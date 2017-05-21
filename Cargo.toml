@@ -8,3 +8,7 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 [dependencies]
 drm-sys = "0.0.4"
 nix = "0.8.1"
+
+[dependencies.error-chain]
+version = "0.10.0"
+default-features = false

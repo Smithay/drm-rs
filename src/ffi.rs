@@ -1,7 +1,21 @@
 #![allow(dead_code)]
 
 use nix::libc;
-use drm_sys::*;
+pub use drm_sys::*;
+
+// The type to be used as an buffer.
+pub type Buffer<T> = Vec<T>;
+
+// Creates a buffer to be modified by an FFI function.
+macro_rules! ffi_buf {
+    ( $ptr:expr, $sz:expr) => (
+        {
+            let mut buf = unsafe { vec![mem::zeroed(); $sz as usize] };
+            *(&mut $ptr) = unsafe { mem::transmute(buf.as_mut_ptr()) };
+            buf
+        }
+    )
+}
 
 ioctl!(readwrite ioctl_version with DRM_IOCTL_BASE, 0x00; drm_version);
 ioctl!(readwrite ioctl_get_unique with DRM_IOCTL_BASE, 0x01; drm_unique);
