@@ -10,6 +10,8 @@ pub type Buffer<T> = Vec<T>;
 macro_rules! ffi_buf {
     ( $ptr:expr, $sz:expr) => (
         {
+            use std::mem;
+
             let mut buf = unsafe { vec![mem::zeroed(); $sz as usize] };
             *(&mut $ptr) = unsafe { mem::transmute(buf.as_mut_ptr()) };
             buf

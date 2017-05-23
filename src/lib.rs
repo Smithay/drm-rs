@@ -5,8 +5,11 @@ extern crate drm_sys;
 #[macro_use]
 extern crate error_chain;
 
-mod ffi;
-mod result;
+#[macro_use]
+pub mod ffi;
+pub mod result;
+
+pub mod control;
 
 use std::os::unix::io::AsRawFd;
 use result::Result;
