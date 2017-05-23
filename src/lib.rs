@@ -31,8 +31,9 @@ pub enum ClientCapability {
 
 /// A trait for all DRM devices.
 pub trait Device : AsRawFd {
-    /// Generates and returns a magic token unique to the current process. This
-    /// token can be used to authenticate with the DRM Master.
+    /// Generates and returns a magic token unique to the current process.
+    ///
+    /// This token can be used to authenticate with the DRM Master.
     fn get_auth_token(&self) -> Result<AuthToken> {
         let mut raw: ffi::drm_auth_t = Default::default();
         unsafe {
@@ -42,15 +43,32 @@ pub trait Device : AsRawFd {
     }
 
     /// Tells the DRM device whether we understand or do not understand a
-    /// particular capability. Some features, such as atomic modesetting,
-    /// require informing the device that the process can use such features
-    /// before it will expose them.
+    /// particular capability.
+    ///
+    /// Some features, such as atomic modesetting, require informing the device
+    /// that the process can use such features before it will expose them.
     fn set_client_cap(&self, cap: ClientCapability, set: bool) -> Result<()> {
         let mut raw: ffi::drm_set_client_cap = Default::default();
         raw.capability = cap as u64;
         raw.value = set as u64;
         unsafe {
             try!(ffi::ioctl_set_client_cap(self.as_raw_fd(), &mut raw));
+        }
+        Ok(())
+    }
+
+    /// Attempts to acquire the DRM Master lock.
+    fn set_master(&self) -> Result<()> {
+        unsafe {
+            try!(ffi::ioctl_set_master(self.as_raw_fd()));
+        }
+        Ok(())
+    }
+
+    /// Drops the DRM Master lock.
+    fn drop_master(&self) -> Result<()> {
+        unsafe {
+            try!(ffi::ioctl_drop_master(self.as_raw_fd()));
         }
         Ok(())
     }
