@@ -6,7 +6,8 @@ use std::fs::{OpenOptions, File};
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::sync::{Mutex, MutexGuard, Once, ONCE_INIT};
 
-use drm::Device;
+use drm::Device as BasicDevice;
+use drm::control::Device as ControlDevice;
 
 #[derive(Debug)]
 // This is our customized struct that implements the traits in drm.
@@ -17,7 +18,17 @@ impl AsRawFd for Card {
     fn as_raw_fd(&self) -> RawFd { self.0.as_raw_fd() }
 }
 
-impl drm::Device for Card { }
+impl BasicDevice for Card { }
+impl ControlDevice for Card { }
+
+impl Card {
+    fn open() -> Self {
+        let mut options = OpenOptions::new();
+        options.read(true);
+        options.write(true);
+        Card(options.open("/dev/dri/card0").unwrap())
+    }
+}
 
 // Some tests cannot be done in parallel. We will use this lock in threads that
 // require single access.
@@ -40,11 +51,7 @@ fn wait_for_lock() -> MutexGuard<'static, ()> {
 
 #[test]
 fn unprivileged_global() {
-    // Open a DRM device.
-    let mut options = OpenOptions::new();
-    options.read(true);
-    options.write(true);
-    let card = Card(options.open("/dev/dri/card0").unwrap());
+    let card = Card::open();
 
     // AuthToken
     card.get_auth_token().expect("Could not get AuthToken");
@@ -56,4 +63,39 @@ fn unprivileged_global() {
         .expect("Could not enable UniversalPlanes capability");
     card.set_client_cap(drm::ClientCapability::Atomic, true)
         .expect("Could not enable Atomic capability");
+}
+
+#[test]
+fn load_resources() {
+    let card = Card::open();
+
+    // Load the resource ids
+    let res = card.resource_ids().expect("Could not load normal resource ids.");
+    let pres = card.plane_ids().expect("Could not load plane ids");
+
+    let cons: Vec<_> = res.connectors().iter().map(| &id | {
+        card.resource_info(id).expect("Could not load connector info")
+    }).collect();
+
+    let encs: Vec<_> = res.encoders().iter().map(| &id | {
+        card.resource_info(id).expect("Could not load encoder info")
+    }).collect();
+
+    let crtcs: Vec<_> = res.crtcs().iter().map(| &id | {
+        card.resource_info(id).expect("Could not load crtc info")
+    }).collect();
+
+    let fbs: Vec<_> = res.framebuffers().iter().map(| &id | {
+        card.resource_info(id).expect("Could not load fbs info")
+    }).collect();
+
+    let planes: Vec<_> = pres.planes().iter().map(| &id | {
+        card.resource_info(id).expect("Could not load plane info")
+    }).collect();
+
+    println!("{:#?}", cons);
+    println!("{:#?}", encs);
+    println!("{:#?}", crtcs);
+    println!("{:#?}", fbs);
+    println!("{:#?}", planes);
 }
