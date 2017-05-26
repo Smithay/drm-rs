@@ -10,8 +10,9 @@ pub type RawId = u32;
 /// The underlying value type of a property.
 pub type RawPropValue = u64;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// An array to hold the name of a property.
-pub type RawPropName = [i8; DRM_PROP_NAME_LEN as usize];
+pub struct RawName([i8; 32]);
 
 /// A trait for devices that provide control (modesetting) functionality.
 pub trait Device : Sized + super::Device {
@@ -106,7 +107,7 @@ pub struct ResourcePropertyHandle {
 /// The information of a specific resource's property.
 pub struct ResourcePropertyInfo {
     resource: ResourceIdType,
-    value: RawPropValue,
+    value: PropertyValueType,
     info: PropertyInfo
 }
 
@@ -266,13 +267,60 @@ impl ResourcePropertyInfo {
     pub fn load_from_device<T>(device: &T, handle: ResourcePropertyHandle)
                                -> Result<Self> where T: Device {
 
+        let info = try!(PropertyInfo::load_from_device(device, handle.id));
+        let value = match info.value_type {
+            PropertyInfoType::Enum(_) => {
+                PropertyValueType::Enum(EnumValue(handle.raw_val))
+            },
+            PropertyInfoType::URange(_) => {
+                PropertyValueType::URange(handle.raw_val)
+            },
+            PropertyInfoType::IRange(_) => {
+                PropertyValueType::IRange(handle.raw_val as i64)
+            },
+            PropertyInfoType::Connector => {
+                PropertyValueType::Connector(
+                    ConnectorId(handle.raw_val as RawId)
+                )
+            },
+            PropertyInfoType::Encoder => {
+                PropertyValueType::Encoder(EncoderId(handle.raw_val as RawId))
+            },
+            PropertyInfoType::Crtc => {
+                PropertyValueType::Crtc(CrtcId(handle.raw_val as RawId))
+            },
+            PropertyInfoType::Framebuffer => {
+                PropertyValueType::Framebuffer(
+                    FramebufferId(handle.raw_val as RawId)
+                )
+            },
+            PropertyInfoType::Plane => {
+                PropertyValueType::Plane(PlaneId(handle.raw_val as RawId))
+            },
+            PropertyInfoType::Property => {
+                PropertyValueType::Property(
+                    PropertyId(handle.raw_val as RawId)
+                )
+            },
+            PropertyInfoType::Blob => {
+                PropertyValueType::Unknown
+            },
+            PropertyInfoType::Unknown => {
+                PropertyValueType::Unknown
+            }
+        };
+
         let res_prop_info = ResourcePropertyInfo {
             resource: handle.resource,
-            value: handle.raw_val,
-            info: try!(PropertyInfo::load_from_device(device, handle.id))
+            value: value,
+            info: info
         };
 
         Ok(res_prop_info)
+    }
+
+    pub fn value(&self) -> PropertyValueType {
+        self.value
     }
 }
 
@@ -305,27 +353,27 @@ impl From<ObjectInfoType> for u32 {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// A ResourceId for a Connector.
 pub struct ConnectorId(RawId);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// A ResourceId for an Encoder.
 pub struct EncoderId(RawId);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// A ResourceId for a Crtc.
 pub struct CrtcId(RawId);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// A ResourceId for a Framebuffer.
 pub struct FramebufferId(RawId);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// A ResourceId for a Plane.
 pub struct PlaneId(RawId);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// A ResourceId for a Property.
 pub struct PropertyId(RawId);
 
@@ -497,7 +545,7 @@ pub struct PlaneInfo {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PropertyInfo {
     id: PropertyId,
-    name: RawPropName,
+    name: RawName,
     mutable: bool,
     pending: bool,
     value_type: PropertyInfoType
@@ -651,13 +699,11 @@ impl ResourceInfo<PropertyId> for PropertyInfo {
 
         let info = PropertyInfo {
             id: id,
-            name: raw.name,
+            name: RawName(raw.name),
             mutable: raw.flags & (DRM_MODE_PROP_IMMUTABLE) == 0,
             pending: raw.flags & (DRM_MODE_PROP_PENDING) == 1,
             value_type: try!(PropertyInfoType::from_ffi_and_device(device, raw))
         };
-
-        println!("We are here");
 
         Ok(info)
     }
@@ -782,7 +828,7 @@ pub struct GammaLookupTable {
     pub blue: ffi::Buffer<u16>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 /// A filter that can be used with a ResourceIds to determine the set of Crtcs
 /// that can attach to a specific encoder.
 pub struct CrtcListFilter(u32);
@@ -893,15 +939,15 @@ impl Mode {
 
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// The value of an EnumEntry
 pub struct EnumValue(RawPropValue);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// The name of an EnumEntry
-pub struct EnumName(RawPropName);
+pub struct EnumName(RawName);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// A possible entry in an EnumInfo
 pub struct EnumEntry(EnumValue, EnumName);
 
@@ -938,6 +984,21 @@ pub enum PropertyInfoType {
     Unknown
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PropertyValueType {
+    Enum(EnumValue),
+    URange(u64),
+    IRange(i64),
+    Connector(ConnectorId),
+    Encoder(EncoderId),
+    Crtc(CrtcId),
+    Framebuffer(FramebufferId),
+    Plane(PlaneId),
+    Property(PropertyId),
+    // TODO: Blob,
+    Unknown
+}
+
 impl EnumEntry {
     pub fn value(&self) -> EnumValue {
         self.0
@@ -968,7 +1029,7 @@ impl EnumInfo {
             // Collect the enums into a list of EnumPropertyValues
             let enums = eblob.iter().map(| en: &drm_mode_property_enum | {
                 let val = EnumValue(en.value as RawPropValue);
-                let name = EnumName(en.name);
+                let name = EnumName(RawName(en.name));
                 EnumEntry(val, name)
             }).collect();
 
@@ -1069,5 +1130,75 @@ impl PropertyInfoType {
 
     fn is_blob(flag: u32) -> bool {
         flag & DRM_MODE_PROP_BLOB != 0
+    }
+}
+
+impl ::std::fmt::Debug for RawName {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        let cstr = unsafe {
+            CStr::from_ptr(::std::mem::transmute(&self.0))
+        };
+
+        write!(f, "{:?}", cstr)
+    }
+}
+
+impl ::std::fmt::Debug for ConnectorId {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "ConnectorId({})", self.0)
+    }
+}
+
+impl ::std::fmt::Debug for EncoderId {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "EncoderId({})", self.0)
+    }
+}
+
+impl ::std::fmt::Debug for CrtcId {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "CrtcId({})", self.0)
+    }
+}
+
+impl ::std::fmt::Debug for FramebufferId {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "FramebufferId({})", self.0)
+    }
+}
+
+impl ::std::fmt::Debug for PlaneId {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "PlaneId({})", self.0)
+    }
+}
+
+impl ::std::fmt::Debug for PropertyId {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "PropertyId({})", self.0)
+    }
+}
+
+impl ::std::fmt::Debug for CrtcListFilter {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "CrtcListFilter({})", self.0)
+    }
+}
+
+impl ::std::fmt::Debug for EnumValue {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl ::std::fmt::Debug for EnumName {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
+
+impl ::std::fmt::Debug for EnumEntry {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "EnumEntry({}, {:?})", (self.0).0, (self.1).0)
     }
 }
