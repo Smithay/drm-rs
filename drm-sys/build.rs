@@ -16,9 +16,9 @@ mod use_bindgen {
     // functional macros (https://github.com/jethrogb/rust-cexpr/issues/3).
     // Therefore we must create them ourselves.
     fn bind_function_macro(name: &str) -> String {
-        let temp_bind = "const int _".to_string() + name + " = " + name + ";\n";
+        let temp_bind = "const unsigned int _".to_string() + name + " = " + name + ";\n";
         let undef = "#undef ".to_string() + name + "\n";
-        let new_bind = "const int ".to_string() + name + " = _" + name + ";\n";
+        let new_bind = "const nsigned int ".to_string() + name + " = _" + name + ";\n";
 
         temp_bind + &undef + &new_bind
     }
