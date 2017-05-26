@@ -7,6 +7,12 @@ use std::ffi::CStr;
 /// The underlying id for a resource.
 pub type RawId = u32;
 
+/// The underlying value type of a property.
+pub type RawPropValue = u64;
+
+/// An array to hold the name of a property.
+pub type RawPropName = [i8; DRM_PROP_NAME_LEN as usize];
+
 /// A trait for devices that provide control (modesetting) functionality.
 pub trait Device : Sized + super::Device {
     /// Gets the resource ids for this device.
@@ -25,10 +31,26 @@ pub trait Device : Sized + super::Device {
 
         U::load_from_device(self, id)
     }
+
+    /// Gets the properties of a resource.
+    fn resource_property_handles<T, U>(&self, id: T)
+                                       -> Result<ResourcePropertyHandles>
+        where T: ResourceId<U>, U: ResourceInfo<T> {
+
+        ResourcePropertyHandles::load_from_device(self, id)
+    }
+
+    /// Gets the information on a specific resource's property
+    fn resource_property_info(&self, handle: ResourcePropertyHandle)
+                         -> Result<ResourcePropertyInfo> {
+
+        ResourcePropertyInfo::load_from_device(self, handle)
+    }
 }
 
 /// A trait for a resource id to be referenced or created by a RawId
-pub trait ResourceId<T> : Sized where T: ResourceInfo<Self> {
+pub trait ResourceId<T> : Sized + Into<ObjectInfoType> + Into<ResourceIdType>
+    where T: ResourceInfo<Self> {
     /// Extracts the RawId.
     fn as_raw_id(&self) -> RawId;
 
@@ -64,6 +86,28 @@ pub struct ResourceIds {
 /// The set of plane ids that are associated with a DRM device.
 pub struct PlaneResourceIds {
     planes: ffi::Buffer<PlaneId>
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// Handles to the properties and their values of a specific resource.
+pub struct ResourcePropertyHandles {
+    handles: ffi::Buffer<ResourcePropertyHandle>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// A handle to a property and its value of a specific resource.
+pub struct ResourcePropertyHandle {
+    resource: ResourceIdType,
+    id: PropertyId,
+    raw_val: RawPropValue
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// The information of a specific resource's property.
+pub struct ResourcePropertyInfo {
+    resource: ResourceIdType,
+    value: RawPropValue,
+    info: PropertyInfo
 }
 
 impl ResourceIds {
@@ -136,7 +180,7 @@ impl ResourceIds {
 impl PlaneResourceIds {
     /// Loads the plane ids from a device.
     pub fn load_from_device<T>(device: &T) -> Result<Self>
-        where T: Device{
+        where T: Device {
 
         let mut raw: drm_mode_get_plane_res = Default::default();
         unsafe {
@@ -162,6 +206,105 @@ impl PlaneResourceIds {
     }
 }
 
+impl ResourcePropertyHandles {
+    pub fn load_from_device<T, U, V>(device: &T, id: U) -> Result<Self>
+        where T: Device, U: ResourceId<V>, V: ResourceInfo<U> {
+
+        let mut raw: drm_mode_obj_get_properties = Default::default();
+        raw.obj_id = id.as_raw_id();
+        let obj_info: ObjectInfoType = id.into();
+        raw.obj_type = obj_info.into();
+        unsafe {
+            try!(ffi::ioctl_mode_obj_getproperties(device.as_raw_fd(),
+                                                   &mut raw));
+        }
+        let ids = ffi_buf!(raw.props_ptr, raw.count_props);
+        let vals = ffi_buf!(raw.prop_values_ptr, raw.count_props);
+        unsafe {
+            try!(ffi::ioctl_mode_obj_getproperties(device.as_raw_fd(),
+                                                   &mut raw));
+        }
+        let handles = ids.into_iter()
+            .map(| id | unsafe { PropertyId::from_raw_id(id) })
+            .zip(vals.into_iter())
+            .map(| (id, val) | {
+                ResourcePropertyHandle {
+                    resource: id.into(),
+                    id: id,
+                    raw_val: val,
+                }
+            })
+            .collect();
+
+        let props = ResourcePropertyHandles {
+            handles: handles
+        };
+
+        Ok(props)
+    }
+
+    pub fn handles<'a>(&'a self) -> &'a [ResourcePropertyHandle] {
+        &self.handles
+    }
+}
+
+impl ResourcePropertyHandle {
+    pub fn parent(&self) -> ResourceIdType {
+        self.resource
+    }
+
+    pub fn property_id(&self) -> PropertyId {
+        self.id
+    }
+
+    pub fn raw_value(&self) -> RawPropValue {
+        self.raw_val
+    }
+}
+
+impl ResourcePropertyInfo {
+    pub fn load_from_device<T>(device: &T, handle: ResourcePropertyHandle)
+                               -> Result<Self> where T: Device {
+
+        let res_prop_info = ResourcePropertyInfo {
+            resource: handle.resource,
+            value: handle.raw_val,
+            info: try!(PropertyInfo::load_from_device(device, handle.id))
+        };
+
+        Ok(res_prop_info)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ObjectInfoType {
+    Connector,
+    Encoder,
+    Property,
+    Framebuffer,
+    Blob,
+    Plane,
+    Crtc,
+    Unknown
+}
+
+#[warn(non_upper_case_globals)]
+impl From<ObjectInfoType> for u32 {
+    fn from(n: ObjectInfoType) -> Self {
+        match n {
+            ObjectInfoType::Connector => DRM_MODE_OBJECT_CONNECTOR,
+            ObjectInfoType::Encoder => DRM_MODE_OBJECT_ENCODER,
+            //ObjectInfoType::Mode => DRM_MODE_OBJECT_MODE,
+            ObjectInfoType::Property => DRM_MODE_OBJECT_PROPERTY,
+            ObjectInfoType::Framebuffer => DRM_MODE_OBJECT_FB,
+            ObjectInfoType::Blob => DRM_MODE_OBJECT_BLOB,
+            ObjectInfoType::Plane => DRM_MODE_OBJECT_PLANE,
+            ObjectInfoType::Crtc => DRM_MODE_OBJECT_CRTC,
+            ObjectInfoType::Unknown => DRM_MODE_OBJECT_ANY,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// A ResourceId for a Connector.
 pub struct ConnectorId(RawId);
@@ -183,13 +326,90 @@ pub struct FramebufferId(RawId);
 pub struct PlaneId(RawId);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// A ResourceId for a Property.
+pub struct PropertyId(RawId);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// A handle to a generic resource id
 pub enum ResourceIdType {
     Connector(ConnectorId),
     Encoder(EncoderId),
     Crtc(CrtcId),
     Framebuffer(FramebufferId),
-    Plane(PlaneId)
+    Plane(PlaneId),
+    Property(PropertyId)
+}
+
+impl From<ConnectorId> for ResourceIdType {
+    fn from(id: ConnectorId) -> ResourceIdType {
+        ResourceIdType::Connector(id)
+    }
+}
+
+impl From<EncoderId> for ResourceIdType {
+    fn from(id: EncoderId) -> ResourceIdType {
+        ResourceIdType::Encoder(id)
+    }
+}
+
+impl From<CrtcId> for ResourceIdType {
+    fn from(id: CrtcId) -> ResourceIdType {
+        ResourceIdType::Crtc(id)
+    }
+}
+
+impl From<FramebufferId> for ResourceIdType {
+    fn from(id: FramebufferId) -> ResourceIdType {
+        ResourceIdType::Framebuffer(id)
+    }
+}
+
+impl From<PlaneId> for ResourceIdType {
+    fn from(id: PlaneId) -> ResourceIdType {
+        ResourceIdType::Plane(id)
+    }
+}
+
+impl From<PropertyId> for ResourceIdType {
+    fn from(id: PropertyId) -> ResourceIdType {
+        ResourceIdType::Property(id)
+    }
+}
+
+impl From<ConnectorId> for ObjectInfoType {
+    fn from(_: ConnectorId) -> ObjectInfoType {
+        ObjectInfoType::Connector
+    }
+}
+
+impl From<EncoderId> for ObjectInfoType {
+    fn from(_: EncoderId) -> ObjectInfoType {
+        ObjectInfoType::Encoder
+    }
+}
+
+impl From<CrtcId> for ObjectInfoType {
+    fn from(_: CrtcId) -> ObjectInfoType {
+        ObjectInfoType::Crtc
+    }
+}
+
+impl From<FramebufferId> for ObjectInfoType {
+    fn from(_: FramebufferId) -> ObjectInfoType {
+        ObjectInfoType::Framebuffer
+    }
+}
+
+impl From<PlaneId> for ObjectInfoType {
+    fn from(_: PlaneId) -> ObjectInfoType {
+        ObjectInfoType::Plane
+    }
+}
+
+impl From<PropertyId> for ObjectInfoType {
+    fn from(_: PropertyId) -> ObjectInfoType {
+        ObjectInfoType::Property
+    }
 }
 
 impl ResourceId<ConnectorInfo> for ConnectorId {
@@ -217,6 +437,11 @@ impl ResourceId<PlaneInfo> for PlaneId {
     unsafe fn from_raw_id(id: RawId) -> Self { PlaneId(id) }
 }
 
+impl ResourceId<PropertyInfo> for PropertyId {
+    fn as_raw_id(&self) -> RawId { self.0 }
+    unsafe fn from_raw_id(id: RawId) -> Self { PropertyId(id) }
+}
+
 #[derive(Debug, Clone)]
 pub struct ConnectorInfo {
     id: ConnectorId,
@@ -239,7 +464,7 @@ pub struct EncoderInfo {
     // TODO: possible_clones
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CrtcInfo {
     id: CrtcId,
     position: (u32, u32),
@@ -248,7 +473,7 @@ pub struct CrtcInfo {
     gamma_length: u32
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FramebufferInfo {
     id: FramebufferId,
     size: (u32, u32),
@@ -258,7 +483,7 @@ pub struct FramebufferInfo {
     depth: u32
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlaneInfo {
     id: PlaneId,
     crtc_id: CrtcId,
@@ -267,6 +492,15 @@ pub struct PlaneInfo {
     // TODO: possible_crtcs
     gamma_length: u32,
     // TODO: formats
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PropertyInfo {
+    id: PropertyId,
+    name: RawPropName,
+    mutable: bool,
+    pending: bool,
+    value_type: PropertyInfoType
 }
 
 impl ResourceInfo<ConnectorId> for ConnectorInfo {
@@ -405,6 +639,34 @@ impl ResourceInfo<PlaneId> for PlaneInfo {
     }
 }
 
+impl ResourceInfo<PropertyId> for PropertyInfo {
+    fn load_from_device<T>(device: &T, id: PropertyId) -> Result<Self>
+        where T: Device {
+
+        let mut raw: drm_mode_get_property = Default::default();
+        raw.prop_id = id.as_raw_id();
+        unsafe {
+            try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(), &mut raw));
+        }
+
+        let info = PropertyInfo {
+            id: id,
+            name: raw.name,
+            mutable: raw.flags & (DRM_MODE_PROP_IMMUTABLE) == 0,
+            pending: raw.flags & (DRM_MODE_PROP_PENDING) == 1,
+            value_type: try!(PropertyInfoType::from_ffi_and_device(device, raw))
+        };
+
+        println!("We are here");
+
+        Ok(info)
+    }
+
+    fn id(&self) -> PropertyId {
+        self.id
+    }
+}
+
 impl ConnectorInfo {
     /// Returns the type of connector this is
     pub fn connector_type(&self) -> ConnectorType {
@@ -448,6 +710,22 @@ impl CrtcInfo {
             0 => None,
             _ => Some(self.fb)
         }
+    }
+}
+
+impl PropertyInfo {
+    pub fn name(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(::std::mem::transmute(&self.name))
+        }
+    }
+
+    pub fn mutable(&self) -> bool {
+        self.mutable
+    }
+
+    pub fn pending(&self) -> bool {
+        self.pending
     }
 }
 
@@ -610,5 +888,186 @@ impl Mode {
         unsafe {
             CStr::from_ptr(&self.mode.name as *const _)
         }
+    }
+}
+
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// The value of an EnumEntry
+pub struct EnumValue(RawPropValue);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// The name of an EnumEntry
+pub struct EnumName(RawPropName);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// A possible entry in an EnumInfo
+pub struct EnumEntry(EnumValue, EnumName);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// The possible values of a particular enum.
+pub struct EnumInfo {
+    possible: ffi::Buffer<EnumEntry>
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// The possible values of a particular unsigned range.
+pub struct URangeInfo {
+    possible: (u64, u64)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// The possible values of a particular signed range.
+pub struct IRangeInfo {
+    possible: (i64, i64)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PropertyInfoType {
+    Enum(EnumInfo),
+    URange(URangeInfo),
+    IRange(IRangeInfo),
+    Connector,
+    Encoder,
+    Crtc,
+    Framebuffer,
+    Plane,
+    Property,
+    Blob,
+    Unknown
+}
+
+impl EnumEntry {
+    pub fn value(&self) -> EnumValue {
+        self.0
+    }
+
+    pub fn name(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(::std::mem::transmute(&self.1))
+        }
+    }
+}
+
+impl EnumInfo {
+    fn load_from_device<T>(device: &T, mut raw: drm_mode_get_property) ->
+        Result<Self> where T: Device {
+            let eblob = ffi_buf!(raw.enum_blob_ptr,
+                                 raw.count_enum_blobs);
+
+            // We set this to zero because an enum won't fill values_ptr
+            // anyways. No need to create a buffer for it.
+            raw.count_values = 0;
+
+            unsafe {
+                try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(),
+                                                  &mut raw));
+            }
+
+            // Collect the enums into a list of EnumPropertyValues
+            let enums = eblob.iter().map(| en: &drm_mode_property_enum | {
+                let val = EnumValue(en.value as RawPropValue);
+                let name = EnumName(en.name);
+                EnumEntry(val, name)
+            }).collect();
+
+            let en = EnumInfo {
+                possible: enums
+            };
+
+            Ok(en)
+        }
+
+    pub fn entries(&self) -> &[EnumEntry] {
+        &self.possible
+    }
+}
+
+impl URangeInfo {
+    fn load_from_device<T>(device: &T, mut raw: drm_mode_get_property) ->
+        Result<Self> where T: Device {
+            let values: ffi::Buffer<u64> =
+                ffi_buf!(raw.values_ptr, raw.count_values);
+
+            unsafe {
+                try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(),
+                                                  &mut raw));
+            }
+
+            let &min = values.get(0).unwrap_or(&0);
+            let &max = values.get(1).unwrap_or(&u64::max_value());
+
+            let range = URangeInfo {
+                possible: (min, max)
+            };
+
+            Ok(range)
+        }
+}
+
+impl IRangeInfo {
+    fn load_from_device<T>(device: &T, mut raw: drm_mode_get_property) ->
+        Result<Self> where T: Device {
+            let values: ffi::Buffer<i64> =
+                ffi_buf!(raw.values_ptr, raw.count_values);
+
+            unsafe {
+                try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(),
+                                                  &mut raw));
+            }
+
+            let &min = values.get(0).unwrap_or(&i64::min_value());
+            let &max = values.get(1).unwrap_or(&i64::max_value());
+
+            let range = IRangeInfo {
+                possible: (min, max)
+            };
+
+            Ok(range)
+        }
+}
+
+impl PropertyInfoType {
+    fn from_ffi_and_device<T>(device: &T, raw: drm_mode_get_property)
+                              -> Result<Self>
+        where T: Device {
+
+        let info = if Self::is_enum(raw.flags) {
+            PropertyInfoType::Enum(EnumInfo::load_from_device(device, raw)?)
+        } else if Self::is_urange(raw.flags) {
+            PropertyInfoType::URange(URangeInfo::load_from_device(device, raw)?)
+        } else if Self::is_irange(raw.flags) {
+            PropertyInfoType::IRange(IRangeInfo::load_from_device(device, raw)?)
+        } else if Self::is_object(raw.flags) {
+            // Object
+            unimplemented!()
+        } else if Self::is_blob(raw.flags) {
+            PropertyInfoType::Blob
+        } else {
+            PropertyInfoType::Unknown
+        };
+
+        Ok(info)
+    }
+
+    fn is_enum(flag: u32) -> bool {
+        flag & (DRM_MODE_PROP_ENUM | DRM_MODE_PROP_BITMASK) != 0
+    }
+
+    fn is_urange(flag: u32) -> bool {
+        flag & DRM_MODE_PROP_RANGE != 0
+    }
+
+    fn is_irange(flag: u32) -> bool {
+        flag & DRM_MODE_PROP_SIGNED_RANGE != 0
+    }
+
+    fn is_object(flag: u32) -> bool {
+        flag & DRM_MODE_PROP_OBJECT != 0
+    }
+
+    fn is_blob(flag: u32) -> bool {
+        flag & DRM_MODE_PROP_BLOB != 0
     }
 }

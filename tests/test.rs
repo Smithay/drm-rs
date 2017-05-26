@@ -99,3 +99,27 @@ fn load_resources() {
     println!("{:#?}", fbs);
     println!("{:#?}", planes);
 }
+
+#[test]
+fn load_properties() {
+    let card = Card::open();
+
+    // Load the resource ids
+    let res = card.resource_ids().expect("Could not load normal resource ids.");
+    let pres = card.plane_ids().expect("Could not load plane ids");
+
+    let phandles: Vec<_> = res.connectors().iter().map(| &id | {
+        card.resource_property_handles(id).expect("Could not read connector properties.")
+    }).chain(res.crtcs().iter().map(| &id | {
+        card.resource_property_handles(id).expect("Could not read crtc properties.")
+    })).chain(res.framebuffers().iter().map(| &id | {
+        card.resource_property_handles(id).expect("Could not read framebuffer properties.")
+    })).chain(pres.planes().iter().map(| &id | {
+        card.resource_property_handles(id).expect("Could not read plane properties.")
+    })).flat_map(| ref rphs | {
+        let v: Vec<_> = rphs.handles().iter().map(| rph | rph.clone()).collect();
+        v
+    }).map(| rph | card.resource_property_info(rph).expect("Could not get property info")).collect();
+
+    println!("{:#?}", phandles);
+}
