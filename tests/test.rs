@@ -9,6 +9,8 @@ use std::sync::{Mutex, MutexGuard, Once, ONCE_INIT};
 use drm::Device as BasicDevice;
 use drm::control::Device as ControlDevice;
 
+use drm::control::{connector, encoder, crtc, framebuffer, plane, property};
+
 #[derive(Debug)]
 // This is our customized struct that implements the traits in drm.
 struct Card(File);
@@ -74,23 +76,23 @@ fn load_resources() {
     let pres = card.plane_ids().expect("Could not load plane ids");
 
     let cons: Vec<_> = res.connectors().iter().map(| &id | {
-        card.resource_info(id).expect("Could not load connector info")
+        card.connector_info(id).expect("Could not load connector info")
     }).collect();
 
     let encs: Vec<_> = res.encoders().iter().map(| &id | {
-        card.resource_info(id).expect("Could not load encoder info")
+        card.encoder_info(id).expect("Could not load encoder info")
     }).collect();
 
     let crtcs: Vec<_> = res.crtcs().iter().map(| &id | {
-        card.resource_info(id).expect("Could not load crtc info")
+        card.crtc_info(id).expect("Could not load crtc info")
     }).collect();
 
     let fbs: Vec<_> = res.framebuffers().iter().map(| &id | {
-        card.resource_info(id).expect("Could not load fbs info")
+        card.fb_info(id).expect("Could not load fbs info")
     }).collect();
 
     let planes: Vec<_> = pres.planes().iter().map(| &id | {
-        card.resource_info(id).expect("Could not load plane info")
+        card.plane_info(id).expect("Could not load plane info")
     }).collect();
 
     println!("{:#?}", cons);
@@ -98,28 +100,4 @@ fn load_resources() {
     println!("{:#?}", crtcs);
     println!("{:#?}", fbs);
     println!("{:#?}", planes);
-}
-
-#[test]
-fn load_properties() {
-    let card = Card::open();
-
-    // Load the resource ids
-    let res = card.resource_ids().expect("Could not load normal resource ids.");
-    let pres = card.plane_ids().expect("Could not load plane ids");
-
-    let phandles: Vec<_> = res.connectors().iter().map(| &id | {
-        card.resource_property_handles(id).expect("Could not read connector properties.")
-    }).chain(res.crtcs().iter().map(| &id | {
-        card.resource_property_handles(id).expect("Could not read crtc properties.")
-    })).chain(res.framebuffers().iter().map(| &id | {
-        card.resource_property_handles(id).expect("Could not read framebuffer properties.")
-    })).chain(pres.planes().iter().map(| &id | {
-        card.resource_property_handles(id).expect("Could not read plane properties.")
-    })).flat_map(| ref rphs | {
-        let v: Vec<_> = rphs.handles().iter().map(| rph | rph.clone()).collect();
-        v
-    }).map(| rph | card.resource_property_info(rph).expect("Could not get property info")).collect();
-
-    println!("{:#?}", phandles);
 }
