@@ -1,6 +1,8 @@
 #[cfg(feature = "use_bindgen")]
 mod use_bindgen {
     extern crate bindgen;
+    extern crate pkg_config;
+
     use self::bindgen::Builder;
     use std::env::var;
     use std::path::PathBuf;
@@ -18,7 +20,7 @@ mod use_bindgen {
     fn bind_function_macro(name: &str) -> String {
         let temp_bind = "const unsigned int _".to_string() + name + " = " + name + ";\n";
         let undef = "#undef ".to_string() + name + "\n";
-        let new_bind = "const nsigned int ".to_string() + name + " = _" + name + ";\n";
+        let new_bind = "const unsigned int ".to_string() + name + " = _" + name + ";\n";
 
         temp_bind + &undef + &new_bind
     }
@@ -41,18 +43,23 @@ mod use_bindgen {
         let out_path = String::from(var("OUT_DIR").unwrap());
         let header = out_path.clone() + "/bindings.h";
 
-        let bindings = Builder::default()
-            .no_unstable_rust()
+        let pkgconf = pkg_config::Config::new();
+        let lib = pkgconf.probe("libdrm").unwrap();
+
+        let mut builder = Builder::default()
             .header(header)
-            .clang_arg("-I/usr/include/drm")
             .ctypes_prefix("libc")
             .emit_builtins()
             .emit_clang_ast()
             .emit_ir()
             .derive_debug(true)
-            .derive_default(true)
-            .generate()
-            .expect("Unable to generate libdrm bindings");
+            .derive_default(true);
+
+        for path in lib.include_paths {
+            let arg = "-I".to_string() + &path.into_os_string().into_string().unwrap();
+            builder = builder.clang_arg(arg)
+        }
+        let bindings = builder.generate().expect("Unable to generate libdrm bindings");
 
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
 
