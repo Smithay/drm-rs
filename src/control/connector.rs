@@ -1,7 +1,6 @@
-use drm_sys;
+use ffi;
 use control::{self, ResourceHandle, ResourceInfo};
 use result::*;
-use ffi;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 /// A `ResourceHandle` to a connector.
@@ -12,7 +11,7 @@ pub struct Id(control::RawId);
 pub struct Info {
     handle: Id,
     // TODO: properties
-    //modes: ffi::Buffer<control::Mode>,
+    modes: ffi::Buffer<control::Mode>,
     encoders: ffi::Buffer<control::encoder::Id>,
     con_type: Type,
     con_state: State,
@@ -62,6 +61,11 @@ impl Info {
     pub fn connection_state(&self) -> State {
         self.con_state
     }
+
+    /// Returns a list of supported Modes.
+    pub fn modes<'a>(&'a self) -> &'a [control::Mode] {
+        &self.modes
+    }
 }
 
 impl ResourceHandle for Id {
@@ -76,13 +80,17 @@ impl ResourceHandle for Id {
     }
 }
 
+impl control::property::LoadProperties for Id {
+    const TYPE: u32 = ffi::DRM_MODE_OBJECT_CONNECTOR;
+}
+
 impl ResourceInfo for Info {
     type Handle = Id;
 
     fn load_from_device<T>(device: &T, handle: Id) -> Result<Self>
         where T: control::Device {
 
-        let mut raw: drm_sys::drm_mode_get_connector = Default::default();
+        let mut raw: ffi::drm_mode_get_connector = Default::default();
         raw.connector_id = handle.0;
         unsafe {
             try!(ffi::ioctl_mode_getconnector(device.as_raw_fd(), &mut raw));
@@ -91,7 +99,7 @@ impl ResourceInfo for Info {
         // let props = ffi_buf!(raw.props_ptr, raw.count_props);
         raw.count_props = 0;
         let encs = ffi_buf!(raw.encoders_ptr, raw.count_encoders);
-        let modes: Vec<drm_sys::drm_mode_get_connector> = ffi_buf!(raw.modes_ptr, raw.count_modes);
+        let modes: Vec<ffi::drm_mode_modeinfo> = ffi_buf!(raw.modes_ptr, raw.count_modes);
         unsafe {
             try!(ffi::ioctl_mode_getconnector(device.as_raw_fd(), &mut raw));
         }
@@ -102,7 +110,7 @@ impl ResourceInfo for Info {
 
         let con = Self {
             handle: handle,
-            //modes: modes,
+            modes: unsafe { ::std::mem::transmute(modes) },
             encoders: encs,
             con_type: Type::from(raw.connector_type),
             con_state: State::from(raw.connection),
@@ -119,24 +127,24 @@ impl ResourceInfo for Info {
 impl From<u32> for Type {
     fn from(n: u32) -> Self {
         match n {
-            drm_sys::DRM_MODE_CONNECTOR_Unknown => Type::Unknown,
-            drm_sys::DRM_MODE_CONNECTOR_VGA => Type::VGA,
-            drm_sys::DRM_MODE_CONNECTOR_DVII => Type::DVII,
-            drm_sys::DRM_MODE_CONNECTOR_DVID => Type::DVID,
-            drm_sys::DRM_MODE_CONNECTOR_DVIA => Type::DVIA,
-            drm_sys::DRM_MODE_CONNECTOR_Composite => Type::Composite,
-            drm_sys::DRM_MODE_CONNECTOR_SVIDEO => Type::SVideo,
-            drm_sys::DRM_MODE_CONNECTOR_LVDS => Type::LVDS,
-            drm_sys::DRM_MODE_CONNECTOR_Component => Type::Component,
-            drm_sys::DRM_MODE_CONNECTOR_9PinDIN => Type::NinePinDIN,
-            drm_sys::DRM_MODE_CONNECTOR_DisplayPort => Type::DisplayPort,
-            drm_sys::DRM_MODE_CONNECTOR_HDMIA => Type::HDMIA,
-            drm_sys::DRM_MODE_CONNECTOR_HDMIB => Type::HDMIB,
-            drm_sys::DRM_MODE_CONNECTOR_TV => Type::TV,
-            drm_sys::DRM_MODE_CONNECTOR_eDP => Type::EmbeddedDisplayPort,
-            drm_sys::DRM_MODE_CONNECTOR_VIRTUAL => Type::Virtual,
-            drm_sys::DRM_MODE_CONNECTOR_DSI => Type::DSI,
-            drm_sys::DRM_MODE_CONNECTOR_DPI => Type::DPI,
+            ffi::DRM_MODE_CONNECTOR_Unknown => Type::Unknown,
+            ffi::DRM_MODE_CONNECTOR_VGA => Type::VGA,
+            ffi::DRM_MODE_CONNECTOR_DVII => Type::DVII,
+            ffi::DRM_MODE_CONNECTOR_DVID => Type::DVID,
+            ffi::DRM_MODE_CONNECTOR_DVIA => Type::DVIA,
+            ffi::DRM_MODE_CONNECTOR_Composite => Type::Composite,
+            ffi::DRM_MODE_CONNECTOR_SVIDEO => Type::SVideo,
+            ffi::DRM_MODE_CONNECTOR_LVDS => Type::LVDS,
+            ffi::DRM_MODE_CONNECTOR_Component => Type::Component,
+            ffi::DRM_MODE_CONNECTOR_9PinDIN => Type::NinePinDIN,
+            ffi::DRM_MODE_CONNECTOR_DisplayPort => Type::DisplayPort,
+            ffi::DRM_MODE_CONNECTOR_HDMIA => Type::HDMIA,
+            ffi::DRM_MODE_CONNECTOR_HDMIB => Type::HDMIB,
+            ffi::DRM_MODE_CONNECTOR_TV => Type::TV,
+            ffi::DRM_MODE_CONNECTOR_eDP => Type::EmbeddedDisplayPort,
+            ffi::DRM_MODE_CONNECTOR_VIRTUAL => Type::Virtual,
+            ffi::DRM_MODE_CONNECTOR_DSI => Type::DSI,
+            ffi::DRM_MODE_CONNECTOR_DPI => Type::DPI,
             _ => Type::Unknown
         }
     }

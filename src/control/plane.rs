@@ -31,6 +31,10 @@ impl ResourceHandle for Id {
     }
 }
 
+impl control::property::LoadProperties for Id {
+    const TYPE: u32 = ffi::DRM_MODE_OBJECT_PLANE;
+}
+
 impl ResourceInfo for Info {
     type Handle = Id;
 

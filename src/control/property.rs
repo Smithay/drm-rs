@@ -337,17 +337,15 @@ impl UnassociatedValue {
     }
 }
 
-pub trait LoadProperties : ResourceHandle {
+pub trait LoadProperties : ResourceHandle<RawHandle=control::RawId> {
     const TYPE: u32;
-
-    fn as_raw_id(&self) -> control::RawId;
 
     fn load_resource_properties<T>(&self, device: &T)
                                    -> Result<ResourceProperties>
         where T: control::Device {
 
         let mut raw: ffi::drm_mode_obj_get_properties = Default::default();
-        raw.obj_id = self.as_raw_id() as u32;
+        raw.obj_id = self.as_raw() as u32;
         raw.obj_type = Self::TYPE;
         unsafe {
             try!(ffi::ioctl_mode_obj_getproperties(device.as_raw_fd(),
@@ -366,7 +364,7 @@ pub trait LoadProperties : ResourceHandle {
                 AssociatedPropertyHandle {
                     handle: id,
                     value: UnassociatedValue::from_raw(val),
-                    resource: id.as_raw(),
+                    resource: self.as_raw(),
                 }
             })
             .collect();

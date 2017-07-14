@@ -1,15 +1,13 @@
-use drm_sys::*;
 use result::*;
 use ffi;
-
 use std::ffi::CStr;
-
 pub mod connector;
 pub mod encoder;
 pub mod crtc;
 pub mod framebuffer;
 pub mod plane;
 pub mod property;
+pub mod dumbbuffer;
 
 /// The underlying id for a resource.
 pub type RawId = u32;
@@ -113,7 +111,7 @@ impl ResourceIds {
     pub fn load_from_device<T>(device: &T) -> Result<Self>
         where T: Device{
 
-        let mut raw: drm_mode_card_res = Default::default();
+        let mut raw: ffi::drm_mode_card_res = Default::default();
         unsafe {
             try!(ffi::ioctl_mode_getresources(device.as_raw_fd(), &mut raw));
         }
@@ -180,7 +178,7 @@ impl PlaneResourceIds {
     pub fn load_from_device<T>(device: &T) -> Result<Self>
         where T: Device {
 
-        let mut raw: drm_mode_get_plane_res = Default::default();
+        let mut raw: ffi::drm_mode_get_plane_res = Default::default();
         unsafe {
             try!(ffi::ioctl_mode_getplaneresources(device.as_raw_fd(),
                                                    &mut raw));
@@ -220,22 +218,18 @@ pub enum Type {
 impl From<Type> for u32 {
     fn from(n: Type) -> Self {
         match n {
-            Type::Connector => DRM_MODE_OBJECT_CONNECTOR,
-            Type::Encoder => DRM_MODE_OBJECT_ENCODER,
-            //Type::Mode => DRM_MODE_OBJECT_MODE,
-            Type::Property => DRM_MODE_OBJECT_PROPERTY,
-            Type::Framebuffer => DRM_MODE_OBJECT_FB,
-            Type::Blob => DRM_MODE_OBJECT_BLOB,
-            Type::Plane => DRM_MODE_OBJECT_PLANE,
-            Type::Crtc => DRM_MODE_OBJECT_CRTC,
-            Type::Unknown => DRM_MODE_OBJECT_ANY,
+            Type::Connector => ffi::DRM_MODE_OBJECT_CONNECTOR,
+            Type::Encoder => ffi::DRM_MODE_OBJECT_ENCODER,
+            //Type::Mode => ffi::DRM_MODE_OBJECT_MODE,
+            Type::Property => ffi::DRM_MODE_OBJECT_PROPERTY,
+            Type::Framebuffer => ffi::DRM_MODE_OBJECT_FB,
+            Type::Blob => ffi::DRM_MODE_OBJECT_BLOB,
+            Type::Plane => ffi::DRM_MODE_OBJECT_PLANE,
+            Type::Crtc => ffi::DRM_MODE_OBJECT_CRTC,
+            Type::Unknown => ffi::DRM_MODE_OBJECT_ANY,
         }
     }
 }
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-/// A ResourceId for a Property.
-pub struct PropertyId(RawId);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// A handle to a generic resource id
@@ -267,7 +261,7 @@ pub struct Mode {
     // We're using the FFI struct because the DRM API expects it when giving it
     // to a CRTC or creating a blob from it. Maybe in the future we can look at
     // another option.
-    mode: drm_mode_modeinfo
+    mode: ffi::drm_mode_modeinfo
 }
 
 impl Mode {
@@ -308,6 +302,31 @@ impl Mode {
         }
     }
 }
+
+// We need to implement PartialEq manually for modeinfo
+impl PartialEq for Mode {
+    fn eq(&self, other: &Mode) -> bool {
+        self.mode.clock == other.mode.clock &&
+            self.mode.clock == other.mode.clock &&
+            self.mode.hdisplay == other.mode.hdisplay &&
+            self.mode.hsync_start == other.mode.hsync_start &&
+            self.mode.hsync_end == other.mode.hsync_end &&
+            self.mode.htotal == other.mode.htotal &&
+            self.mode.hskew == other.mode.hskew &&
+            self.mode.vdisplay == other.mode.vdisplay &&
+            self.mode.vsync_start == other.mode.vsync_start &&
+            self.mode.vsync_end == other.mode.vsync_end &&
+            self.mode.vtotal == other.mode.vtotal &&
+            self.mode.vscan == other.mode.vscan &&
+            self.mode.vrefresh == other.mode.vrefresh &&
+            self.mode.flags == other.mode.flags &&
+            self.mode.type_ == other.mode.type_ &&
+            self.mode.name == other.mode.name
+    }
+}
+
+impl Eq for Mode {}
+
 
 
 impl ::std::fmt::Debug for RawName {

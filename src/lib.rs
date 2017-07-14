@@ -10,6 +10,7 @@ pub mod ffi;
 pub mod result;
 
 pub mod control;
+pub mod buffer;
 
 use std::os::unix::io::AsRawFd;
 use result::Result;
