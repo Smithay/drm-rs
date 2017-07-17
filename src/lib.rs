@@ -39,11 +39,15 @@ pub trait Device : AsRawFd {
     ///
     /// This token can be used to authenticate with the DRM Master.
     fn get_auth_token(&self) -> Result<AuthToken> {
-        let mut raw: ffi::drm_auth_t = Default::default();
-        unsafe {
-            try!(ffi::ioctl_get_magic(self.as_raw_fd(), &mut raw));
-        }
-        Ok(AuthToken(raw.magic))
+        let mut token = {
+            let mut raw: ffi::drm_auth_t = Default::default();
+            unsafe {
+                ffi::ioctl_get_magic(self.as_raw_fd(), &mut raw)?
+            };
+            raw.magic
+        };
+
+        Ok(AuthToken(token))
     }
 
     /// Tells the DRM device whether we understand or do not understand a
@@ -52,28 +56,35 @@ pub trait Device : AsRawFd {
     /// Some features, such as atomic modesetting, require informing the device
     /// that the process can use such features before it will expose them.
     fn set_client_cap(&self, cap: ClientCapability, set: bool) -> Result<()> {
-        let mut raw: ffi::drm_set_client_cap = Default::default();
-        raw.capability = cap as u64;
-        raw.value = set as u64;
+        let mut raw = {
+            let mut raw: ffi::drm_set_client_cap = Default::default();
+            raw.capability = cap as u64;
+            raw.value = set as u64;
+            raw
+        };
+
         unsafe {
-            try!(ffi::ioctl_set_client_cap(self.as_raw_fd(), &mut raw));
-        }
+            ffi::ioctl_set_client_cap(self.as_raw_fd(), &mut raw)?
+        };
+
         Ok(())
     }
 
     /// Attempts to acquire the DRM Master lock.
     fn set_master(&self) -> Result<()> {
         unsafe {
-            try!(ffi::ioctl_set_master(self.as_raw_fd()));
-        }
+            ffi::ioctl_set_master(self.as_raw_fd())?
+        };
+
         Ok(())
     }
 
-    /// Drops the DRM Master lock.
+    /// Attempts to release the DRM Master lock.
     fn drop_master(&self) -> Result<()> {
         unsafe {
-            try!(ffi::ioctl_drop_master(self.as_raw_fd()));
-        }
+            ffi::ioctl_drop_master(self.as_raw_fd())?
+        };
+
         Ok(())
     }
 }

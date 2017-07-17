@@ -1,4 +1,7 @@
-use drm_sys;
+//! # Property
+//!
+//! A property is information and values about a control resource.
+
 use control::{self, ResourceHandle, ResourceInfo};
 use result::*;
 use ffi;
@@ -11,32 +14,30 @@ pub type RawValue = u64;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 /// A `ResourceHandle` to a property.
-pub struct Id(control::RawId);
+pub struct Handle(control::RawHandle);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// The `ResourceInfo` on a property.
 pub struct Info {
-    handle: Id,
+    handle: Handle,
     name: control::RawName,
     mutable: bool,
     pending: bool,
     value_type: PropertyInfoType
 }
 
-impl ResourceHandle for Id {
-    type RawHandle = control::RawId;
-
-    fn from_raw(raw: Self::RawHandle) -> Self {
-        Id(raw)
+impl ResourceHandle for Handle {
+    fn from_raw(raw: control::RawHandle) -> Self {
+        Handle(raw)
     }
 
-    fn as_raw(&self) -> Self::RawHandle {
+    fn as_raw(&self) -> control::RawHandle {
         self.0
     }
 }
 
 impl ResourceInfo for Info {
-    type Handle = Id;
+    type Handle = Handle;
 
     fn load_from_device<T>(device: &T, handle: Self::Handle) -> Result<Self>
         where T: control::Device {
@@ -65,37 +66,37 @@ impl Info {
     /// Takes an `UnassociatedValue` and gives a specific `Value` based on this
     /// property.
     pub fn associate_value(&self, value: UnassociatedValue) -> Value {
-        let raw_id = value.0 as control::RawId;
+        let raw_id = value.0 as control::RawHandle;
         match self.value_type {
             PropertyInfoType::Enum(_) => Value::Enum(EnumValue(value.0)),
             PropertyInfoType::URange(_) => Value::URange(value.0 as u64),
             PropertyInfoType::IRange(_) => Value::IRange(value.0 as i64),
             PropertyInfoType::Connector => {
                 Value::Connector(
-                    control::connector::Id::from_raw(raw_id)
+                    control::connector::Handle::from_raw(raw_id)
                 )
             },
             PropertyInfoType::Encoder => {
                 Value::Encoder(
-                    control::encoder::Id::from_raw(raw_id)
+                    control::encoder::Handle::from_raw(raw_id)
                 )
             },
             PropertyInfoType::Crtc => {
                 Value::Crtc(
-                    control::crtc::Id::from_raw(raw_id)
+                    control::crtc::Handle::from_raw(raw_id)
                 )
             },
             PropertyInfoType::Framebuffer => {
                 Value::Framebuffer(
-                    control::framebuffer::Id::from_raw(raw_id)
+                    control::framebuffer::Handle::from_raw(raw_id)
                 )
             },
             PropertyInfoType::Plane => {
                 Value::Plane(
-                    control::plane::Id::from_raw(raw_id)
+                    control::plane::Handle::from_raw(raw_id)
                 )
             },
-            PropertyInfoType::Property => Value::Property(Id::from_raw(raw_id)),
+            PropertyInfoType::Property => Value::Property(Handle::from_raw(raw_id)),
             PropertyInfoType::Blob => unimplemented!(),
             PropertyInfoType::Unknown => Value::Unknown
         }
@@ -120,9 +121,9 @@ pub enum PropertyInfoType {
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// A `ResourceHandle` to a property with an associated resource and `Value`
 pub struct AssociatedPropertyHandle {
-    handle: Id,
+    handle: Handle,
     value: UnassociatedValue,
-    resource: control::RawId
+    resource: control::RawHandle
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -317,12 +318,12 @@ pub enum Value {
     Enum(EnumValue),
     URange(u64),
     IRange(i64),
-    Connector(control::connector::Id),
-    Encoder(control::encoder::Id),
-    Crtc(control::crtc::Id),
-    Framebuffer(control::framebuffer::Id),
-    Plane(control::plane::Id),
-    Property(Id),
+    Connector(control::connector::Handle),
+    Encoder(control::encoder::Handle),
+    Crtc(control::crtc::Handle),
+    Framebuffer(control::framebuffer::Handle),
+    Plane(control::plane::Handle),
+    Property(Handle),
     // TODO: Blob,
     Unknown
 }
@@ -337,7 +338,7 @@ impl UnassociatedValue {
     }
 }
 
-pub trait LoadProperties : ResourceHandle<RawHandle=control::RawId> {
+pub trait LoadProperties : ResourceHandle {
     const TYPE: u32;
 
     fn load_resource_properties<T>(&self, device: &T)
@@ -358,7 +359,7 @@ pub trait LoadProperties : ResourceHandle<RawHandle=control::RawId> {
                                                    &mut raw));
         }
         let handles = ids.into_iter()
-            .map(| id | Id::from_raw(id) )
+            .map(| id | Handle::from_raw(id) )
             .zip(vals.into_iter())
             .map(| (id, val) | {
                 AssociatedPropertyHandle {
@@ -377,9 +378,9 @@ pub trait LoadProperties : ResourceHandle<RawHandle=control::RawId> {
     }
 }
 
-impl ::std::fmt::Debug for Id {
+impl ::std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "property::Id({})", self.0)
+        write!(f, "property::Handle({})", self.0)
     }
 }
 

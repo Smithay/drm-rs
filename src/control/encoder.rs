@@ -1,23 +1,39 @@
-use drm_sys;
+//! # Encoder
+//!
+//! An encoder is a bridge between a CRTC and a connector that takes the pixel
+//! data of the CRTC and encodes it into a format the connector understands.
+
 use control::{self, ResourceHandle, ResourceInfo};
 use result::*;
 use ffi;
 
+/// A [`ResourceHandle`] for an encoder.
+///
+/// Like all control resources, every encoder has a unique `Handle` associated
+/// with it. This `Handle` can be used to acquire information about the encoder
+/// (see [`encoder::Info`]) or change the encoder's state.
+///
+/// These can be retrieved by using [`ResourceHandles::encoders`].
+///
+/// [`ResourceHandle`]: ResourceHandle.t.html
+/// [`encoder::Info`]: Info.t.html
+/// [`ResourceHandles::encoders`]: ResourceHandles.t.html#method.encoders
 #[derive(Clone, Copy, PartialEq, Eq)]
-/// A `ResourceHandle` to an encoder.
-pub struct Id(control::RawId);
+pub struct Handle(control::RawHandle);
 
+/// A [`ResourceInfo`] for an encoder.
+///
+/// [`ResourceInfo`]: ResourceInfo.t.html
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// The `ResourceInfo` on an encoder.
 pub struct Info {
-    handle: Id,
-    crtc_id: control::crtc::Id,
+    handle: Handle,
+    crtc_id: control::crtc::Handle,
     enc_type: Type,
-    //possible_crtcs: CrtcListFilter,
+    // TODO: CrtcListFilter
 }
 
+/// The type of encoder.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// The underlying type of encoder.
 pub enum Type {
     None,
     DAC,
@@ -30,35 +46,34 @@ pub enum Type {
     DPI
 }
 
-impl ResourceHandle for Id {
-    type RawHandle = control::RawId;
-
-    fn from_raw(raw: Self::RawHandle) -> Self {
-        Id(raw)
+impl ResourceHandle for Handle {
+    fn from_raw(raw: control::RawHandle) -> Self {
+        Handle(raw)
     }
 
-    fn as_raw(&self) -> Self::RawHandle {
+    fn as_raw(&self) -> control::RawHandle {
         self.0
     }
 }
 
 impl ResourceInfo for Info {
-    type Handle = Id;
+    type Handle = Handle;
 
-    fn load_from_device<T>(device: &T, handle: Id) -> Result<Self>
+    fn load_from_device<T>(device: &T, handle: Handle) -> Result<Self>
         where T: control::Device {
 
-        let mut raw: drm_sys::drm_mode_get_encoder = Default::default();
-        raw.encoder_id = handle.0;
-        unsafe {
-            try!(ffi::ioctl_mode_getencoder(device.as_raw_fd(), &mut raw));
-        }
+        let enc = {
+            let mut raw: ffi::drm_mode_get_encoder = Default::default();
+            raw.encoder_id = handle.as_raw();
+            unsafe {
+                try!(ffi::ioctl_mode_getencoder(device.as_raw_fd(), &mut raw));
+            }
 
-        let enc = Self {
-            handle: handle,
-            crtc_id: control::crtc::Id::from_raw(raw.crtc_id),
-            enc_type: Type::from(raw.encoder_type),
-            //possible_crtcs: CrtcListFilter(raw.possible_crtcs)
+            Self {
+                handle: handle,
+                crtc_id: control::crtc::Handle::from_raw(raw.crtc_id),
+                enc_type: Type::from(raw.encoder_type),
+            }
         };
 
         Ok(enc)
@@ -70,22 +85,22 @@ impl ResourceInfo for Info {
 impl From<u32> for Type {
     fn from(n: u32) -> Self {
         match n {
-            drm_sys::DRM_MODE_ENCODER_NONE => Type::None,
-            drm_sys::DRM_MODE_ENCODER_DAC => Type::DAC,
-            drm_sys::DRM_MODE_ENCODER_TMDS => Type::TMDS,
-            drm_sys::DRM_MODE_ENCODER_LVDS => Type::LVDS,
-            drm_sys::DRM_MODE_ENCODER_TVDAC => Type::TVDAC,
-            drm_sys::DRM_MODE_ENCODER_VIRTUAL => Type::Virtual,
-            drm_sys::DRM_MODE_ENCODER_DSI => Type::DSI,
-            drm_sys::DRM_MODE_ENCODER_DPMST => Type::DPMST,
-            drm_sys::DRM_MODE_ENCODER_DPI => Type::DPI,
+            ffi::DRM_MODE_ENCODER_NONE => Type::None,
+            ffi::DRM_MODE_ENCODER_DAC => Type::DAC,
+            ffi::DRM_MODE_ENCODER_TMDS => Type::TMDS,
+            ffi::DRM_MODE_ENCODER_LVDS => Type::LVDS,
+            ffi::DRM_MODE_ENCODER_TVDAC => Type::TVDAC,
+            ffi::DRM_MODE_ENCODER_VIRTUAL => Type::Virtual,
+            ffi::DRM_MODE_ENCODER_DSI => Type::DSI,
+            ffi::DRM_MODE_ENCODER_DPMST => Type::DPMST,
+            ffi::DRM_MODE_ENCODER_DPI => Type::DPI,
             _ => Type::None
         }
     }
 }
 
-impl ::std::fmt::Debug for Id {
+impl ::std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "encoder::Id({})", self.0)
+        write!(f, "encoder::Handle({})", self.0)
     }
 }

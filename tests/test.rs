@@ -95,34 +95,32 @@ fn load_resources() {
     let card = Card::open_control();
 
     // Load the resource ids
-    let res = card.resource_ids().expect("Could not load normal resource ids.");
-    let pres = card.plane_ids().expect("Could not load plane ids");
+    let res = card.resource_handles().expect("Could not load handles.");
+    let pres = card.plane_ids().expect("Could not load plane handles");
 
-    let cons: Vec<_> = res.connectors().iter().map(| &id | {
-        card.connector_info(id).expect("Could not load connector info")
-    }).collect();
+    for &con in res.connectors() {
+        let info = card.resource_info(con)
+            .expect("Could not get connector info");
+        println!("{:#?}", info);
+    }
 
-    let encs: Vec<_> = res.encoders().iter().map(| &id | {
-        card.encoder_info(id).expect("Could not load encoder info")
-    }).collect();
+    for &enc in res.encoders() {
+        let info = card.resource_info(enc)
+            .expect("Could not get encoder info");
+        println!("{:#?}", info);
+    }
 
-    let crtcs: Vec<_> = res.crtcs().iter().map(| &id | {
-        card.crtc_info(id).expect("Could not load crtc info")
-    }).collect();
+    for &crtc in res.crtcs() {
+        let info = card.resource_info(crtc)
+            .expect("Could not get crtc info");
+        println!("{:#?}", info);
+    }
 
-    let fbs: Vec<_> = res.framebuffers().iter().map(| &id | {
-        card.fb_info(id).expect("Could not load fbs info")
-    }).collect();
-
-    let planes: Vec<_> = pres.planes().iter().map(| &id | {
-        card.plane_info(id).expect("Could not load plane info")
-    }).collect();
-
-    println!("{:#?}", cons);
-    println!("{:#?}", encs);
-    println!("{:#?}", crtcs);
-    println!("{:#?}", fbs);
-    println!("{:#?}", planes);
+    for &fb in res.framebuffers() {
+        let info = card.resource_info(fb)
+            .expect("Could not get framebuffer info");
+        println!("{:#?}", info);
+    }
 }
 
 #[test]

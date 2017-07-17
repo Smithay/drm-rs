@@ -1,58 +1,82 @@
-use drm_sys;
+//! # CRTC
+//!
+//! A CRTC is a display controller provided by your device. It's primary job is
+//! to take pixel data and send it to a connector with the proper resolution and
+//! frequencies.
+//!
+//! Specific CRTCs can only be attached to connectors that have an encoder it
+//! supports. For example, you can have a CRTC that can not output to analog
+//! connectors. These are built in hardware limitations.
+//!
+//! Each CRTC has a built in plane, which can be attached to a framebuffer. It
+//! can also use pixel data from other planes to perform hardware compositing.
+
 use control::{self, ResourceHandle, ResourceInfo};
 use result::*;
 use ffi;
 
-use control::framebuffer::Id as FbId;
-use control::connector::Id as ConId;
+use control::framebuffer::Handle as FBHandle;
+use control::connector::Handle as ConHandle;
 
+/// A [`ResourceHandle`] for a CRTC.
+///
+/// Like all control resources, every CRTC has a unique `Handle` associated with
+/// it. This `Handle` can be used to acquire information about the CRTC (see
+/// [`crtc::Info`]) or change the CRTC's state.
+///
+/// These can be retrieved by using [`ResourceIds::crtcs`].
+///
+/// [`ResourceHandle`]: ResourceHandle.t.html
+/// [`crtc::Info`]: Info.t.html
+/// [`ResourceIds::crtcs`]: ResourceIds.t.html#method.crtcs
 #[derive(Clone, Copy, PartialEq, Eq)]
-/// A `ResourceHandle` to a crtc.
-pub struct Id(control::RawId);
+pub struct Handle(control::RawHandle);
 
+/// A [`ResourceInfo`] for a CRTC.
+///
+/// [`ResourceInfo`]: ResourceInfo.t.html
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// The `ResourceInfo` on a crtc.
 pub struct Info {
-    handle: Id,
+    handle: Handle,
     position: (u32, u32),
     // TODO: mode
-    fb: control::framebuffer::Id,
+    fb: control::framebuffer::Handle,
     gamma_length: u32
 }
 
-impl ResourceHandle for Id {
-    type RawHandle = control::RawId;
-
-    fn from_raw(raw: Self::RawHandle) -> Self {
-        Id(raw)
+impl ResourceHandle for Handle {
+    fn from_raw(raw: control::RawHandle) -> Self {
+        Handle(raw)
     }
 
-    fn as_raw(&self) -> Self::RawHandle {
-        self.0
+    fn as_raw(&self) -> control::RawHandle {
+        self.as_raw()
     }
 }
 
-impl control::property::LoadProperties for Id {
+impl control::property::LoadProperties for Handle {
     const TYPE: u32 = ffi::DRM_MODE_OBJECT_CRTC;
 }
 
 impl ResourceInfo for Info {
-    type Handle = Id;
+    type Handle = Handle;
 
-    fn load_from_device<T>(device: &T, handle: Id) -> Result<Self>
+    fn load_from_device<T>(device: &T, handle: Handle) -> Result<Self>
         where T: control::Device {
 
-        let mut raw: drm_sys::drm_mode_crtc = Default::default();
-        raw.crtc_id = handle.0;
-        unsafe {
-            try!(ffi::ioctl_mode_getcrtc(device.as_raw_fd(), &mut raw));
-        }
+        let crtc = {
+            let mut raw: ffi::drm_mode_crtc = Default::default();
+            raw.crtc_id = handle.0;
+            unsafe {
+                try!(ffi::ioctl_mode_getcrtc(device.as_raw_fd(), &mut raw));
+            }
 
-        let crtc = Self {
-            handle: handle,
-            position: (raw.x, raw.y),
-            fb: control::framebuffer::Id::from_raw(raw.fb_id),
-            gamma_length: raw.gamma_size
+            Self {
+                handle: handle,
+                position: (raw.x, raw.y),
+                fb: control::framebuffer::Handle::from_raw(raw.fb_id),
+                gamma_length: raw.gamma_size
+            }
         };
 
         Ok(crtc)
@@ -61,39 +85,8 @@ impl ResourceInfo for Info {
     fn handle(&self) -> Self::Handle { self.handle }
 }
 
-impl Id {
-    pub fn set_on_device<T>(&self, device: &T, fb: FbId, cons: &[ConId],
-                            pos: (u32, u32), mode: Option<control::Mode>) -> Result<()>
-        where T: control::Device {
-
-        let (x, y) = pos;
-
-        let mut raw: ffi::drm_mode_crtc = Default::default();
-        raw.x = x;
-        raw.y = y;
-        raw.crtc_id = self.as_raw();
-        raw.fb_id = fb.as_raw();
-        raw.set_connectors_ptr = cons.as_ptr() as u64;
-        raw.count_connectors = cons.len() as u32;
-
-        match mode {
-            Some(x) => {
-                raw.mode = x.mode;
-                raw.mode_valid = 1;
-            },
-            _ => ()
-        };
-
-        unsafe {
-            try!(ffi::ioctl_mode_setcrtc(device.as_raw_fd(), &mut raw));
-        }
-
-        Ok(())
-    }
-}
-
-impl ::std::fmt::Debug for Id {
+impl ::std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "crtc::Id({})", self.0)
+        write!(f, "crtc::Handle({})", self.0)
     }
 }
