@@ -6,7 +6,7 @@ license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
-drm-sys = "0.0.7"
+drm-sys = "0.0.8"
 nix = "0.8.1"
 
 [dependencies.error-chain]
