@@ -85,6 +85,36 @@ impl ResourceInfo for Info {
     fn handle(&self) -> Self::Handle { self.handle }
 }
 
+/// Attaches a framebuffer to a CRTC's built-in plane, attaches the CRTC to
+/// a connector, and sets the CRTC's mode to output the pixel data.
+pub fn set<T>(device: &T, handle: Handle, fb: FBHandle, cons: &[ConHandle],
+              position: (u32, u32), mode: Option<control::Mode>) -> Result<()>
+    where T: control::Device {
+
+
+    let mut raw: ffi::drm_mode_crtc = Default::default();
+    raw.x = position.0;
+    raw.y = position.1;
+    raw.crtc_id = handle.as_raw();
+    raw.fb_id = fb.as_raw();
+    raw.set_connectors_ptr = cons.as_ptr() as u64;
+    raw.count_connectors = cons.len() as u32;
+
+    match mode {
+        Some(m) => {
+            raw.mode = m.mode;
+            raw.mode_valid = 1;
+        },
+        _ => ()
+    };
+
+    unsafe {
+        try!(ffi::ioctl_mode_setcrtc(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(())
+}
+
 impl ::std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "crtc::Handle({})", self.0)

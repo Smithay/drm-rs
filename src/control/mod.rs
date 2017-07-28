@@ -47,31 +47,10 @@ pub trait Device : Sized + super::Device {
     /// Attaches a framebuffer to a CRTC's built-in plane, attaches the CRTC to
     /// a connector, and sets the CRTC's mode to output the pixel data.
     fn set_crtc(&self, crtc: crtc::Handle, fb: framebuffer::Handle,
-                connectors: &[connector::Handle], position: (u32, u32),
+                cons: &[connector::Handle], position: (u32, u32),
                 mode: Option<Mode>) -> Result<()> {
 
-
-        let mut raw: ffi::drm_mode_crtc = Default::default();
-        raw.x = position.0;
-        raw.y = position.1;
-        raw.crtc_id = crtc.as_raw();
-        raw.fb_id = fb.as_raw();
-        raw.set_connectors_ptr = connectors.as_ptr() as u64;
-        raw.count_connectors = connectors.len() as u32;
-
-        match mode {
-            Some(m) => {
-                raw.mode = m.mode;
-                raw.mode_valid = 1;
-            },
-            _ => ()
-        };
-
-        unsafe {
-            try!(ffi::ioctl_mode_setcrtc(self.as_raw_fd(), &mut raw));
-        }
-
-        Ok(())
+        crtc::set(self, crtc, fb, connectors, position, mode)
     }
 
     /// Creates a framebuffer from a [`Buffer`], returning
