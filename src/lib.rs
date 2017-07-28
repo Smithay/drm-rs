@@ -89,3 +89,12 @@ pub trait Device : AsRawFd {
     }
 }
 
+#[allow(non_camel_case_types)]
+pub type iPoint = (i32, i32);
+#[allow(non_camel_case_types)]
+pub type uPoint = (u32, u32);
+pub type Dimensions = (u32, u32);
+#[allow(non_camel_case_types)]
+pub type iRect = (iPoint, Dimensions);
+#[allow(non_camel_case_types)]
+pub type uRect = (uPoint, Dimensions);
