@@ -50,7 +50,7 @@ pub trait Device : Sized + super::Device {
                 cons: &[connector::Handle], position: (u32, u32),
                 mode: Option<Mode>) -> Result<()> {
 
-        crtc::set(self, crtc, fb, connectors, position, mode)
+        crtc::set(self, crtc, fb, cons, position, mode)
     }
 
     /// Creates a framebuffer from a [`Buffer`], returning
