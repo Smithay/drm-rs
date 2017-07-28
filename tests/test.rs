@@ -9,7 +9,7 @@ use std::sync::{Mutex, MutexGuard, Once, ONCE_INIT};
 use drm::Device as BasicDevice;
 use drm::control::Device as ControlDevice;
 use drm::control::property::LoadProperties;
-use drm::control::ResourceInfo;
+use drm::control::{ResourceInfo, ResourceHandle};
 
 use drm::control::{connector, encoder, crtc, framebuffer, plane, property, dumbbuffer};
 
@@ -60,19 +60,13 @@ fn wait_for_lock() -> MutexGuard<'static, ()> {
     }
 }
 
-// Get the handle of a valid Connector
-fn get_connected(card: &Card) -> drm::control::connector::Id {
-    let res = card.resource_ids().expect("Could not load normal resource ids.");
+fn load_information<T, U>(card: &Card, handles: &[T]) -> Vec<U>
+    where T: ResourceHandle, U: ResourceInfo<Handle=T> {
 
-    // Find a connected connector.
-    let &con = res.connectors().iter().filter(| &&c | {
-        let info = card.connector_info(c).expect("Could not get connector info");
-        info.connection_state() == drm::control::connector::State::Connected
-    }).next().expect("No connectors available");
-
-    con
+    handles.iter().map(| &h | {
+        card.resource_info(h).expect("Could not load resource info")
+    }).collect()
 }
-
 
 #[test]
 fn unprivileged_global() {
@@ -96,31 +90,17 @@ fn load_resources() {
 
     // Load the resource ids
     let res = card.resource_handles().expect("Could not load handles.");
-    let pres = card.plane_ids().expect("Could not load plane handles");
+    let pres = card.plane_handles().expect("Could not load plane handles");
 
-    for &con in res.connectors() {
-        let info = card.resource_info(con)
-            .expect("Could not get connector info");
-        println!("{:#?}", info);
-    }
+    let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
+    let encinfo: Vec<encoder::Info> = load_information(&card, res.encoders());
+    let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
+    let fbinfo: Vec<framebuffer::Info> = load_information(&card, res.framebuffers());
 
-    for &enc in res.encoders() {
-        let info = card.resource_info(enc)
-            .expect("Could not get encoder info");
-        println!("{:#?}", info);
-    }
-
-    for &crtc in res.crtcs() {
-        let info = card.resource_info(crtc)
-            .expect("Could not get crtc info");
-        println!("{:#?}", info);
-    }
-
-    for &fb in res.framebuffers() {
-        let info = card.resource_info(fb)
-            .expect("Could not get framebuffer info");
-        println!("{:#?}", info);
-    }
+    println!("{:#?}", coninfo);
+    println!("{:#?}", encinfo);
+    println!("{:#?}", crtcinfo);
+    println!("{:#?}", fbinfo);
 }
 
 #[test]
@@ -129,17 +109,24 @@ fn legacy_modeset() {
     let guard = wait_for_lock();
 
     let card = Card::open_control();
-    let res = card.resource_ids().expect("Could not load normal resource ids.");
 
-    // Find a connector that's connected
-    let con = get_connected(&card);
-    let coninfo = card.connector_info(con).expect("Could not load connector info");
+    // Load the information.
+    let res = card.resource_handles().expect("Could not load normal resource ids.");
+    let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
+    let encinfo: Vec<encoder::Info> = load_information(&card, res.encoders());
+    let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
+    let fbinfo: Vec<framebuffer::Info> = load_information(&card, res.framebuffers());
+
+    // Filter each connector until we find one that's connected.
+    let con = coninfo.iter().filter(| &i | {
+        i.connection_state() == connector::State::Connected
+    }).next().expect("No connected connectors");
 
     // Get the first (usually best) mode
-    let &mode = coninfo.modes().iter().next().expect("No modes found on connector");
+    let &mode = con.modes().iter().next().expect("No modes found on connector");
 
     // Find a crtc and FB
-    let &crtc = res.crtcs().iter().next().expect("No crtcs available");
+    let crtc = crtcinfo.iter().next().expect("No crtcs found");
 
     // Create a DB
     let db = dumbbuffer::DumbBuffer::create_from_device(&card, (1920, 1080), 32)
@@ -152,7 +139,7 @@ fn legacy_modeset() {
     }
 
     // Create an FB:
-    let fbinfo = framebuffer::Info::create_from_buffer(&card, &db)
+    let fbinfo = framebuffer::create(&card, &db)
         .expect("Could not create FB");
 
     println!("{:#?}", mode);
@@ -160,8 +147,8 @@ fn legacy_modeset() {
     println!("{:#?}", db);
 
     // Set the crtc
-    crtc.set_on_device(&card, fbinfo.handle(), &[con], (0, 0), Some(mode))
-        .expect("Could not set Crtc");
+    crtc::set(&card, crtc.handle(), fbinfo.handle(), &[con.handle()], (0, 0), Some(mode))
+        .expect("Could not set CRTC");
 
     ::std::thread::sleep_ms(5000);
 }
