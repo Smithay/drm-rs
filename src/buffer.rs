@@ -1,5 +1,3 @@
-use ffi;
-
 /// The underlying handle for a buffer
 pub type RawId = u32;
 

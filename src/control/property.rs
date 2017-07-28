@@ -6,7 +6,6 @@ use control::{self, ResourceHandle, ResourceInfo};
 use result::*;
 use ffi;
 
-use std::os::unix::io::AsRawFd;
 use std::ffi::CStr;
 
 /// The underlying value type of a property.

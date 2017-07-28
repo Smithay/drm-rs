@@ -8,10 +8,9 @@ use std::sync::{Mutex, MutexGuard, Once, ONCE_INIT};
 
 use drm::Device as BasicDevice;
 use drm::control::Device as ControlDevice;
-use drm::control::property::LoadProperties;
 use drm::control::{ResourceInfo, ResourceHandle};
 
-use drm::control::{connector, encoder, crtc, framebuffer, plane, property, dumbbuffer};
+use drm::control::{connector, encoder, crtc, framebuffer, plane, dumbbuffer};
 
 #[derive(Debug)]
 // This is our customized struct that implements the traits in drm.
@@ -96,11 +95,13 @@ fn load_resources() {
     let encinfo: Vec<encoder::Info> = load_information(&card, res.encoders());
     let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
     let fbinfo: Vec<framebuffer::Info> = load_information(&card, res.framebuffers());
+    let plinfo: Vec<plane::Info> = load_information(&card, pres.planes());
 
     println!("{:#?}", coninfo);
     println!("{:#?}", encinfo);
     println!("{:#?}", crtcinfo);
     println!("{:#?}", fbinfo);
+    println!("{:#?}", plinfo);
 }
 
 #[test]
@@ -113,9 +114,7 @@ fn legacy_modeset() {
     // Load the information.
     let res = card.resource_handles().expect("Could not load normal resource ids.");
     let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
-    let encinfo: Vec<encoder::Info> = load_information(&card, res.encoders());
     let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
-    let fbinfo: Vec<framebuffer::Info> = load_information(&card, res.framebuffers());
 
     // Filter each connector until we find one that's connected.
     let con = coninfo.iter().filter(| &i | {
@@ -150,5 +149,6 @@ fn legacy_modeset() {
     crtc::set(&card, crtc.handle(), fbinfo.handle(), &[con.handle()], (0, 0), Some(mode))
         .expect("Could not set CRTC");
 
-    ::std::thread::sleep_ms(5000);
+    let five_seconds = ::std::time::Duration::from_millis(5000);
+    ::std::thread::sleep(five_seconds);
 }

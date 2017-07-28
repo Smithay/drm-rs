@@ -39,7 +39,7 @@ pub trait Device : AsRawFd {
     ///
     /// This token can be used to authenticate with the DRM Master.
     fn get_auth_token(&self) -> Result<AuthToken> {
-        let mut token = {
+        let token = {
             let mut raw: ffi::drm_auth_t = Default::default();
             unsafe {
                 ffi::ioctl_get_magic(self.as_raw_fd(), &mut raw)?

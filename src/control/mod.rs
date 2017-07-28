@@ -195,7 +195,7 @@ impl PlaneResourceHandles {
                                                        &mut raw));
             }
 
-            let mut phandles = PlaneResourceHandles {
+            let phandles = PlaneResourceHandles {
                 planes: ffi_buf!(raw.plane_id_ptr, raw.count_planes)
             };
 

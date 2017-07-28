@@ -52,7 +52,7 @@ impl DumbBuffer {
             try!(ffi::ioctl_mode_map_dumb(device.as_raw_fd(), &mut raw));
         }
 
-        let map = unsafe {
+        let map = {
             use nix::sys::mman;
             let addr = ::std::ptr::null_mut();
             let prot = mman::PROT_READ | mman::PROT_WRITE;
