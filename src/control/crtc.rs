@@ -50,7 +50,7 @@ impl ResourceHandle for Handle {
     }
 
     fn as_raw(&self) -> control::RawHandle {
-        self.as_raw()
+        self.0
     }
 }
 
