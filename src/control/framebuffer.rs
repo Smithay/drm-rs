@@ -32,41 +32,6 @@ pub struct Info {
     depth: u8
 }
 
-impl Info {
-    /// Creates a framebuffer from a [`Buffer`], returning
-    /// [`framebuffer::Info`].
-    ///
-    /// [`framebuffer::Info`]: framebuffer.Handle.html
-    pub fn create_framebuffer<T, U>(device: &T, buffer: &U) -> Result<Info>
-        where T: control::Device, U: super::super::buffer::Buffer {
-
-        let framebuffer = {
-            let mut raw: ffi::drm_mode_fb_cmd = Default::default();
-            let (w, h) = buffer.size();
-            raw.width = w;
-            raw.height = h;
-            raw.pitch = buffer.pitch();
-            raw.bpp = buffer.bpp() as u32;
-            raw.depth = buffer.depth() as u32;
-            raw.handle = buffer.handle().as_raw();
-
-            unsafe {
-                try!(ffi::ioctl_mode_addfb(device.as_raw_fd(), &mut raw));
-            }
-
-            Info {
-                handle: Handle::from_raw(raw.fb_id),
-                size: (raw.width, raw.height),
-                pitch: raw.pitch,
-                bpp: raw.bpp as u8,
-                depth: raw.depth as u8
-            }
-        };
-
-        Ok(framebuffer)
-    }
-}
-
 impl ResourceHandle for Handle {
     fn from_raw(raw: control::RawHandle) -> Self {
         Handle(raw)
@@ -107,6 +72,39 @@ impl ResourceInfo for Info {
     }
 
     fn handle(&self) -> Self::Handle { self.handle }
+}
+
+/// Creates a framebuffer from a [`Buffer`], returning
+/// [`framebuffer::Info`].
+///
+/// [`framebuffer::Info`]: framebuffer.Handle.html
+pub fn create<T, U>(device: &T, buffer: &U) -> Result<Info>
+    where T: control::Device, U: super::super::buffer::Buffer {
+
+    let framebuffer = {
+        let mut raw: ffi::drm_mode_fb_cmd = Default::default();
+        let (w, h) = buffer.size();
+        raw.width = w;
+        raw.height = h;
+        raw.pitch = buffer.pitch();
+        raw.bpp = buffer.bpp() as u32;
+        raw.depth = buffer.depth() as u32;
+        raw.handle = buffer.handle().as_raw();
+
+        unsafe {
+            try!(ffi::ioctl_mode_addfb(device.as_raw_fd(), &mut raw));
+        }
+
+        Info {
+            handle: Handle::from_raw(raw.fb_id),
+            size: (raw.width, raw.height),
+            pitch: raw.pitch,
+            bpp: raw.bpp as u8,
+            depth: raw.depth as u8
+        }
+    };
+
+    Ok(framebuffer)
 }
 
 impl ::std::fmt::Debug for Handle {

@@ -22,7 +22,7 @@ pub trait Device : Sized + super::Device {
     ///
     /// [`ResourceHandles::load_from_device`]:
     ///     ResourceHandles.t.html#method.load_from_device
-    fn resource_ids(&self) -> Result<ResourceHandles> {
+    fn resource_handles(&self) -> Result<ResourceHandles> {
         ResourceHandles::load_from_device(self)
     }
 
@@ -30,7 +30,7 @@ pub trait Device : Sized + super::Device {
     ///
     /// [`PlaneResourceHandles::load_from_device`]:
     ///     PlaneResourceHandles.t.html#method.load_from_device
-    fn plane_ids(&self) -> Result<PlaneResourceHandles> {
+    fn plane_handles(&self) -> Result<PlaneResourceHandles> {
         PlaneResourceHandles::load_from_device(self)
     }
 
@@ -82,7 +82,7 @@ pub trait Device : Sized + super::Device {
     fn create_framebuffer<U>(&self, buffer: &U) -> Result<framebuffer::Info>
         where U: super::buffer::Buffer {
 
-        framebuffer::Info::create_framebuffer(self, buffer)
+        framebuffer::create(self, buffer)
     }
 }
 
