@@ -5,6 +5,7 @@
 use control::{self, ResourceHandle, ResourceInfo, crtc, framebuffer};
 use result::*;
 use ffi;
+use ::{iRect, uRect};
 
 /// A [`ResourceHandle`] for a plane.
 ///
@@ -73,29 +74,33 @@ impl ResourceInfo for Info {
     fn handle(&self) -> Self::Handle { self.handle }
 }
 
-impl Handle {
-    pub fn set<T>(&self, device: &T, crtc: crtc::Handle, framebuffer: framebuffer::Handle, flags: u32, crtc_rect:((i32, i32), (u32, u32)), src_rect: ((u32, u32), (u32, u32))) -> Result<()>
-        where T: control::Device {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PresentFlag {
+    TopField = (0 << 1),
+    BottomField = (1 << 1),
+}
 
-        let mut raw : ffi::drm_mode_set_plane = Default::default();
+pub fn set<T>(plane: Handle, device: &T, crtc: crtc::Handle, framebuffer: framebuffer::Handle, flags: PresentFlag, crtc_rect: iRect, src_rect: uRect) -> Result<()>
+    where T: control::Device
+{
+    let mut raw : ffi::drm_mode_set_plane = Default::default();
 
-        raw.plane_id = self.as_raw();
-        raw.crtc_id = crtc.as_raw();
-        raw.fb_id = framebuffer.as_raw();
-        raw.flags = flags;
-        raw.crtc_x = (crtc_rect.0).0;
-        raw.crtc_y = (crtc_rect.0).1;
-        raw.crtc_w = (crtc_rect.1).0;
-        raw.crtc_h = (crtc_rect.1).1;
-        raw.src_x = (src_rect.0).0;
-        raw.src_y = (src_rect.0).1;
-        raw.src_w = (src_rect.1).0;
-        raw.src_h = (src_rect.1).1;
+    raw.plane_id = plane.as_raw();
+    raw.crtc_id = crtc.as_raw();
+    raw.fb_id = framebuffer.as_raw();
+    raw.flags = flags as u32;
+    raw.crtc_x = (crtc_rect.0).0;
+    raw.crtc_y = (crtc_rect.0).1;
+    raw.crtc_w = (crtc_rect.1).0;
+    raw.crtc_h = (crtc_rect.1).1;
+    raw.src_x = (src_rect.0).0;
+    raw.src_y = (src_rect.0).1;
+    raw.src_w = (src_rect.1).0;
+    raw.src_h = (src_rect.1).1;
 
-        unsafe { ffi::ioctl_mode_setplane(device.as_raw_fd(), &mut raw)?; }
+    unsafe { ffi::ioctl_mode_setplane(device.as_raw_fd(), &mut raw)?; }
 
-        Ok(())
-    }
+    Ok(())
 }
 
 impl ::std::fmt::Debug for Handle {
