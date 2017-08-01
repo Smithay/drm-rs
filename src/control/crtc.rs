@@ -11,6 +11,8 @@
 //! Each CRTC has a built in plane, which can be attached to a framebuffer. It
 //! can also use pixel data from other planes to perform hardware compositing.
 
+use ::{Dimensions, iPoint};
+use buffer;
 use control::{self, ResourceHandle, ResourceInfo};
 use result::*;
 use ffi;
@@ -110,6 +112,58 @@ pub fn set<T>(device: &T, handle: Handle, fb: FBHandle, cons: &[ConHandle],
 
     unsafe {
         try!(ffi::ioctl_mode_setcrtc(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(())
+}
+
+pub fn set_cursor<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Dimensions) -> Result<()>
+    where T: control::Device {
+
+    let mut raw: ffi::drm_mode_cursor = Default::default();
+    raw.flags = ffi::DRM_MODE_CURSOR_BO;
+    raw.crtc_id = handle.as_raw();
+    raw.width = dimensions.0;
+    raw.height = dimensions.1;
+    raw.handle = bo.as_raw();
+
+    unsafe {
+        try!(ffi::ioctl_mode_cursor(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(())
+}
+
+pub fn set_cursor2<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Dimensions, hotspot: iPoint) -> Result<()>
+    where T: control::Device {
+
+    let mut raw: ffi::drm_mode_cursor2 = Default::default();
+    raw.flags = ffi::DRM_MODE_CURSOR_BO;
+    raw.crtc_id = handle.as_raw();
+    raw.width = dimensions.0;
+    raw.height = dimensions.1;
+    raw.handle = bo.as_raw();
+    raw.hot_x = hotspot.0;
+    raw.hot_y = hotspot.1;
+
+    unsafe {
+        try!(ffi::ioctl_mode_cursor2(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(())
+}
+
+pub fn move_cursor<T>(device: &T, handle: Handle, to: iPoint) -> Result<()>
+    where T: control::Device {
+
+    let mut raw: ffi::drm_mode_cursor = Default::default();
+    raw.flags = ffi::DRM_MODE_CURSOR_MOVE;
+    raw.crtc_id = handle.as_raw();
+    raw.x = to.0;
+    raw.y = to.1;
+
+    unsafe {
+        try!(ffi::ioctl_mode_cursor(device.as_raw_fd(), &mut raw));
     }
 
     Ok(())
