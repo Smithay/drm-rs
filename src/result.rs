@@ -6,4 +6,11 @@ error_chain! {
         Unix(nix::Error);
         Io(io::Error);
     }
+
+    errors {
+        InvalidGammaSize(set: usize, size: u32) {
+            description("Invalid Gamma Ramp Size")
+            display("Invalid Gamma Ramp Size: '{}', expected: '{}'", set, size)
+        }
+    }
 }
