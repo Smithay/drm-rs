@@ -7,7 +7,7 @@ use buffer;
 pub struct DumbBuffer {
     size: (u32, u32),
     length: usize,
-    bpp: u8,
+    format: buffer::PixelFormat,
     pitch: u32,
     handle: buffer::Id
 }
@@ -18,14 +18,14 @@ pub struct DumbMapping<'a> {
 }
 
 impl DumbBuffer {
-    pub fn create_from_device<T>(device: &T, size: (u32, u32), bpp: u32)
+    pub fn create_from_device<T>(device: &T, size: (u32, u32), format: buffer::PixelFormat)
                              -> Result<Self>
         where T: control::Device {
 
         let mut raw: ffi::drm_mode_create_dumb = Default::default();
         raw.width = size.0;
         raw.height = size.1;
-        raw.bpp = bpp;
+        raw.bpp = try!(format.bpp().ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat))) as u32;
 
         unsafe {
             try!(ffi::ioctl_mode_create_dumb(device.as_raw_fd(), &mut raw));
@@ -34,7 +34,7 @@ impl DumbBuffer {
         let dumb = Self {
             size: (raw.width, raw.height),
             length: raw.size as usize,
-            bpp: raw.bpp as u8,
+            format: format,
             pitch: raw.pitch,
             handle: buffer::Id::from_raw(raw.handle)
         };
@@ -82,8 +82,7 @@ impl<'a> AsMut<[u8]> for DumbMapping<'a> {
 
 impl buffer::Buffer for DumbBuffer {
     fn size(&self) -> (u32, u32) { self.size }
-    fn depth(&self) -> u8 { 24 }
-    fn bpp(&self) -> u8 { self.bpp }
+    fn format(&self) -> buffer::PixelFormat { self.format }
     fn pitch(&self) -> u32 { self.pitch }
     fn handle(&self) -> buffer::Id { self.handle }
 }

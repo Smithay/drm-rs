@@ -11,3 +11,5 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
           target_os="linux",
           target_arch="x86_64"))]
 include!(concat!("platforms/linux/x86_64/bindings.rs"));
+
+pub mod fourcc;
