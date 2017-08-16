@@ -20,6 +20,12 @@ use ffi;
 use control::framebuffer::Handle as FBHandle;
 use control::connector::Handle as ConHandle;
 
+use std::any::Any;
+use std::boxed::Box;
+use std::io::Read;
+use std::mem;
+use std::time::Duration;
+
 /// A [`ResourceHandle`] for a CRTC.
 ///
 /// Like all control resources, every CRTC has a unique `Handle` associated with
@@ -112,6 +118,153 @@ pub fn set<T>(device: &T, handle: Handle, fb: FBHandle, cons: &[ConHandle],
 
     unsafe {
         try!(ffi::ioctl_mode_setcrtc(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(())
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PageFlipFlags {
+    PageFlipEvent = ffi::DRM_MODE_PAGE_FLIP_EVENT,
+    PageFlipAsync = ffi::DRM_MODE_PAGE_FLIP_ASYNC,
+}
+
+pub fn page_flip<T, U>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFlipFlags], userdata: U) -> Result<()>
+    where T: control::Device, U: 'static {
+
+    let mut raw: ffi::drm_mode_crtc_page_flip = Default::default();
+    raw.fb_id = fb.as_raw();
+    raw.crtc_id = handle.as_raw();
+    raw.flags = flags.into_iter().fold(0, |val, flag| val | *flag as u32);
+    raw.user_data = Box::into_raw(Box::new(userdata)) as u64;
+
+    unsafe {
+        try!(ffi::ioctl_mode_page_flip(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(())
+}
+
+pub trait VblankHandler<T: control::Device> {
+    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>);
+}
+
+impl<T, F> VblankHandler<T> for F
+    where T: control::Device, F: FnMut(&T, u32, Duration, Box<Any>) {
+
+    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>) {
+        (*self)(device, frame, duration, userdata)
+    }
+}
+
+impl<T> VblankHandler<T> for ()
+    where T: control::Device {
+
+    fn handle_event(&mut self, _: &T, _: u32, _: Duration, _: Box<Any>) {}
+}
+
+pub trait PageFlipHandler<T: control::Device> {
+    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>);
+}
+
+impl<T, F> PageFlipHandler<T> for F
+    where T: control::Device, F: FnMut(&T, u32, Duration, Box<Any>) {
+
+    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>) {
+        (*self)(device, frame, duration, userdata)
+    }
+}
+
+impl<T> PageFlipHandler<T> for ()
+    where T: control::Device {
+
+    fn handle_event(&mut self, _: &T, _: u32, _: Duration, _: Box<Any>) {}
+}
+
+pub trait PageFlipHandler2<T: control::Device> {
+    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, crtc: Handle, userdata: Box<Any>);
+}
+
+impl<T, F> PageFlipHandler2<T> for F
+    where T: control::Device, F: FnMut(&T, u32, Duration, Handle, Box<Any>) {
+
+    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, crtc: Handle, userdata: Box<Any>) {
+        (*self)(device, frame, duration, crtc, userdata)
+    }
+}
+
+impl<T> PageFlipHandler2<T> for ()
+    where T: control::Device {
+
+    fn handle_event(&mut self, _: &T, _: u32, _: Duration, _: Handle, _: Box<Any>) {}
+}
+
+pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: Option<&mut V>, mut pageflip_handler: Option<&mut P>, mut pageflip_handler2: Option<&mut P2>) -> Result<()>
+    where T: control::Device, V: VblankHandler<T>, P: PageFlipHandler<T>, P2: PageFlipHandler2<T> {
+
+    struct DeviceWrapper<'a, T: control::Device + 'a>(&'a T);
+    impl<'a, T: control::Device> Read for DeviceWrapper<'a, T> {
+        fn read(&mut self, buf: &mut [u8]) -> ::std::io::Result<usize> {
+            ::nix::unistd::read(self.0.as_raw_fd(), buf).map_err(|err| {
+                match err {
+                    ::nix::Error::Sys(_) => ::std::io::Error::last_os_error(),
+                    err => ::std::io::Error::new(::std::io::ErrorKind::Other, err),
+                }
+            })
+        }
+    }
+    let mut wrapper = DeviceWrapper(device);
+
+    let mut event_buf: [u8; 1024] = [0; 1024];
+    let amount = try!(wrapper.read(&mut event_buf));
+    if amount > 0 {
+        let mut i = 0isize;
+        while i < amount as isize {
+            let event = unsafe { &*(event_buf.as_ptr().offset(i) as *const ffi::drm_event) };
+            match event.type_ {
+                x if x == ffi::DRM_EVENT_VBLANK => {
+                    if version >= 1 {
+                        if let Some(mut handler) = vblank_handler.as_mut() {
+                            let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                            let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut u8 as *mut Any) };
+                            (*handler).handle_event(
+                                wrapper.0,
+                                vblank_event.sequence,
+                                Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
+                                userdata
+                            );
+                        }
+                    }
+                },
+                x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
+                    let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                    let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut u8 as *mut Any) };
+                    if let Some(mut handler) = pageflip_handler2.as_mut() {
+                        if version >= 3 {
+                            (*handler).handle_event(
+                                wrapper.0,
+                                vblank_event.sequence,
+                                Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
+                                Handle::from_raw(vblank_event.crtc_id),
+                                userdata
+                            );
+                        }
+                    } else if let Some(mut handler) = pageflip_handler.as_mut() {
+                        if version >= 2 {
+                            (*handler).handle_event(
+                                &wrapper.0,
+                                vblank_event.sequence,
+                                Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
+                                userdata
+                            );
+                        }
+                    }
+                },
+                _ => {},
+            }
+            i += event.length as isize;
+        }
     }
 
     Ok(())

@@ -4071,7 +4071,7 @@ pub struct drm_event_vblank {
     pub tv_sec: __u32,
     pub tv_usec: __u32,
     pub sequence: __u32,
-    pub reserved: __u32,
+    pub crtc_id: __u32, /* 0 on older kernels that do not support this */
 }
 #[test]
 fn bindgen_test_layout_drm_event_vblank() {
