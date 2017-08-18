@@ -107,6 +107,34 @@ pub fn create<T, U>(device: &T, buffer: &U) -> Result<Info>
     Ok(framebuffer)
 }
 
+pub type ClipRect = ffi::drm_clip_rect;
+
+pub fn mark_dirty<T>(device: &T, fb: Handle, clips: &[ClipRect]) -> Result<()>
+    where T: control::Device {
+
+    let mut raw: ffi::drm_mode_fb_dirty_cmd = Default::default();
+
+    raw.fb_id = fb.as_raw();
+    raw.num_clips = clips.len() as u32;
+    raw.clips_ptr = clips.as_ptr() as u64;
+
+    unsafe {
+        try!(ffi::ioctl_mode_dirtyfb(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(())
+}
+
+pub fn destroy<T>(device: &T, fb: Handle) -> Result<()>
+    where T: control::Device {
+
+    unsafe {
+        try!(ffi::ioctl_mode_rmfb(device.as_raw_fd(), &mut fb.as_raw() as *mut _));
+    }
+
+    Ok(())
+}
+
 impl ::std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "framebuffer::Handle({})", self.0)
