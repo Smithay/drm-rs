@@ -42,6 +42,19 @@ impl DumbBuffer {
         Ok(dumb)
     }
 
+    pub fn destroy<T>(self, device: &T) -> Result<()>
+        where T: control::Device {
+
+        let mut raw: ffi::drm_mode_destroy_dumb = Default::default();
+        raw.handle = self.handle.as_raw();
+
+        unsafe {
+            try!(ffi::ioctl_mode_destroy_dumb(device.as_raw_fd(), &mut raw));
+        }
+
+        Ok(())
+    }
+
     pub fn map<'a, T>(&'a self, device: &T) -> Result<DumbMapping<'a>>
         where T: control::Device {
 
@@ -77,6 +90,14 @@ impl DumbBuffer {
 impl<'a> AsMut<[u8]> for DumbMapping<'a> {
     fn as_mut(&mut self) -> &mut [u8] {
         self.map
+    }
+}
+
+impl<'a> Drop for DumbMapping<'a> {
+    fn drop(&mut self) {
+        use nix::sys::mman;
+
+        mman::munmap(self.map.as_mut_ptr() as *mut _, self.map.len()).expect("Unmap failed");
     }
 }
 
