@@ -272,3 +272,63 @@ fn vblank_modeset() {
     db1.destroy(&card).unwrap();
     db2.destroy(&card).unwrap();
 }
+
+#[test]
+fn gamma_test() {
+    // Can't run with other modesetting tests.
+    let guard = wait_for_lock();
+
+    let card = Card::open_control();
+
+    // Load the information.
+    let res = card.resource_handles().expect("Could not load normal resource ids.");
+    let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
+    let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
+
+    // Filter each connector until we find one that's connected.
+    let con = coninfo.iter().filter(| &i | {
+        i.connection_state() == connector::State::Connected
+    }).next().expect("No connected connectors");
+
+    // Get the first (usually best) mode
+    let &mode = con.modes().iter().next().expect("No modes found on connector");
+
+    // Find a crtc and FB
+    let crtc = crtcinfo.iter().next().expect("No crtcs found");
+
+    // Create a DB
+    let db = dumbbuffer::DumbBuffer::create_from_device(&card, (1920, 1080), 32)
+        .expect("Could not create dumb buffer");
+
+    // Map it and grey it out.
+    let mut map = db.map(&card).expect("Could not map dumbbuffer");
+    for mut b in map.as_mut() {
+        *b = 128;
+    }
+
+    // Create an FB:
+    let fbinfo = framebuffer::create(&card, &db)
+        .expect("Could not create FB");
+
+    println!("{:#?}", mode);
+    println!("{:#?}", fbinfo);
+    println!("{:#?}", db);
+
+    // Set the crtc
+    crtc::set(&card, crtc.handle(), fbinfo.handle(), &[con.handle()], (0, 0), Some(mode))
+        .expect("Could not set CRTC");
+
+    let five_seconds = ::std::time::Duration::from_millis(5000);
+    ::std::thread::sleep(five_seconds);
+
+    let gamma = crtc::gamma(&card, crtc.handle()).unwrap();
+    println!("{:?}", gamma.red);
+    crtc::set_gamma(&card, crtc.handle(), crtc::GammaRamp {
+        red: gamma.red.iter().map(|_| ::std::u16::MAX).collect::<Vec<u16>>().into_boxed_slice(),
+        green: gamma.green.clone(),
+        blue: gamma.blue.clone(),
+    }).unwrap();
+
+    ::std::thread::sleep(five_seconds);
+    crtc::set_gamma(&card, crtc.handle(), gamma).unwrap();
+}

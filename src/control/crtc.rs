@@ -322,6 +322,67 @@ pub fn move_cursor<T>(device: &T, handle: Handle, to: iPoint) -> Result<()>
     Ok(())
 }
 
+#[derive(Debug, Clone)]
+pub struct GammaRamp {
+    pub red: Box<[u16]>,
+    pub green: Box<[u16]>,
+    pub blue: Box<[u16]>,
+}
+
+pub fn gamma<T>(device: &T, handle: Handle) -> Result<GammaRamp>
+    where T: control::Device {
+
+    let info = Info::load_from_device(device, handle)?;
+
+    let mut raw: ffi::drm_mode_crtc_lut = Default::default();
+    raw.crtc_id = handle.as_raw();
+    raw.gamma_size = info.gamma_length;
+    let red = ffi_buf!(raw.red, info.gamma_length as usize);
+    let green = ffi_buf!(raw.green, info.gamma_length as usize);
+    let blue = ffi_buf!(raw.blue, info.gamma_length as usize);
+
+    unsafe {
+        try!(ffi::ioctl_mode_getgamma(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(GammaRamp {
+        red:   red.into_boxed_slice(),
+        green: green.into_boxed_slice(),
+        blue:  blue.into_boxed_slice(),
+    })
+}
+
+pub fn set_gamma<T>(device: &T, handle: Handle, mut gamma: GammaRamp) -> Result<()>
+    where T: control::Device {
+
+    let info = Info::load_from_device(device, handle)?;
+
+    if gamma.red.len() as u32 != info.gamma_length {
+        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(gamma.red.len(), info.gamma_length)));
+    }
+
+    if gamma.green.len() as u32 != info.gamma_length {
+        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(gamma.green.len(), info.gamma_length).into()))
+    }
+
+    if gamma.blue.len() as u32 != info.gamma_length {
+        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(gamma.blue.len(), info.gamma_length).into()))
+    }
+
+    let mut raw: ffi::drm_mode_crtc_lut = Default::default();
+    raw.crtc_id = handle.as_raw();
+    raw.gamma_size = info.gamma_length;
+    raw.red = gamma.red.as_mut_ptr() as u64;
+    raw.green = gamma.green.as_mut_ptr() as u64;
+    raw.blue = gamma.blue.as_mut_ptr() as u64;
+
+    unsafe {
+        try!(ffi::ioctl_mode_setgamma(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(())
+}
+
 impl ::std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "crtc::Handle({})", self.0)
