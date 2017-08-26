@@ -82,25 +82,45 @@ pub fn create<T, U>(device: &T, buffer: &U) -> Result<Info>
     where T: control::Device, U: super::super::buffer::Buffer {
 
     let framebuffer = {
-        let mut raw: ffi::drm_mode_fb_cmd = Default::default();
+        let mut raw: ffi::drm_mode_fb_cmd2 = Default::default();
         let (w, h) = buffer.size();
         raw.width = w;
         raw.height = h;
-        raw.pitch = buffer.pitch();
-        raw.bpp = buffer.bpp() as u32;
-        raw.depth = buffer.depth() as u32;
-        raw.handle = buffer.handle().as_raw();
+        raw.pixel_format = buffer.format().as_raw();
+        raw.flags = 0; //TODO
+        raw.handles[0] = buffer.handle().as_raw();
+        raw.pitches[0] = buffer.pitch();
+        raw.offsets[0] = 0; //TODO
+        raw.modifier[0]; //TODO
 
-        unsafe {
-            try!(ffi::ioctl_mode_addfb(device.as_raw_fd(), &mut raw));
-        }
+        match unsafe {
+            ffi::ioctl_mode_addfb2(device.as_raw_fd(), &mut raw)
+        } {
+            Ok(_) => try!(Info::load_from_device(device, Handle::from_raw(raw.fb_id))),
+            Err(_) => {
+                //ioctl addfd2 unsupported
+                let mut raw_old: ffi::drm_mode_fb_cmd = Default::default();
+                raw_old.width = w;
+                raw_old.height = h;
+                raw_old.pitch = buffer.pitch();
+                let depth = try!(buffer.format().depth().ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat)));
+                let bpp = try!(buffer.format().bpp().ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat)));
+                raw_old.bpp = bpp as u32;
+                raw_old.depth = depth as u32;
+                raw_old.handle = buffer.handle().as_raw();
 
-        Info {
-            handle: Handle::from_raw(raw.fb_id),
-            size: (raw.width, raw.height),
-            pitch: raw.pitch,
-            bpp: raw.bpp as u8,
-            depth: raw.depth as u8
+                unsafe {
+                    try!(ffi::ioctl_mode_addfb(device.as_raw_fd(), &mut raw_old));
+                }
+
+                Info {
+                    handle: Handle::from_raw(raw_old.fb_id),
+                    size: (raw_old.width, raw_old.height),
+                    pitch: raw_old.pitch,
+                    depth: raw_old.depth as u8,
+                    bpp: raw_old.bpp as u8,
+                }
+            }
         }
     };
 
