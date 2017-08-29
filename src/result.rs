@@ -12,9 +12,7 @@ error_chain! {
             description("Invalid Gamma Ramp Size")
             display("Invalid Gamma Ramp Size: '{}', expected: '{}'", set, size)
         }
-    }
 
-    errors {
         UnsupportedPixelFormat {
             description("PixelFormat is unsupported by operation")
             display("The provided PixelFormat is not supported by the operation")
