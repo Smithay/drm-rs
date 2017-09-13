@@ -130,6 +130,8 @@ pub enum PageFlipFlags {
     PageFlipAsync = ffi::DRM_MODE_PAGE_FLIP_ASYNC,
 }
 
+struct FatPtrWrapper(Box<Any>);
+
 pub fn page_flip<T, U>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFlipFlags], userdata: U) -> Result<()>
     where T: control::Device, U: 'static {
 
@@ -137,7 +139,7 @@ pub fn page_flip<T, U>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFl
     raw.fb_id = fb.as_raw();
     raw.crtc_id = handle.as_raw();
     raw.flags = flags.into_iter().fold(0, |val, flag| val | *flag as u32);
-    raw.user_data = Box::into_raw(Box::new(userdata)) as u64;
+    raw.user_data = Box::into_raw(Box::new(FatPtrWrapper(Box::new(userdata) as Box<Any>))) as u64;
 
     unsafe {
         try!(ffi::ioctl_mode_page_flip(device.as_raw_fd(), &mut raw));
@@ -225,9 +227,9 @@ pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: O
             match event.type_ {
                 x if x == ffi::DRM_EVENT_VBLANK => {
                     if version >= 1 {
-                        if let Some(mut handler) = vblank_handler.as_mut() {
+                        if let Some(handler) = vblank_handler.as_mut() {
                             let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
-                            let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut u8 as *mut Any) };
+                            let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
                             (*handler).handle_event(
                                 wrapper.0,
                                 vblank_event.sequence,
@@ -239,8 +241,8 @@ pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: O
                 },
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
                     let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
-                    let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut u8 as *mut Any) };
-                    if let Some(mut handler) = pageflip_handler2.as_mut() {
+                    let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
+                    if let Some(handler) = pageflip_handler2.as_mut() {
                         if version >= 3 {
                             (*handler).handle_event(
                                 wrapper.0,
@@ -250,7 +252,7 @@ pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: O
                                 userdata
                             );
                         }
-                    } else if let Some(mut handler) = pageflip_handler.as_mut() {
+                    } else if let Some(handler) = pageflip_handler.as_mut() {
                         if version >= 2 {
                             (*handler).handle_event(
                                 &wrapper.0,
