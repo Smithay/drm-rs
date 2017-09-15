@@ -18,7 +18,7 @@ use result::*;
 /// [`ResourceHandle`]: ../ResourceHandle.t.html
 /// [`connector::Info`]: Info.t.html
 /// [`ResourceHandles::connectors`]: ../ResourceHandles.t.html#method.connectors
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Handle(control::RawHandle);
 
 /// A [`ResourceInfo`] for a connector.

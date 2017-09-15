@@ -37,7 +37,7 @@ use std::time::Duration;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`crtc::Info`]: Info.t.html
 /// [`ResourceIds::crtcs`]: ResourceIds.t.html#method.crtcs
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Handle(control::RawHandle);
 
 /// A [`ResourceInfo`] for a CRTC.
