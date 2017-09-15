@@ -19,7 +19,7 @@ use ffi;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`framebuffer::Info`]: Info.t.html
 /// [`ResourceIds::framebuffers`]: ResourceIds.t.html#method.framebuffers
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Handle(control::RawHandle);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

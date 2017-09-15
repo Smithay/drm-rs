@@ -11,7 +11,7 @@ use std::ffi::CStr;
 /// The underlying value type of a property.
 pub type RawValue = u64;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 /// A `ResourceHandle` to a property.
 pub struct Handle(control::RawHandle);
 
