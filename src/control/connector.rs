@@ -89,6 +89,11 @@ impl Info {
     pub fn modes<'a>(&'a self) -> &'a [control::Mode] {
         &self.modes
     }
+
+    /// Returns a list containing each supported [`encoder::Handle`].
+    pub fn encoders<'a>(&'a self) -> &'a [control::encoder::Handle] {
+        &self.encoders
+    }
 }
 
 impl ResourceHandle for Handle {
