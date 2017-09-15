@@ -18,7 +18,7 @@ use ::{iRect, uRect};
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`plane::Info`]: Info.t.html
 /// [`PlaneResourceHandles::planes`]: PlaneResourceHandles.t.html#method.planes
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Handle(control::RawHandle);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

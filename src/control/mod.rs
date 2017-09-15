@@ -1,6 +1,7 @@
 use result::*;
 use ffi;
 use std::ffi::CStr;
+use std::hash::Hash;
 pub mod connector;
 pub mod encoder;
 pub mod crtc;
@@ -71,7 +72,7 @@ pub trait Device : Sized + super::Device {
 /// provide some sort of handle that we can use to refer to them. Almost all
 /// operations performed on a `Device` that use an object or resource require
 /// making requests using a handle.
-pub trait ResourceHandle: Eq + Copy {
+pub trait ResourceHandle: Eq + Copy + Hash {
     /// Create this handle from its raw part.
     fn from_raw(RawHandle) -> Self;
 
