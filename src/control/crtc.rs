@@ -11,7 +11,7 @@
 //! Each CRTC has a built in plane, which can be attached to a framebuffer. It
 //! can also use pixel data from other planes to perform hardware compositing.
 
-use ::{Dimensions, iPoint};
+use {Dimensions, iPoint};
 use buffer;
 use control::{self, ResourceHandle, ResourceInfo};
 use result::*;
@@ -49,7 +49,7 @@ pub struct Info {
     position: (u32, u32),
     // TODO: mode
     fb: control::framebuffer::Handle,
-    gamma_length: u32
+    gamma_length: u32,
 }
 
 impl ResourceHandle for Handle {
@@ -70,8 +70,9 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn load_from_device<T>(device: &T, handle: Handle) -> Result<Self>
-        where T: control::Device {
-
+    where
+        T: control::Device,
+    {
         let crtc = {
             let mut raw: ffi::drm_mode_crtc = Default::default();
             raw.crtc_id = handle.0;
@@ -83,23 +84,31 @@ impl ResourceInfo for Info {
                 handle: handle,
                 position: (raw.x, raw.y),
                 fb: control::framebuffer::Handle::from_raw(raw.fb_id),
-                gamma_length: raw.gamma_size
+                gamma_length: raw.gamma_size,
             }
         };
 
         Ok(crtc)
     }
 
-    fn handle(&self) -> Self::Handle { self.handle }
+    fn handle(&self) -> Self::Handle {
+        self.handle
+    }
 }
 
 /// Attaches a framebuffer to a CRTC's built-in plane, attaches the CRTC to
 /// a connector, and sets the CRTC's mode to output the pixel data.
-pub fn set<T>(device: &T, handle: Handle, fb: FBHandle, cons: &[ConHandle],
-              position: (u32, u32), mode: Option<control::Mode>) -> Result<()>
-    where T: control::Device {
-
-
+pub fn set<T>(
+    device: &T,
+    handle: Handle,
+    fb: FBHandle,
+    cons: &[ConHandle],
+    position: (u32, u32),
+    mode: Option<control::Mode>,
+) -> Result<()>
+where
+    T: control::Device,
+{
     let mut raw: ffi::drm_mode_crtc = Default::default();
     raw.x = position.0;
     raw.y = position.1;
@@ -112,8 +121,8 @@ pub fn set<T>(device: &T, handle: Handle, fb: FBHandle, cons: &[ConHandle],
         Some(m) => {
             raw.mode = m.mode;
             raw.mode_valid = 1;
-        },
-        _ => ()
+        }
+        _ => (),
     };
 
     unsafe {
@@ -132,9 +141,17 @@ pub enum PageFlipFlags {
 
 struct FatPtrWrapper(Box<Any>);
 
-pub fn page_flip<T, U>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFlipFlags], userdata: U) -> Result<()>
-    where T: control::Device, U: 'static {
-
+pub fn page_flip<T, U>(
+    device: &T,
+    handle: Handle,
+    fb: FBHandle,
+    flags: &[PageFlipFlags],
+    userdata: U,
+) -> Result<()>
+where
+    T: control::Device,
+    U: 'static,
+{
     let mut raw: ffi::drm_mode_crtc_page_flip = Default::default();
     raw.fb_id = fb.as_raw();
     raw.crtc_id = handle.as_raw();
@@ -149,70 +166,101 @@ pub fn page_flip<T, U>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFl
 }
 
 pub trait VblankHandler<T: control::Device> {
-    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>);
+    fn handle_event(&mut self, device: &mut T, frame: u32, duration: Duration, userdata: Box<Any>);
 }
 
 impl<T, F> VblankHandler<T> for F
-    where T: control::Device, F: FnMut(&T, u32, Duration, Box<Any>) {
-
-    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>) {
+where
+    T: control::Device,
+    F: FnMut(&mut T, u32, Duration, Box<Any>),
+{
+    fn handle_event(&mut self, device: &mut T, frame: u32, duration: Duration, userdata: Box<Any>) {
         (*self)(device, frame, duration, userdata)
     }
 }
 
 impl<T> VblankHandler<T> for ()
-    where T: control::Device {
-
-    fn handle_event(&mut self, _: &T, _: u32, _: Duration, _: Box<Any>) {}
+where
+    T: control::Device,
+{
+    fn handle_event(&mut self, _: &mut T, _: u32, _: Duration, _: Box<Any>) {}
 }
 
 pub trait PageFlipHandler<T: control::Device> {
-    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>);
+    fn handle_event(&mut self, device: &mut T, frame: u32, duration: Duration, userdata: Box<Any>);
 }
 
 impl<T, F> PageFlipHandler<T> for F
-    where T: control::Device, F: FnMut(&T, u32, Duration, Box<Any>) {
-
-    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>) {
+where
+    T: control::Device,
+    F: FnMut(&mut T, u32, Duration, Box<Any>),
+{
+    fn handle_event(&mut self, device: &mut T, frame: u32, duration: Duration, userdata: Box<Any>) {
         (*self)(device, frame, duration, userdata)
     }
 }
 
 impl<T> PageFlipHandler<T> for ()
-    where T: control::Device {
-
-    fn handle_event(&mut self, _: &T, _: u32, _: Duration, _: Box<Any>) {}
+where
+    T: control::Device,
+{
+    fn handle_event(&mut self, _: &mut T, _: u32, _: Duration, _: Box<Any>) {}
 }
 
 pub trait PageFlipHandler2<T: control::Device> {
-    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, crtc: Handle, userdata: Box<Any>);
+    fn handle_event(
+        &mut self,
+        device: &mut T,
+        frame: u32,
+        duration: Duration,
+        crtc: Handle,
+        userdata: Box<Any>,
+    );
 }
 
 impl<T, F> PageFlipHandler2<T> for F
-    where T: control::Device, F: FnMut(&T, u32, Duration, Handle, Box<Any>) {
-
-    fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, crtc: Handle, userdata: Box<Any>) {
+where
+    T: control::Device,
+    F: FnMut(&mut T, u32, Duration, Handle, Box<Any>),
+{
+    fn handle_event(
+        &mut self,
+        device: &mut T,
+        frame: u32,
+        duration: Duration,
+        crtc: Handle,
+        userdata: Box<Any>,
+    ) {
         (*self)(device, frame, duration, crtc, userdata)
     }
 }
 
 impl<T> PageFlipHandler2<T> for ()
-    where T: control::Device {
-
-    fn handle_event(&mut self, _: &T, _: u32, _: Duration, _: Handle, _: Box<Any>) {}
+where
+    T: control::Device,
+{
+    fn handle_event(&mut self, _: &mut T, _: u32, _: Duration, _: Handle, _: Box<Any>) {}
 }
 
-pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: Option<&mut V>, mut pageflip_handler: Option<&mut P>, mut pageflip_handler2: Option<&mut P2>) -> Result<()>
-    where T: control::Device, V: VblankHandler<T>, P: PageFlipHandler<T>, P2: PageFlipHandler2<T> {
-
-    struct DeviceWrapper<'a, T: control::Device + 'a>(&'a T);
+pub fn handle_event<T, V, P, P2>(
+    device: &mut T,
+    version: u32,
+    mut vblank_handler: Option<&mut V>,
+    mut pageflip_handler: Option<&mut P>,
+    mut pageflip_handler2: Option<&mut P2>,
+) -> Result<()>
+where
+    T: control::Device,
+    V: VblankHandler<T>,
+    P: PageFlipHandler<T>,
+    P2: PageFlipHandler2<T>,
+{
+    struct DeviceWrapper<'a, T: control::Device + 'a>(&'a mut T);
     impl<'a, T: control::Device> Read for DeviceWrapper<'a, T> {
         fn read(&mut self, buf: &mut [u8]) -> ::std::io::Result<usize> {
-            ::nix::unistd::read(self.0.as_raw_fd(), buf).map_err(|err| {
-                match err {
-                    ::nix::Error::Sys(_) => ::std::io::Error::last_os_error(),
-                    err => ::std::io::Error::new(::std::io::ErrorKind::Other, err),
-                }
+            ::nix::unistd::read(self.0.as_raw_fd(), buf).map_err(|err| match err {
+                ::nix::Error::Sys(_) => ::std::io::Error::last_os_error(),
+                err => ::std::io::Error::new(::std::io::ErrorKind::Other, err),
             })
         }
     }
@@ -225,45 +273,52 @@ pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: O
         while i < amount as isize {
             let event = unsafe { &*(event_buf.as_ptr().offset(i) as *const ffi::drm_event) };
             match event.type_ {
-                x if x == ffi::DRM_EVENT_VBLANK => {
-                    if version >= 1 {
-                        if let Some(handler) = vblank_handler.as_mut() {
-                            let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
-                            let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
-                            (*handler).handle_event(
-                                wrapper.0,
-                                vblank_event.sequence,
-                                Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
-                                userdata
-                            );
-                        }
+                x if x == ffi::DRM_EVENT_VBLANK => if version >= 1 {
+                    if let Some(handler) = vblank_handler.as_mut() {
+                        let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                        let userdata = unsafe {
+                            Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0
+                        };
+                        (*handler).handle_event(
+                            wrapper.0,
+                            vblank_event.sequence,
+                            Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
+                            userdata,
+                        );
                     }
                 },
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
                     let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
-                    let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
+                    let userdata =
+                        unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
                     if let Some(handler) = pageflip_handler2.as_mut() {
                         if version >= 3 {
                             (*handler).handle_event(
                                 wrapper.0,
                                 vblank_event.sequence,
-                                Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
+                                Duration::new(
+                                    vblank_event.tv_sec as u64,
+                                    vblank_event.tv_usec * 1000,
+                                ),
                                 Handle::from_raw(vblank_event.crtc_id),
-                                userdata
+                                userdata,
                             );
                         }
                     } else if let Some(handler) = pageflip_handler.as_mut() {
                         if version >= 2 {
                             (*handler).handle_event(
-                                &wrapper.0,
+                                wrapper.0,
                                 vblank_event.sequence,
-                                Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
-                                userdata
+                                Duration::new(
+                                    vblank_event.tv_sec as u64,
+                                    vblank_event.tv_usec * 1000,
+                                ),
+                                userdata,
                             );
                         }
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
             i += event.length as isize;
         }
@@ -272,9 +327,15 @@ pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: O
     Ok(())
 }
 
-pub fn set_cursor<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Dimensions) -> Result<()>
-    where T: control::Device {
-
+pub fn set_cursor<T>(
+    device: &T,
+    handle: Handle,
+    bo: buffer::Id,
+    dimensions: Dimensions,
+) -> Result<()>
+where
+    T: control::Device,
+{
     let mut raw: ffi::drm_mode_cursor = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_BO;
     raw.crtc_id = handle.as_raw();
@@ -289,9 +350,16 @@ pub fn set_cursor<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Dim
     Ok(())
 }
 
-pub fn set_cursor2<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Dimensions, hotspot: iPoint) -> Result<()>
-    where T: control::Device {
-
+pub fn set_cursor2<T>(
+    device: &T,
+    handle: Handle,
+    bo: buffer::Id,
+    dimensions: Dimensions,
+    hotspot: iPoint,
+) -> Result<()>
+where
+    T: control::Device,
+{
     let mut raw: ffi::drm_mode_cursor2 = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_BO;
     raw.crtc_id = handle.as_raw();
@@ -309,8 +377,9 @@ pub fn set_cursor2<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Di
 }
 
 pub fn move_cursor<T>(device: &T, handle: Handle, to: iPoint) -> Result<()>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     let mut raw: ffi::drm_mode_cursor = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_MOVE;
     raw.crtc_id = handle.as_raw();
@@ -332,8 +401,9 @@ pub struct GammaRamp {
 }
 
 pub fn gamma<T>(device: &T, handle: Handle) -> Result<GammaRamp>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     let info = Info::load_from_device(device, handle)?;
 
     let mut raw: ffi::drm_mode_crtc_lut = Default::default();
@@ -348,27 +418,35 @@ pub fn gamma<T>(device: &T, handle: Handle) -> Result<GammaRamp>
     }
 
     Ok(GammaRamp {
-        red:   red.into_boxed_slice(),
+        red: red.into_boxed_slice(),
         green: green.into_boxed_slice(),
-        blue:  blue.into_boxed_slice(),
+        blue: blue.into_boxed_slice(),
     })
 }
 
 pub fn set_gamma<T>(device: &T, handle: Handle, mut gamma: GammaRamp) -> Result<()>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     let info = Info::load_from_device(device, handle)?;
 
     if gamma.red.len() as u32 != info.gamma_length {
-        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(gamma.red.len(), info.gamma_length)));
+        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(
+            gamma.red.len(),
+            info.gamma_length,
+        )));
     }
 
     if gamma.green.len() as u32 != info.gamma_length {
-        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(gamma.green.len(), info.gamma_length).into()))
+        return Err(Error::from_kind(
+            ErrorKind::InvalidGammaSize(gamma.green.len(), info.gamma_length).into(),
+        ));
     }
 
     if gamma.blue.len() as u32 != info.gamma_length {
-        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(gamma.blue.len(), info.gamma_length).into()))
+        return Err(Error::from_kind(
+            ErrorKind::InvalidGammaSize(gamma.blue.len(), info.gamma_length).into(),
+        ));
     }
 
     let mut raw: ffi::drm_mode_crtc_lut = Default::default();
