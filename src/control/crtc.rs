@@ -222,7 +222,7 @@ impl<T> PageFlipHandler2<T> for ()
 /// `pageflip_handler2` is not required, `pageflip_handler` however is required
 /// even if `pageflip_handler2` is set, in case the new api is not supported,
 /// if you want to receive those events guaranteed.
-pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: Option<&mut V>, mut pageflip_handler: Option<&mut P>, mut pageflip_handler2: Option<&mut P2>) -> Result<()>
+pub fn handle_event<T, V, P, P2>(device: &T, mut vblank_handler: Option<&mut V>, mut pageflip_handler: Option<&mut P>, mut pageflip_handler2: Option<&mut P2>) -> Result<()>
     where T: control::Device, V: VblankHandler<T>, P: PageFlipHandler<T>, P2: PageFlipHandler2<T> {
 
     struct DeviceWrapper<'a, T: control::Device + 'a>(&'a T);
@@ -246,24 +246,22 @@ pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: O
             let event = unsafe { &*(event_buf.as_ptr().offset(i) as *const ffi::drm_event) };
             match event.type_ {
                 x if x == ffi::DRM_EVENT_VBLANK => {
-                    if version >= 1 {
-                        if let Some(handler) = vblank_handler.as_mut() {
-                            let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
-                            let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
-                            (*handler).handle_event(
-                                wrapper.0,
-                                vblank_event.sequence,
-                                Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
-                                userdata
-                            );
-                        }
+                    if let Some(handler) = vblank_handler.as_mut() {
+                        let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                        let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
+                        (*handler).handle_event(
+                            wrapper.0,
+                            vblank_event.sequence,
+                            Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
+                            userdata
+                        );
                     }
                 },
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
                     let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
                     let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
-                    if let Some(handler) = pageflip_handler2.as_mut() {
-                        if version >= 3 {
+                    if vblank_event.crtc_id != 0 {
+                        if let Some(handler) = pageflip_handler2.as_mut() {
                             (*handler).handle_event(
                                 wrapper.0,
                                 vblank_event.sequence,
@@ -271,9 +269,7 @@ pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: O
                                 Handle::from_raw(vblank_event.crtc_id),
                                 userdata
                             );
-                        }
-                    } else if let Some(handler) = pageflip_handler.as_mut() {
-                        if version >= 2 {
+                        } else if let Some(handler) = pageflip_handler.as_mut() {
                             (*handler).handle_event(
                                 &wrapper.0,
                                 vblank_event.sequence,
@@ -281,6 +277,13 @@ pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: O
                                 userdata
                             );
                         }
+                    } else if let Some(handler) = pageflip_handler.as_mut() {
+                        (*handler).handle_event(
+                            &wrapper.0,
+                            vblank_event.sequence,
+                            Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
+                            userdata
+                        );
                     }
                 },
                 _ => {},
