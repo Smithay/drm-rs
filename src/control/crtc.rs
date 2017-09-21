@@ -11,7 +11,7 @@
 //! Each CRTC has a built in plane, which can be attached to a framebuffer. It
 //! can also use pixel data from other planes to perform hardware compositing.
 
-use ::{Dimensions, iPoint};
+use iPoint;
 use buffer;
 use control::{self, ResourceHandle, ResourceInfo};
 use result::*;
@@ -125,13 +125,21 @@ pub fn set<T>(device: &T, handle: Handle, fb: FBHandle, cons: &[ConHandle],
 
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// Flags to alter the behaviour of a page flip
 pub enum PageFlipFlags {
+    /// Request a vblank event on page flip
     PageFlipEvent = ffi::DRM_MODE_PAGE_FLIP_EVENT,
+    /// Request page flip as soon as possible, not waiting for vblank
     PageFlipAsync = ffi::DRM_MODE_PAGE_FLIP_ASYNC,
 }
 
 struct FatPtrWrapper(Box<Any>);
 
+/// Queue a page flip on the given crtc.
+///
+/// On the next vblank the given framebuffer will be attached to the
+/// crtc and an event will be triggered by the device, which will be indicated by it's fd becoming
+/// readable. The event can be received using `handle_event`.
 pub fn page_flip<T, U>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFlipFlags], userdata: U) -> Result<()>
     where T: control::Device, U: 'static {
 
@@ -148,7 +156,9 @@ pub fn page_flip<T, U>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFl
     Ok(())
 }
 
+/// Handles vblank events
 pub trait VblankHandler<T: control::Device> {
+    /// Called per vblank event
     fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>);
 }
 
@@ -166,7 +176,9 @@ impl<T> VblankHandler<T> for ()
     fn handle_event(&mut self, _: &T, _: u32, _: Duration, _: Box<Any>) {}
 }
 
+/// Handles page flip events
 pub trait PageFlipHandler<T: control::Device> {
+    /// Called per page flip event
     fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, userdata: Box<Any>);
 }
 
@@ -184,7 +196,9 @@ impl<T> PageFlipHandler<T> for ()
     fn handle_event(&mut self, _: &T, _: u32, _: Duration, _: Box<Any>) {}
 }
 
+/// Handles page flip events
 pub trait PageFlipHandler2<T: control::Device> {
+    /// Called per page flip event
     fn handle_event(&mut self, device: &T, frame: u32, duration: Duration, crtc: Handle, userdata: Box<Any>);
 }
 
@@ -202,6 +216,12 @@ impl<T> PageFlipHandler2<T> for ()
     fn handle_event(&mut self, _: &T, _: u32, _: Duration, _: Handle, _: Box<Any>) {}
 }
 
+/// Handles all pending events of a given device.
+///
+/// You need to set a handler for every event type you want to receive.
+/// `pageflip_handler2` is not required, `pageflip_handler` however is required
+/// even if `pageflip_handler2` is set, in case the new api is not supported,
+/// if you want to receive those events guaranteed.
 pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: Option<&mut V>, mut pageflip_handler: Option<&mut P>, mut pageflip_handler2: Option<&mut P2>) -> Result<()>
     where T: control::Device, V: VblankHandler<T>, P: PageFlipHandler<T>, P2: PageFlipHandler2<T> {
 
@@ -272,15 +292,19 @@ pub fn handle_event<T, V, P, P2>(device: &T, version: u32, mut vblank_handler: O
     Ok(())
 }
 
-pub fn set_cursor<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Dimensions) -> Result<()>
-    where T: control::Device {
+/// Sets a hardware-cursor on the given crtc with the image of a given buffer
+pub fn set_cursor<T, B>(device: &T, handle: Handle, buffer: &B) -> Result<()>
+    where T: control::Device,
+          B: buffer::Buffer   {
+
+    let dimensions = buffer.size();
 
     let mut raw: ffi::drm_mode_cursor = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_BO;
     raw.crtc_id = handle.as_raw();
     raw.width = dimensions.0;
     raw.height = dimensions.1;
-    raw.handle = bo.as_raw();
+    raw.handle = buffer.handle().as_raw();
 
     unsafe {
         try!(ffi::ioctl_mode_cursor(device.as_raw_fd(), &mut raw));
@@ -289,15 +313,20 @@ pub fn set_cursor<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Dim
     Ok(())
 }
 
-pub fn set_cursor2<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Dimensions, hotspot: iPoint) -> Result<()>
-    where T: control::Device {
+/// Sets a hardware-cursor on the given crtc with the image of a given buffer and a hotspot marking
+/// the click point of the cursor
+pub fn set_cursor2<T, B>(device: &T, handle: Handle, buffer: &B, hotspot: iPoint) -> Result<()>
+    where T: control::Device,
+          B: buffer::Buffer   {
+
+    let dimensions = buffer.size();
 
     let mut raw: ffi::drm_mode_cursor2 = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_BO;
     raw.crtc_id = handle.as_raw();
     raw.width = dimensions.0;
     raw.height = dimensions.1;
-    raw.handle = bo.as_raw();
+    raw.handle = buffer.handle().as_raw();
     raw.hot_x = hotspot.0;
     raw.hot_y = hotspot.1;
 
@@ -308,6 +337,7 @@ pub fn set_cursor2<T>(device: &T, handle: Handle, bo: buffer::Id, dimensions: Di
     Ok(())
 }
 
+/// Moves a set cursor on a given crtc
 pub fn move_cursor<T>(device: &T, handle: Handle, to: iPoint) -> Result<()>
     where T: control::Device {
 
@@ -325,12 +355,17 @@ pub fn move_cursor<T>(device: &T, handle: Handle, to: iPoint) -> Result<()>
 }
 
 #[derive(Debug, Clone)]
+/// The hardware gamma ramp
 pub struct GammaRamp {
+    /// Red color component
     pub red: Box<[u16]>,
+    /// Green color component
     pub green: Box<[u16]>,
+    /// Blue color component
     pub blue: Box<[u16]>,
 }
 
+/// Receive the currently set gamma ramp of a crtc
 pub fn gamma<T>(device: &T, handle: Handle) -> Result<GammaRamp>
     where T: control::Device {
 
@@ -354,6 +389,7 @@ pub fn gamma<T>(device: &T, handle: Handle) -> Result<GammaRamp>
     })
 }
 
+/// Set a gamma ramp for the given crtc
 pub fn set_gamma<T>(device: &T, handle: Handle, mut gamma: GammaRamp) -> Result<()>
     where T: control::Device {
 

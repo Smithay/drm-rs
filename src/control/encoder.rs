@@ -35,6 +35,7 @@ pub struct Info {
 
 /// The type of encoder.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub enum Type {
     None,
     DAC,

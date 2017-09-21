@@ -4,13 +4,16 @@ use ffi::fourcc::*;
 pub type RawId = u32;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// GEM handle of a buffer
 pub struct Id(RawId);
 
 impl Id {
+    /// Convert into a GEM handle from the raw type
     pub fn from_raw(raw: RawId) -> Self {
         Id(raw)
     }
 
+    /// Convert into the raw type
     pub fn as_raw(&self) -> RawId {
         self.0
     }
@@ -29,6 +32,8 @@ pub trait Buffer {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(missing_docs)]
+/// Possible pixel formats of a buffer
 pub enum PixelFormat {
     C8,
     R8,
@@ -89,6 +94,7 @@ pub enum PixelFormat {
 }
 
 impl PixelFormat {
+    /// Convert into the raw fourcc code
     pub fn as_raw(&self) -> u32 {
         use self::PixelFormat::*;
         match *self {
@@ -151,6 +157,7 @@ impl PixelFormat {
         }
     }
 
+    /// Depth value of the format
     pub fn depth(&self) -> Option<u8> {
         use self::PixelFormat::*;
         match *self {
@@ -163,6 +170,7 @@ impl PixelFormat {
         }
     }
 
+    /// Bytes per pixel of the used format
     pub fn bpp(&self) -> Option<u8> {
         use self::PixelFormat::*;
         match *self {
@@ -175,6 +183,7 @@ impl PixelFormat {
         }
     }
 
+    /// Try to parse format from raw fourcc code
     pub fn from_raw(raw: u32) -> Option<PixelFormat> {
         use self::PixelFormat::*;
 
