@@ -1,4 +1,4 @@
-//! # CFramebuffer
+//! # Framebuffer
 //!
 //! A framebuffer is pixel data that can be attached to a plane.
 
@@ -22,6 +22,9 @@ use ffi;
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Handle(control::RawHandle);
 
+/// A [`ResourceInfo`] for a framebuffer.
+///
+/// [`ResourceInfo`]: ResourceInfo.t.html
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Info {
     handle: Handle,
@@ -127,8 +130,10 @@ pub fn create<T, U>(device: &T, buffer: &U) -> Result<Info>
     Ok(framebuffer)
 }
 
+/// Rect inside the area of a framebuffer
 pub type ClipRect = ffi::drm_clip_rect;
 
+/// Mark areas of a framebuffer dirty
 pub fn mark_dirty<T>(device: &T, fb: Handle, clips: &[ClipRect]) -> Result<()>
     where T: control::Device {
 
@@ -145,6 +150,7 @@ pub fn mark_dirty<T>(device: &T, fb: Handle, clips: &[ClipRect]) -> Result<()>
     Ok(())
 }
 
+/// Destroy a framebuffer
 pub fn destroy<T>(device: &T, fb: Handle) -> Result<()>
     where T: control::Device {
 

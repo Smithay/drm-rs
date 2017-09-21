@@ -1,9 +1,14 @@
+//!
+//! Foreign function interface
+//!
+
 #![allow(dead_code)]
+#![allow(missing_docs)]
 
 use nix::libc;
 pub use drm_sys::*;
 
-// The type to be used as an buffer.
+/// The type to be used as an ffi buffer.
 pub type Buffer<T> = Vec<T>;
 
 // Creates a buffer to be modified by an FFI function.

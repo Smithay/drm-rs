@@ -39,6 +39,7 @@ pub struct Info {
 
 /// The physical type of connector.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub enum Type {
     Unknown,
     VGA,
@@ -62,6 +63,7 @@ pub enum Type {
 
 /// The connection state of a connector.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub enum State {
     Connected,
     Disconnected,

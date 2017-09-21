@@ -1,9 +1,16 @@
+//!
+//! # DumbBuffer
+//!
+//! Memory-supported, slow, but easy & cross-platform buffer implementation
+//!
+
 use ffi;
 use result::*;
 use control;
 use buffer;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+/// Slow, but generic `Buffer` implementation
 pub struct DumbBuffer {
     size: (u32, u32),
     length: usize,
@@ -12,12 +19,14 @@ pub struct DumbBuffer {
     handle: buffer::Id
 }
 
+/// Mapping of a dumbbuffer
 pub struct DumbMapping<'a> {
     _phantom: ::std::marker::PhantomData<&'a ()>,
     map: &'a mut [u8]
 }
 
 impl DumbBuffer {
+    /// Create a new dumb buffer with a given size and pixel format
     pub fn create_from_device<T>(device: &T, size: (u32, u32), format: buffer::PixelFormat)
                              -> Result<Self>
         where T: control::Device {
@@ -42,6 +51,7 @@ impl DumbBuffer {
         Ok(dumb)
     }
 
+    /// Free the memory resources of a dumb buffer
     pub fn destroy<T>(self, device: &T) -> Result<()>
         where T: control::Device {
 
@@ -55,9 +65,10 @@ impl DumbBuffer {
         Ok(())
     }
 
-    pub fn map<'a, T>(&'a self, device: &T) -> Result<DumbMapping<'a>>
+    /// Map the buffer for access
+    pub fn map<'a, T>(&'a mut self, device: &T) -> Result<DumbMapping<'a>>
         where T: control::Device {
-
+        
         let mut raw: ffi::drm_mode_map_dumb = Default::default();
         raw.handle = self.handle.as_raw();
 

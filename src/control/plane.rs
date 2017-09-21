@@ -75,11 +75,13 @@ impl ResourceInfo for Info {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(missing_docs)]
 pub enum PresentFlag {
     TopField = (0 << 1),
     BottomField = (1 << 1),
 }
 
+/// Attaches a framebuffer to a CRTC's plane for hardware-composing
 pub fn set<T>(plane: Handle, device: &T, crtc: crtc::Handle, framebuffer: framebuffer::Handle, flags: PresentFlag, crtc_rect: iRect, src_rect: uRect) -> Result<()>
     where T: control::Device
 {
