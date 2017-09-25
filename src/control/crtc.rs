@@ -37,7 +37,10 @@ use std::time::Duration;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`crtc::Info`]: Info.t.html
 /// [`ResourceIds::crtcs`]: ResourceIds.t.html#method.crtcs
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
+#[HandleType = "crtc"]
+#[HandleTrait = "ResourceHandle"]
+#[HandleRaw = "control::RawHandle"]
 pub struct Handle(control::RawHandle);
 
 /// A [`ResourceInfo`] for a CRTC.
@@ -50,16 +53,6 @@ pub struct Info {
     // TODO: mode
     fb: control::framebuffer::Handle,
     gamma_length: u32
-}
-
-impl ResourceHandle for Handle {
-    fn from_raw(raw: control::RawHandle) -> Self {
-        Handle(raw)
-    }
-
-    fn as_raw(&self) -> control::RawHandle {
-        self.0
-    }
 }
 
 impl control::property::LoadProperties for Handle {
@@ -422,10 +415,4 @@ pub fn set_gamma<T>(device: &T, handle: Handle, mut gamma: GammaRamp) -> Result<
     }
 
     Ok(())
-}
-
-impl ::std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "crtc::Handle({})", self.0)
-    }
 }

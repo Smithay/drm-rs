@@ -19,7 +19,10 @@ use ffi;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`framebuffer::Info`]: Info.t.html
 /// [`ResourceIds::framebuffers`]: ResourceIds.t.html#method.framebuffers
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
+#[HandleType = "framebuffer"]
+#[HandleTrait = "ResourceHandle"]
+#[HandleRaw = "control::RawHandle"]
 pub struct Handle(control::RawHandle);
 
 /// A [`ResourceInfo`] for a framebuffer.
@@ -33,16 +36,6 @@ pub struct Info {
     bpp: u8,
     // TODO: Gem handle?
     depth: u8
-}
-
-impl ResourceHandle for Handle {
-    fn from_raw(raw: control::RawHandle) -> Self {
-        Handle(raw)
-    }
-
-    fn as_raw(&self) -> control::RawHandle {
-        self.0
-    }
 }
 
 impl control::property::LoadProperties for Handle {
@@ -159,10 +152,4 @@ pub fn destroy<T>(device: &T, fb: Handle) -> Result<()>
     }
 
     Ok(())
-}
-
-impl ::std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "framebuffer::Handle({})", self.0)
-    }
 }

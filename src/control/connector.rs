@@ -18,7 +18,10 @@ use result::*;
 /// [`ResourceHandle`]: ../ResourceHandle.t.html
 /// [`connector::Info`]: Info.t.html
 /// [`ResourceHandles::connectors`]: ../ResourceHandles.t.html#method.connectors
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
+#[HandleType = "connector"]
+#[HandleTrait = "ResourceHandle"]
+#[HandleRaw = "control::RawHandle"]
 pub struct Handle(control::RawHandle);
 
 /// A [`ResourceInfo`] for a connector.
@@ -95,16 +98,6 @@ impl Info {
     /// Returns a list containing each supported [`encoder::Handle`].
     pub fn encoders<'a>(&'a self) -> &'a [control::encoder::Handle] {
         &self.encoders
-    }
-}
-
-impl ResourceHandle for Handle {
-    fn from_raw(raw: control::RawHandle) -> Self {
-        Handle(raw)
-    }
-
-    fn as_raw(&self) -> control::RawHandle {
-        self.0
     }
 }
 
@@ -191,8 +184,3 @@ impl From<u32> for State {
     }
 }
 
-impl ::std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "connector::Handle({})", self.0)
-    }
-}

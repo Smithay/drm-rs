@@ -112,10 +112,14 @@
 
 extern crate drm_sys;
 #[macro_use]
+extern crate drm_macros;
+
+#[macro_use]
 extern crate nix;
 
 #[macro_use]
 extern crate error_chain;
+
 
 #[macro_use]
 pub mod ffi;

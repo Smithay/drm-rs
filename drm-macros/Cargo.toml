@@ -1,0 +1,11 @@
+[package]
+name = "drm-macros"
+version = "0.0.0"
+authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "0.11.11"
+quote = "0.3.15"

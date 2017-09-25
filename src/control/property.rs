@@ -11,8 +11,11 @@ use std::ffi::CStr;
 /// The underlying value type of a property.
 pub type RawValue = u64;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 /// A `ResourceHandle` to a property.
+#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
+#[HandleType = "property"]
+#[HandleTrait = "ResourceHandle"]
+#[HandleRaw = "control::RawHandle"]
 pub struct Handle(control::RawHandle);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,16 +26,6 @@ pub struct Info {
     mutable: bool,
     pending: bool,
     value_type: PropertyInfoType
-}
-
-impl ResourceHandle for Handle {
-    fn from_raw(raw: control::RawHandle) -> Self {
-        Handle(raw)
-    }
-
-    fn as_raw(&self) -> control::RawHandle {
-        self.0
-    }
 }
 
 impl ResourceInfo for Info {
@@ -374,12 +367,6 @@ pub trait LoadProperties : ResourceHandle {
         };
 
         Ok(props)
-    }
-}
-
-impl ::std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "property::Handle({})", self.0)
     }
 }
 

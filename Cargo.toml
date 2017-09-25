@@ -7,6 +7,7 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
 drm-sys = "0.0.9"
+drm-macros = { path = "drm-macros" }
 nix = "0.8.1"
 
 [dependencies.error-chain]

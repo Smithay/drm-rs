@@ -18,7 +18,10 @@ use ffi;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`encoder::Info`]: Info.t.html
 /// [`ResourceHandles::encoders`]: ResourceHandles.t.html#method.encoders
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
+#[HandleType = "encoder"]
+#[HandleTrait = "ResourceHandle"]
+#[HandleRaw = "control::RawHandle"]
 pub struct Handle(control::RawHandle);
 
 /// A [`ResourceInfo`] for an encoder.
@@ -80,16 +83,6 @@ impl Info {
     }
 }
 
-impl ResourceHandle for Handle {
-    fn from_raw(raw: control::RawHandle) -> Self {
-        Handle(raw)
-    }
-
-    fn as_raw(&self) -> control::RawHandle {
-        self.0
-    }
-}
-
 impl ResourceInfo for Info {
     type Handle = Handle;
 
@@ -132,11 +125,5 @@ impl From<u32> for Type {
             ffi::DRM_MODE_ENCODER_DPI => Type::DPI,
             _ => Type::None
         }
-    }
-}
-
-impl ::std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "encoder::Handle({})", self.0)
     }
 }

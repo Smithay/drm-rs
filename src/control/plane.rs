@@ -18,7 +18,10 @@ use ::{iRect, uRect};
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`plane::Info`]: Info.t.html
 /// [`PlaneResourceHandles::planes`]: PlaneResourceHandles.t.html#method.planes
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
+#[HandleType = "plane"]
+#[HandleTrait = "ResourceHandle"]
+#[HandleRaw = "control::RawHandle"]
 pub struct Handle(control::RawHandle);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,16 +34,6 @@ pub struct Info {
     // TODO: possible_crtcs
     gamma_length: u32,
     // TODO: formats
-}
-
-impl ResourceHandle for Handle {
-    fn from_raw(raw: control::RawHandle) -> Self {
-        Handle(raw)
-    }
-
-    fn as_raw(&self) -> control::RawHandle {
-        self.0
-    }
 }
 
 impl control::property::LoadProperties for Handle {
@@ -103,10 +96,4 @@ pub fn set<T>(plane: Handle, device: &T, crtc: crtc::Handle, framebuffer: frameb
     unsafe { ffi::ioctl_mode_setplane(device.as_raw_fd(), &mut raw)?; }
 
     Ok(())
-}
-
-impl ::std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "plane::Handle({})", self.0)
-    }
 }
