@@ -1,7 +1,9 @@
 [package]
 name = "drm-macros"
-version = "0.0.0"
+description = "Macros for the drm-rs crate"
+version = "0.0.1"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
+license = "MIT"
 
 [lib]
 proc-macro = true
