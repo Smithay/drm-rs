@@ -1,7 +1,7 @@
 [package]
 name = "drm"
 description = "Safe, low-level bindings to the Direct Rendering Manager API"
-version = "0.2.1"
+version = "0.2.3"
 license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
