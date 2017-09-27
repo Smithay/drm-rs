@@ -149,15 +149,15 @@ pub fn page_flip<T, U>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFl
     Ok(())
 }
 
-/// Iterator over `DrmEvent`s of a device. Create via `recieve_events`.
-pub struct DrmEvents {
+/// Iterator over `Event`s of a device. Create via `receive_events`.
+pub struct Events {
     event_buf: [u8; 1024],
     amount: usize,
     i: usize,
 }
 
 /// An event from a device.
-pub enum DrmEvent {
+pub enum Event {
     /// A vblank happened
     Vblank(VblankEvent),
     /// A page flip happened
@@ -188,10 +188,10 @@ pub struct PageFlipEvent {
     pub userdata: Box<Any>,
 }
 
-impl Iterator for DrmEvents {
-    type Item = DrmEvent;
+impl Iterator for Events {
+    type Item = Event;
 
-    fn next(&mut self) -> Option<DrmEvent> {
+    fn next(&mut self) -> Option<Event> {
         if self.amount > 0 && self.i < self.amount {
             let event = unsafe { &*(self.event_buf.as_ptr().offset(self.i as isize) as *const ffi::drm_event) };
             self.i += event.length as usize;
@@ -223,8 +223,8 @@ impl Iterator for DrmEvents {
     }
 }
 
-/// Recieves all pending events of a given device and returns an Iterator for them.
-pub fn recieve_events<T>(device: &T) -> Result<DrmEvents>
+/// Receives all pending events of a given device and returns an Iterator for them.
+pub fn receive_events<T>(device: &T) -> Result<Events>
     where T: control::Device,
 {
     struct DeviceWrapper<'a, T: control::Device + 'a>(&'a T);
@@ -243,7 +243,7 @@ pub fn recieve_events<T>(device: &T) -> Result<DrmEvents>
     let mut event_buf: [u8; 1024] = [0; 1024];
     let amount = try!(wrapper.read(&mut event_buf));
 
-    Ok(DrmEvents {
+    Ok(Events {
         event_buf,
         amount,
         i: 0,
