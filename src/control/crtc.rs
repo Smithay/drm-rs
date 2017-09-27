@@ -126,21 +126,19 @@ pub enum PageFlipFlags {
     PageFlipAsync = ffi::DRM_MODE_PAGE_FLIP_ASYNC,
 }
 
-struct FatPtrWrapper(Box<Any>);
-
 /// Queue a page flip on the given crtc.
 ///
 /// On the next vblank the given framebuffer will be attached to the
 /// crtc and an event will be triggered by the device, which will be indicated by it's fd becoming
 /// readable. The event can be received using `handle_event`.
-pub fn page_flip<T, U>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFlipFlags], userdata: U) -> Result<()>
-    where T: control::Device, U: 'static {
+pub fn page_flip<T>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFlipFlags]) -> Result<()>
+    where T: control::Device {
 
     let mut raw: ffi::drm_mode_crtc_page_flip = Default::default();
     raw.fb_id = fb.as_raw();
     raw.crtc_id = handle.as_raw();
     raw.flags = flags.into_iter().fold(0, |val, flag| val | *flag as u32);
-    raw.user_data = Box::into_raw(Box::new(FatPtrWrapper(Box::new(userdata) as Box<Any>))) as u64;
+    raw.user_data = handle.as_raw() as u64;
 
     unsafe {
         try!(ffi::ioctl_mode_page_flip(device.as_raw_fd(), &mut raw));
@@ -172,8 +170,8 @@ pub struct VblankEvent {
     pub frame: u32,
     /// duration between events
     pub duration: Duration,
-    /// userdata as passed into `page_flip`
-    pub userdata: Box<Any>,
+    /// crtc that did throw the event
+    pub crtc: Handle,
 }
 
 /// Page Flip event
@@ -182,10 +180,8 @@ pub struct PageFlipEvent {
     pub frame: u32,
     /// duration between events
     pub duration: Duration,
-    /// crtc that did throw the event, if available by the driver
-    pub crtc: Option<Handle>,
-    /// userdata as passed into `page_flip`
-    pub userdata: Box<Any>,
+    /// crtc that did throw the event
+    pub crtc: Handle,
 }
 
 impl Iterator for Events {
@@ -198,21 +194,18 @@ impl Iterator for Events {
             match event.type_ {
                 x if x == ffi::DRM_EVENT_VBLANK => {
                     let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
-                    let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
                     Some(Event::Vblank(VblankEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 100),
-                        userdata,
+                        crtc: Handle::from_raw(vblank_event.user_data as u32),
                     }))
                 },
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
                     let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
-                    let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
                     Some(Event::PageFlip(PageFlipEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
-                        crtc: if vblank_event.crtc_id != 0 { Some(Handle::from_raw(vblank_event.crtc_id)) } else { None },
-                        userdata
+                        crtc: Handle::from_raw(if vblank_event.crtc_id != 0 { vblank_event.crtc_id } else { vblank_event.user_data as u32 }),
                     }))
                 },
                 _ => Some(Event::Unknown(self.event_buf[self.i-(event.length as usize)..self.i].to_vec())),
