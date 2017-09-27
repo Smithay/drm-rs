@@ -162,6 +162,8 @@ pub enum DrmEvent {
     Vblank(VblankEvent),
     /// A page flip happened
     PageFlip(PageFlipEvent),
+    /// Unknown event, raw data provided
+    Unknown(Vec<u8>),
 }
 
 /// Vblank event
@@ -190,33 +192,34 @@ impl Iterator for DrmEvents {
     type Item = DrmEvent;
 
     fn next(&mut self) -> Option<DrmEvent> {
-        while self.amount > 0 && self.i < self.amount {
+        if self.amount > 0 && self.i < self.amount {
             let event = unsafe { &*(self.event_buf.as_ptr().offset(self.i as isize) as *const ffi::drm_event) };
             self.i += event.length as usize;
             match event.type_ {
                 x if x == ffi::DRM_EVENT_VBLANK => {
                     let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
                     let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
-                    return Some(DrmEvent::Vblank(VblankEvent {
+                    Some(Event::Vblank(VblankEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 100),
                         userdata,
-                    }));
+                    }))
                 },
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
                     let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
                     let userdata = unsafe { Box::from_raw(vblank_event.user_data as *mut FatPtrWrapper).0 };
-                    return Some(DrmEvent::PageFlip(PageFlipEvent {
+                    Some(Event::PageFlip(PageFlipEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
                         crtc: if vblank_event.crtc_id != 0 { Some(Handle::from_raw(vblank_event.crtc_id)) } else { None },
                         userdata
-                    }));
+                    }))
                 },
-                _ => continue,
+                _ => Some(Event::Unknown(self.event_buf[self.i-(event.length as usize)..self.i].to_vec())),
             }
+        } else {
+            None
         }
-        None
     }
 }
 
