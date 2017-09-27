@@ -32,7 +32,7 @@ pub struct Info {
     handle: Handle,
     crtc_id: control::crtc::Handle,
     enc_type: Type,
-    possible_crtcs: u32,
+    possible_crtcs: control::CrtcListFilter,
     possible_clones: u32,
 }
 
@@ -59,6 +59,12 @@ impl Info {
         self.enc_type
     }
 
+    /// Returns a filter for determining which CRTCs are compatible with this
+    /// encoder.
+    pub fn possible_crtcs(&self) -> control::CrtcListFilter {
+        self.possible_crtcs
+    }
+
     /// Returns the currently connected `crtc::Handle`
     pub fn current_crtc(&self) -> Option<control::crtc::Handle> {
         if self.crtc_id.as_raw() == 0 {
@@ -66,20 +72,6 @@ impl Info {
         } else {
             Some(self.crtc_id)
         }
-    }
-
-    /// Returns true if the encoder supports a given `crtc::Handle`
-    pub fn supports_crtc(&self, crtc: control::crtc::Handle) -> bool {
-        use ::std::num::Wrapping;
-
-        self.possible_crtcs & (Wrapping(1u32) << crtc.as_raw() as usize).0 != 0
-    }
-
-    /// Returns true if the encoder supports cloning via a given `crtc::Handle`
-    pub fn supports_clone(&self, crtc: control::crtc::Handle) -> bool {
-        use ::std::num::Wrapping;
-
-        self.possible_clones & (Wrapping(1u32) << crtc.as_raw() as usize).0 != 0
     }
 }
 
@@ -100,7 +92,7 @@ impl ResourceInfo for Info {
                 handle: handle,
                 crtc_id: control::crtc::Handle::from_raw(raw.crtc_id),
                 enc_type: Type::from(raw.encoder_type),
-                possible_crtcs: raw.possible_crtcs,
+                possible_crtcs: control::CrtcListFilter(raw.possible_crtcs),
                 possible_clones: raw.possible_clones,
             }
         };
