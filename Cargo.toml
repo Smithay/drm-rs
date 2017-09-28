@@ -1,6 +1,7 @@
 [package]
 name = "drm"
 description = "Safe, low-level bindings to the Direct Rendering Manager API"
+repository = "https://github.com/Smithay/drm-rs"
 version = "0.3.0"
 license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
@@ -8,7 +9,7 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 [dependencies]
 drm-sys = "0.0.9"
 drm-macros = "0.0.1"
-nix = "0.9.0"
+nix = "0.8.1"
 
 [dependencies.error-chain]
 version = "0.11.0"
