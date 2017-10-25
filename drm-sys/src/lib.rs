@@ -12,4 +12,9 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
           target_arch="x86_64"))]
 include!(concat!("platforms/linux/x86_64/bindings.rs"));
 
+#[cfg(all(not(feature = "use_bindgen"),
+          target_os="freebsd",
+          target_arch="x86_64"))]
+include!(concat!("platforms/freebsd/x86_64/bindings.rs"));
+
 pub mod fourcc;
