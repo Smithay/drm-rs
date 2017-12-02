@@ -32,6 +32,7 @@ pub struct Info {
     handle: Handle,
     // TODO: properties
     modes: ffi::Buffer<control::Mode>,
+    encoder: control::encoder::Handle,
     encoders: ffi::Buffer<control::encoder::Handle>,
     con_type: Type,
     con_state: State,
@@ -95,6 +96,15 @@ impl Info {
         &self.modes
     }
 
+    /// Returns the currently active encoder
+    pub fn current_encoder(&self) -> Option<control::encoder::Handle> {
+        if self.encoder.as_raw() == 0 {
+            None
+        } else {
+            Some(self.encoder)
+        }
+    }
+
     /// Returns a list containing each supported [`encoder::Handle`].
     pub fn encoders<'a>(&'a self) -> &'a [control::encoder::Handle] {
         &self.encoders
@@ -126,6 +136,7 @@ impl ResourceInfo for Info {
             let con = Self {
                 handle: handle,
                 modes: ffi_buf!(raw.modes_ptr, raw.count_modes),
+                encoder: control::encoder::Handle::from_raw(raw.encoder_id),
                 encoders: ffi_buf!(raw.encoders_ptr, raw.count_encoders),
                 con_type: Type::from(raw.connector_type),
                 con_state: State::from(raw.connection),
@@ -183,4 +194,3 @@ impl From<u32> for State {
         }
     }
 }
-
