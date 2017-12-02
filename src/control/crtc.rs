@@ -331,6 +331,24 @@ pub fn move_cursor<T>(device: &T, handle: Handle, to: iPoint) -> Result<()>
     Ok(())
 }
 
+/// Clears any hardware-cursor on the given crtc
+pub fn clear_cursor<T>(device: &T, handle: Handle) -> Result<()>
+    where T: control::Device {
+
+    let mut raw: ffi::drm_mode_cursor = Default::default();
+    raw.flags = ffi::DRM_MODE_CURSOR_BO;
+    raw.crtc_id = handle.as_raw();
+    raw.width = 0;
+    raw.height = 0;
+    raw.handle = 0;
+
+    unsafe {
+        try!(ffi::ioctl_mode_cursor(device.as_raw_fd(), &mut raw));
+    }
+
+    Ok(())
+}
+
 #[derive(Debug, Clone)]
 /// The hardware gamma ramp
 pub struct GammaRamp {
