@@ -50,9 +50,28 @@ pub struct Handle(control::RawHandle);
 pub struct Info {
     handle: Handle,
     position: (u32, u32),
-    // TODO: mode
+    mode: Option<control::Mode>,
     fb: control::framebuffer::Handle,
     gamma_length: u32
+}
+
+impl Info {
+    /// Returns the current position
+    pub fn position(&self) -> (u32, u32) {
+        self.position
+    }
+
+    /// Returns the currently set [`Mode`].
+    ///
+    /// [`Mode`]: ../Mode.t.html
+    pub fn mode(&self) -> Option<control::Mode> {
+        self.mode.clone()
+    }
+
+    /// Returns the currently active framebuffer
+    pub fn fb(&self) -> FBHandle {
+        self.fb
+    }
 }
 
 impl control::property::LoadProperties for Handle {
@@ -75,6 +94,13 @@ impl ResourceInfo for Info {
             Self {
                 handle: handle,
                 position: (raw.x, raw.y),
+                mode: if raw.mode_valid != 0 {
+                    Some(control::Mode {
+                        mode: raw.mode.clone(),
+                    })
+                } else {
+                    None
+                },
                 fb: control::framebuffer::Handle::from_raw(raw.fb_id),
                 gamma_length: raw.gamma_size
             }
