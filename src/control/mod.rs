@@ -129,7 +129,7 @@ impl ResourceHandles {
             let ids = ResourceHandles {
                 connectors: ffi_buf!(raw.connector_id_ptr,
                                      raw.count_connectors),
-                encoders: ffi_buf!(raw.encoder_id_ptr, raw.count_connectors),
+                encoders: ffi_buf!(raw.encoder_id_ptr, raw.count_encoders),
                 crtcs: ffi_buf!(raw.crtc_id_ptr, raw.count_crtcs),
                 framebuffers: ffi_buf!(raw.fb_id_ptr, raw.count_fbs),
                 width: (raw.min_width, raw.max_width),
