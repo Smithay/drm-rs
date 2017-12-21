@@ -38,7 +38,7 @@ pub struct Info {
     con_state: State,
     // TODO: Subpixel
     // TODO: Subconnector
-    size: (u32, u32)
+    size: (u32, u32),
 }
 
 /// The physical type of connector.
@@ -62,7 +62,7 @@ pub enum Type {
     EmbeddedDisplayPort,
     Virtual,
     DSI,
-    DPI
+    DPI,
 }
 
 /// The connection state of a connector.
@@ -71,7 +71,7 @@ pub enum Type {
 pub enum State {
     Connected,
     Disconnected,
-    Unknown
+    Unknown,
 }
 
 impl Info {
@@ -119,8 +119,9 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn load_from_device<T>(device: &T, handle: Self::Handle) -> Result<Self>
-        where T: control::Device {
-
+    where
+        T: control::Device,
+    {
         let connector = {
             // TODO: Change to immutable once we no longer need to modify
             // raw.count_props
@@ -140,7 +141,7 @@ impl ResourceInfo for Info {
                 encoders: ffi_buf!(raw.encoders_ptr, raw.count_encoders),
                 con_type: Type::from(raw.connector_type),
                 con_state: State::from(raw.connection),
-                size: (raw.mm_width, raw.mm_height)
+                size: (raw.mm_width, raw.mm_height),
             };
 
             unsafe {
@@ -153,7 +154,9 @@ impl ResourceInfo for Info {
         Ok(connector)
     }
 
-    fn handle(&self) -> Self::Handle { self.handle }
+    fn handle(&self) -> Self::Handle {
+        self.handle
+    }
 }
 
 #[allow(non_snake_case)]
@@ -178,7 +181,7 @@ impl From<u32> for Type {
             ffi::DRM_MODE_CONNECTOR_VIRTUAL => Type::Virtual,
             ffi::DRM_MODE_CONNECTOR_DSI => Type::DSI,
             ffi::DRM_MODE_CONNECTOR_DPI => Type::DPI,
-            _ => Type::Unknown
+            _ => Type::Unknown,
         }
     }
 }
@@ -190,7 +193,7 @@ impl From<u32> for State {
         match n {
             1 => State::Connected,
             2 => State::Disconnected,
-            _ => State::Unknown
+            _ => State::Unknown,
         }
     }
 }

@@ -110,16 +110,15 @@
 
 #![warn(missing_docs)]
 
-extern crate drm_sys;
 #[macro_use]
 extern crate drm_macros;
+extern crate drm_sys;
 
 #[macro_use]
 extern crate nix;
 
 #[macro_use]
 extern crate error_chain;
-
 
 #[macro_use]
 pub mod ffi;
@@ -149,20 +148,18 @@ pub enum ClientCapability {
     /// Universal plane access and api
     UniversalPlanes = ffi::DRM_CLIENT_CAP_UNIVERSAL_PLANES as isize,
     /// Atomic modesetting support
-    Atomic = ffi::DRM_CLIENT_CAP_ATOMIC as isize
+    Atomic = ffi::DRM_CLIENT_CAP_ATOMIC as isize,
 }
 
 /// A trait for all DRM devices.
-pub trait Device : AsRawFd {
+pub trait Device: AsRawFd {
     /// Generates and returns a magic token unique to the current process.
     ///
     /// This token can be used to authenticate with the DRM Master.
     fn get_auth_token(&self) -> Result<AuthToken> {
         let token = {
             let mut raw: ffi::drm_auth_t = Default::default();
-            unsafe {
-                ffi::ioctl_get_magic(self.as_raw_fd(), &mut raw)?
-            };
+            unsafe { ffi::ioctl_get_magic(self.as_raw_fd(), &mut raw)? };
             raw.magic
         };
 
@@ -182,27 +179,21 @@ pub trait Device : AsRawFd {
             raw
         };
 
-        unsafe {
-            ffi::ioctl_set_client_cap(self.as_raw_fd(), &mut raw)?
-        };
+        unsafe { ffi::ioctl_set_client_cap(self.as_raw_fd(), &mut raw)? };
 
         Ok(())
     }
 
     /// Attempts to acquire the DRM Master lock.
     fn set_master(&self) -> Result<()> {
-        unsafe {
-            ffi::ioctl_set_master(self.as_raw_fd())?
-        };
+        unsafe { ffi::ioctl_set_master(self.as_raw_fd())? };
 
         Ok(())
     }
 
     /// Attempts to release the DRM Master lock.
     fn drop_master(&self) -> Result<()> {
-        unsafe {
-            ffi::ioctl_drop_master(self.as_raw_fd())?
-        };
+        unsafe { ffi::ioctl_drop_master(self.as_raw_fd())? };
 
         Ok(())
     }

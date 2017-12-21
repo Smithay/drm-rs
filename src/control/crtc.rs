@@ -52,7 +52,7 @@ pub struct Info {
     position: (u32, u32),
     mode: Option<control::Mode>,
     fb: control::framebuffer::Handle,
-    gamma_length: u32
+    gamma_length: u32,
 }
 
 impl Info {
@@ -82,8 +82,9 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn load_from_device<T>(device: &T, handle: Handle) -> Result<Self>
-        where T: control::Device {
-
+    where
+        T: control::Device,
+    {
         let crtc = {
             let mut raw: ffi::drm_mode_crtc = Default::default();
             raw.crtc_id = handle.0;
@@ -102,23 +103,31 @@ impl ResourceInfo for Info {
                     None
                 },
                 fb: control::framebuffer::Handle::from_raw(raw.fb_id),
-                gamma_length: raw.gamma_size
+                gamma_length: raw.gamma_size,
             }
         };
 
         Ok(crtc)
     }
 
-    fn handle(&self) -> Self::Handle { self.handle }
+    fn handle(&self) -> Self::Handle {
+        self.handle
+    }
 }
 
 /// Attaches a framebuffer to a CRTC's built-in plane, attaches the CRTC to
 /// a connector, and sets the CRTC's mode to output the pixel data.
-pub fn set<T>(device: &T, handle: Handle, fb: FBHandle, cons: &[ConHandle],
-              position: (u32, u32), mode: Option<control::Mode>) -> Result<()>
-    where T: control::Device {
-
-
+pub fn set<T>(
+    device: &T,
+    handle: Handle,
+    fb: FBHandle,
+    cons: &[ConHandle],
+    position: (u32, u32),
+    mode: Option<control::Mode>,
+) -> Result<()>
+where
+    T: control::Device,
+{
     let mut raw: ffi::drm_mode_crtc = Default::default();
     raw.x = position.0;
     raw.y = position.1;
@@ -131,8 +140,8 @@ pub fn set<T>(device: &T, handle: Handle, fb: FBHandle, cons: &[ConHandle],
         Some(m) => {
             raw.mode = m.mode;
             raw.mode_valid = 1;
-        },
-        _ => ()
+        }
+        _ => (),
     };
 
     unsafe {
@@ -158,8 +167,9 @@ pub enum PageFlipFlags {
 /// crtc and an event will be triggered by the device, which will be indicated by it's fd becoming
 /// readable. The event can be received using `handle_event`.
 pub fn page_flip<T>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFlipFlags]) -> Result<()>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     let mut raw: ffi::drm_mode_crtc_page_flip = Default::default();
     raw.fb_id = fb.as_raw();
     raw.crtc_id = handle.as_raw();
@@ -215,26 +225,42 @@ impl Iterator for Events {
 
     fn next(&mut self) -> Option<Event> {
         if self.amount > 0 && self.i < self.amount {
-            let event = unsafe { &*(self.event_buf.as_ptr().offset(self.i as isize) as *const ffi::drm_event) };
+            let event = unsafe {
+                &*(self.event_buf.as_ptr().offset(self.i as isize) as *const ffi::drm_event)
+            };
             self.i += event.length as usize;
             match event.type_ {
                 x if x == ffi::DRM_EVENT_VBLANK => {
-                    let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                    let vblank_event: &ffi::drm_event_vblank =
+                        unsafe { mem::transmute(event) };
                     Some(Event::Vblank(VblankEvent {
                         frame: vblank_event.sequence,
-                        duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 100),
+                        duration: Duration::new(
+                            vblank_event.tv_sec as u64,
+                            vblank_event.tv_usec * 100,
+                        ),
                         crtc: Handle::from_raw(vblank_event.user_data as u32),
                     }))
-                },
+                }
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
-                    let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                    let vblank_event: &ffi::drm_event_vblank =
+                        unsafe { mem::transmute(event) };
                     Some(Event::PageFlip(PageFlipEvent {
                         frame: vblank_event.sequence,
-                        duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
-                        crtc: Handle::from_raw(if vblank_event.crtc_id != 0 { vblank_event.crtc_id } else { vblank_event.user_data as u32 }),
+                        duration: Duration::new(
+                            vblank_event.tv_sec as u64,
+                            vblank_event.tv_usec * 1000,
+                        ),
+                        crtc: Handle::from_raw(if vblank_event.crtc_id != 0 {
+                            vblank_event.crtc_id
+                        } else {
+                            vblank_event.user_data as u32
+                        }),
                     }))
-                },
-                _ => Some(Event::Unknown(self.event_buf[self.i-(event.length as usize)..self.i].to_vec())),
+                }
+                _ => Some(Event::Unknown(
+                    self.event_buf[self.i - (event.length as usize)..self.i].to_vec(),
+                )),
             }
         } else {
             None
@@ -244,16 +270,15 @@ impl Iterator for Events {
 
 /// Receives all pending events of a given device and returns an Iterator for them.
 pub fn receive_events<T>(device: &T) -> Result<Events>
-    where T: control::Device,
+where
+    T: control::Device,
 {
     struct DeviceWrapper<'a, T: control::Device + 'a>(&'a T);
     impl<'a, T: control::Device> Read for DeviceWrapper<'a, T> {
         fn read(&mut self, buf: &mut [u8]) -> ::std::io::Result<usize> {
-            ::nix::unistd::read(self.0.as_raw_fd(), buf).map_err(|err| {
-                match err {
-                    ::nix::Error::Sys(_) => ::std::io::Error::last_os_error(),
-                    err => ::std::io::Error::new(::std::io::ErrorKind::Other, err),
-                }
+            ::nix::unistd::read(self.0.as_raw_fd(), buf).map_err(|err| match err {
+                ::nix::Error::Sys(_) => ::std::io::Error::last_os_error(),
+                err => ::std::io::Error::new(::std::io::ErrorKind::Other, err),
             })
         }
     }
@@ -271,9 +296,10 @@ pub fn receive_events<T>(device: &T) -> Result<Events>
 
 /// Sets a hardware-cursor on the given crtc with the image of a given buffer
 pub fn set_cursor<T, B>(device: &T, handle: Handle, buffer: &B) -> Result<()>
-    where T: control::Device,
-          B: buffer::Buffer   {
-
+where
+    T: control::Device,
+    B: buffer::Buffer,
+{
     let dimensions = buffer.size();
 
     let mut raw: ffi::drm_mode_cursor = Default::default();
@@ -293,9 +319,10 @@ pub fn set_cursor<T, B>(device: &T, handle: Handle, buffer: &B) -> Result<()>
 /// Sets a hardware-cursor on the given crtc with the image of a given buffer and a hotspot marking
 /// the click point of the cursor
 pub fn set_cursor2<T, B>(device: &T, handle: Handle, buffer: &B, hotspot: iPoint) -> Result<()>
-    where T: control::Device,
-          B: buffer::Buffer   {
-
+where
+    T: control::Device,
+    B: buffer::Buffer,
+{
     let dimensions = buffer.size();
 
     let mut raw: ffi::drm_mode_cursor2 = Default::default();
@@ -316,8 +343,9 @@ pub fn set_cursor2<T, B>(device: &T, handle: Handle, buffer: &B, hotspot: iPoint
 
 /// Moves a set cursor on a given crtc
 pub fn move_cursor<T>(device: &T, handle: Handle, to: iPoint) -> Result<()>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     let mut raw: ffi::drm_mode_cursor = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_MOVE;
     raw.crtc_id = handle.as_raw();
@@ -333,8 +361,9 @@ pub fn move_cursor<T>(device: &T, handle: Handle, to: iPoint) -> Result<()>
 
 /// Clears any hardware-cursor on the given crtc
 pub fn clear_cursor<T>(device: &T, handle: Handle) -> Result<()>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     let mut raw: ffi::drm_mode_cursor = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_BO;
     raw.crtc_id = handle.as_raw();
@@ -362,8 +391,9 @@ pub struct GammaRamp {
 
 /// Receive the currently set gamma ramp of a crtc
 pub fn gamma<T>(device: &T, handle: Handle) -> Result<GammaRamp>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     let info = Info::load_from_device(device, handle)?;
 
     let mut raw: ffi::drm_mode_crtc_lut = Default::default();
@@ -378,28 +408,36 @@ pub fn gamma<T>(device: &T, handle: Handle) -> Result<GammaRamp>
     }
 
     Ok(GammaRamp {
-        red:   red.into_boxed_slice(),
+        red: red.into_boxed_slice(),
         green: green.into_boxed_slice(),
-        blue:  blue.into_boxed_slice(),
+        blue: blue.into_boxed_slice(),
     })
 }
 
 /// Set a gamma ramp for the given crtc
 pub fn set_gamma<T>(device: &T, handle: Handle, mut gamma: GammaRamp) -> Result<()>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     let info = Info::load_from_device(device, handle)?;
 
     if gamma.red.len() as u32 != info.gamma_length {
-        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(gamma.red.len(), info.gamma_length)));
+        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(
+            gamma.red.len(),
+            info.gamma_length,
+        )));
     }
 
     if gamma.green.len() as u32 != info.gamma_length {
-        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(gamma.green.len(), info.gamma_length).into()))
+        return Err(Error::from_kind(
+            ErrorKind::InvalidGammaSize(gamma.green.len(), info.gamma_length).into(),
+        ));
     }
 
     if gamma.blue.len() as u32 != info.gamma_length {
-        return Err(Error::from_kind(ErrorKind::InvalidGammaSize(gamma.blue.len(), info.gamma_length).into()))
+        return Err(Error::from_kind(
+            ErrorKind::InvalidGammaSize(gamma.blue.len(), info.gamma_length).into(),
+        ));
     }
 
     let mut raw: ffi::drm_mode_crtc_lut = Default::default();

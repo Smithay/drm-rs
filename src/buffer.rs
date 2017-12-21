@@ -245,7 +245,7 @@ impl PixelFormat {
 
             x if x == DRM_FORMAT_AYUV as u32 => Some(AYUV),
 
-            _ => None
+            _ => None,
         }
     }
 }

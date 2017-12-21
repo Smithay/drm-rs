@@ -7,7 +7,7 @@ use drm::buffer::PixelFormat;
 
 use drm::control::ResourceInfo;
 use drm::control::ResourceHandle;
-use drm::control::{connector, crtc, framebuffer, dumbbuffer};
+use drm::control::{connector, crtc, dumbbuffer, framebuffer};
 
 use std::fs::File;
 use std::fs::OpenOptions;
@@ -19,11 +19,13 @@ use std::os::unix::io::AsRawFd;
 pub struct Card(File);
 
 impl AsRawFd for Card {
-    fn as_raw_fd(&self) -> RawFd { self.0.as_raw_fd() }
+    fn as_raw_fd(&self) -> RawFd {
+        self.0.as_raw_fd()
+    }
 }
 
-impl BasicDevice for Card { }
-impl ControlDevice for Card { }
+impl BasicDevice for Card {}
+impl ControlDevice for Card {}
 
 impl Card {
     pub fn open(path: &str) -> Self {
@@ -42,22 +44,27 @@ impl Card {
     }
 }
 
-pub fn main()
-{
+pub fn main() {
     let card = Card::open_global();
 
     // Load the information.
-    let res = card.resource_handles().expect("Could not load normal resource ids.");
+    let res = card.resource_handles()
+        .expect("Could not load normal resource ids.");
     let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
     let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
 
     // Filter each connector until we find one that's connected.
-    let con = coninfo.iter().filter(| &i | {
-        i.connection_state() == connector::State::Connected
-    }).next().expect("No connected connectors");
+    let con = coninfo
+        .iter()
+        .filter(|&i| i.connection_state() == connector::State::Connected)
+        .next()
+        .expect("No connected connectors");
 
     // Get the first (usually best) mode
-    let &mode = con.modes().iter().next().expect("No modes found on connector");
+    let &mode = con.modes()
+        .iter()
+        .next()
+        .expect("No modes found on connector");
 
     // Find a crtc and FB
     let crtc = crtcinfo.iter().next().expect("No crtcs found");
@@ -80,8 +87,7 @@ pub fn main()
     }
 
     // Create an FB:
-    let fbinfo = framebuffer::create(&card, &db)
-        .expect("Could not create FB");
+    let fbinfo = framebuffer::create(&card, &db).expect("Could not create FB");
 
     println!("{:#?}", mode);
     println!("{:#?}", fbinfo);
@@ -89,8 +95,14 @@ pub fn main()
 
     // Set the crtc
     // On many setups, this requires root access.
-    crtc::set(&card, crtc.handle(), fbinfo.handle(), &[con.handle()], (0, 0), Some(mode))
-        .expect("Could not set CRTC");
+    crtc::set(
+        &card,
+        crtc.handle(),
+        fbinfo.handle(),
+        &[con.handle()],
+        (0, 0),
+        Some(mode),
+    ).expect("Could not set CRTC");
 
     let five_seconds = ::std::time::Duration::from_millis(5000);
     ::std::thread::sleep(five_seconds);
@@ -100,9 +112,12 @@ pub fn main()
 }
 
 fn load_information<T, U>(card: &Card, handles: &[T]) -> Vec<U>
-    where T: ResourceHandle, U: ResourceInfo<Handle=T> {
-
-    handles.iter().map(| &h | {
-        card.resource_info(h).expect("Could not load resource info")
-    }).collect()
+where
+    T: ResourceHandle,
+    U: ResourceInfo<Handle = T>,
+{
+    handles
+        .iter()
+        .map(|&h| card.resource_info(h).expect("Could not load resource info"))
+        .collect()
 }

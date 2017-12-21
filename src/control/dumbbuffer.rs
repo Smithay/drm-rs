@@ -16,25 +16,33 @@ pub struct DumbBuffer {
     length: usize,
     format: buffer::PixelFormat,
     pitch: u32,
-    handle: buffer::Id
+    handle: buffer::Id,
 }
 
 /// Mapping of a dumbbuffer
 pub struct DumbMapping<'a> {
     _phantom: ::std::marker::PhantomData<&'a ()>,
-    map: &'a mut [u8]
+    map: &'a mut [u8],
 }
 
 impl DumbBuffer {
     /// Create a new dumb buffer with a given size and pixel format
-    pub fn create_from_device<T>(device: &T, size: (u32, u32), format: buffer::PixelFormat)
-                             -> Result<Self>
-        where T: control::Device {
-
+    pub fn create_from_device<T>(
+        device: &T,
+        size: (u32, u32),
+        format: buffer::PixelFormat,
+    ) -> Result<Self>
+    where
+        T: control::Device,
+    {
         let mut raw: ffi::drm_mode_create_dumb = Default::default();
         raw.width = size.0;
         raw.height = size.1;
-        raw.bpp = try!(format.bpp().ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat))) as u32;
+        raw.bpp = try!(
+            format
+                .bpp()
+                .ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat))
+        ) as u32;
 
         unsafe {
             try!(ffi::ioctl_mode_create_dumb(device.as_raw_fd(), &mut raw));
@@ -45,7 +53,7 @@ impl DumbBuffer {
             length: raw.size as usize,
             format: format,
             pitch: raw.pitch,
-            handle: buffer::Id::from_raw(raw.handle)
+            handle: buffer::Id::from_raw(raw.handle),
         };
 
         Ok(dumb)
@@ -53,8 +61,9 @@ impl DumbBuffer {
 
     /// Free the memory resources of a dumb buffer
     pub fn destroy<T>(self, device: &T) -> Result<()>
-        where T: control::Device {
-
+    where
+        T: control::Device,
+    {
         let mut raw: ffi::drm_mode_destroy_dumb = Default::default();
         raw.handle = self.handle.as_raw();
 
@@ -67,8 +76,9 @@ impl DumbBuffer {
 
     /// Map the buffer for access
     pub fn map<'a, T>(&'a mut self, device: &T) -> Result<DumbMapping<'a>>
-        where T: control::Device {
-        
+    where
+        T: control::Device,
+    {
         let mut raw: ffi::drm_mode_map_dumb = Default::default();
         raw.handle = self.handle.as_raw();
 
@@ -89,9 +99,7 @@ impl DumbBuffer {
 
         let mapping = DumbMapping {
             _phantom: ::std::marker::PhantomData,
-            map: unsafe {
-                ::std::slice::from_raw_parts_mut(map as *mut _, self.length)
-            }
+            map: unsafe { ::std::slice::from_raw_parts_mut(map as *mut _, self.length) },
         };
 
         Ok(mapping)
@@ -113,8 +121,16 @@ impl<'a> Drop for DumbMapping<'a> {
 }
 
 impl buffer::Buffer for DumbBuffer {
-    fn size(&self) -> (u32, u32) { self.size }
-    fn format(&self) -> buffer::PixelFormat { self.format }
-    fn pitch(&self) -> u32 { self.pitch }
-    fn handle(&self) -> buffer::Id { self.handle }
+    fn size(&self) -> (u32, u32) {
+        self.size
+    }
+    fn format(&self) -> buffer::PixelFormat {
+        self.format
+    }
+    fn pitch(&self) -> u32 {
+        self.pitch
+    }
+    fn handle(&self) -> buffer::Id {
+        self.handle
+    }
 }

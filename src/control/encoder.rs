@@ -48,7 +48,7 @@ pub enum Type {
     Virtual,
     DSI,
     DPMST,
-    DPI
+    DPI,
 }
 
 impl Info {
@@ -79,8 +79,9 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn load_from_device<T>(device: &T, handle: Handle) -> Result<Self>
-        where T: control::Device {
-
+    where
+        T: control::Device,
+    {
         let enc = {
             let mut raw: ffi::drm_mode_get_encoder = Default::default();
             raw.encoder_id = handle.as_raw();
@@ -100,7 +101,9 @@ impl ResourceInfo for Info {
         Ok(enc)
     }
 
-    fn handle(&self) -> Self::Handle { self.handle }
+    fn handle(&self) -> Self::Handle {
+        self.handle
+    }
 }
 
 impl From<u32> for Type {
@@ -115,7 +118,7 @@ impl From<u32> for Type {
             ffi::DRM_MODE_ENCODER_DSI => Type::DSI,
             ffi::DRM_MODE_ENCODER_DPMST => Type::DPMST,
             ffi::DRM_MODE_ENCODER_DPI => Type::DPI,
-            _ => Type::None
+            _ => Type::None,
         }
     }
 }

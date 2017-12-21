@@ -25,15 +25,16 @@ pub struct Info {
     name: control::RawName,
     mutable: bool,
     pending: bool,
-    value_type: PropertyInfoType
+    value_type: PropertyInfoType,
 }
 
 impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn load_from_device<T>(device: &T, handle: Self::Handle) -> Result<Self>
-        where T: control::Device {
-
+    where
+        T: control::Device,
+    {
         let mut raw: ffi::drm_mode_get_property = Default::default();
         raw.prop_id = handle.as_raw();
         unsafe {
@@ -45,13 +46,15 @@ impl ResourceInfo for Info {
             name: control::RawName(raw.name),
             mutable: raw.flags & (ffi::DRM_MODE_PROP_IMMUTABLE) == 0,
             pending: raw.flags & (ffi::DRM_MODE_PROP_PENDING) == 1,
-            value_type: try!(PropertyInfoType::from_ffi_and_device(device, raw))
+            value_type: try!(PropertyInfoType::from_ffi_and_device(device, raw)),
         };
 
         Ok(info)
     }
 
-    fn handle(&self) -> Self::Handle { self.handle }
+    fn handle(&self) -> Self::Handle {
+        self.handle
+    }
 }
 
 impl Info {
@@ -64,33 +67,17 @@ impl Info {
             PropertyInfoType::URange(_) => Value::URange(value.0 as u64),
             PropertyInfoType::IRange(_) => Value::IRange(value.0 as i64),
             PropertyInfoType::Connector => {
-                Value::Connector(
-                    control::connector::Handle::from_raw(raw_id)
-                )
-            },
-            PropertyInfoType::Encoder => {
-                Value::Encoder(
-                    control::encoder::Handle::from_raw(raw_id)
-                )
-            },
-            PropertyInfoType::Crtc => {
-                Value::Crtc(
-                    control::crtc::Handle::from_raw(raw_id)
-                )
-            },
+                Value::Connector(control::connector::Handle::from_raw(raw_id))
+            }
+            PropertyInfoType::Encoder => Value::Encoder(control::encoder::Handle::from_raw(raw_id)),
+            PropertyInfoType::Crtc => Value::Crtc(control::crtc::Handle::from_raw(raw_id)),
             PropertyInfoType::Framebuffer => {
-                Value::Framebuffer(
-                    control::framebuffer::Handle::from_raw(raw_id)
-                )
-            },
-            PropertyInfoType::Plane => {
-                Value::Plane(
-                    control::plane::Handle::from_raw(raw_id)
-                )
-            },
+                Value::Framebuffer(control::framebuffer::Handle::from_raw(raw_id))
+            }
+            PropertyInfoType::Plane => Value::Plane(control::plane::Handle::from_raw(raw_id)),
             PropertyInfoType::Property => Value::Property(Handle::from_raw(raw_id)),
             PropertyInfoType::Blob => unimplemented!(),
-            PropertyInfoType::Unknown => Value::Unknown
+            PropertyInfoType::Unknown => Value::Unknown,
         }
     }
 }
@@ -107,7 +94,7 @@ pub enum PropertyInfoType {
     Plane,
     Property,
     Blob,
-    Unknown
+    Unknown,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -115,19 +102,21 @@ pub enum PropertyInfoType {
 pub struct AssociatedPropertyHandle {
     handle: Handle,
     value: UnassociatedValue,
-    resource: control::RawHandle
+    resource: control::RawHandle,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// The set of `AssociatedPropertyHandle`s for a specific property.
 pub struct ResourceProperties {
-    handles: ffi::Buffer<AssociatedPropertyHandle>
+    handles: ffi::Buffer<AssociatedPropertyHandle>,
 }
 
 impl ResourceProperties {
     pub fn load_from_device<T, U>(device: &T, handle: U) -> Result<Self>
-        where T: control::Device, U: LoadProperties {
-
+    where
+        T: control::Device,
+        U: LoadProperties,
+    {
         handle.load_resource_properties(device)
     }
 
@@ -151,19 +140,19 @@ pub struct EnumEntry(EnumValue, EnumName);
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// The possible values of a particular enum.
 pub struct EnumInfo {
-    possible: ffi::Buffer<EnumEntry>
+    possible: ffi::Buffer<EnumEntry>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// The possible values of a particular unsigned range.
 pub struct URangeInfo {
-    possible: (u64, u64)
+    possible: (u64, u64),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// The possible values of a particular signed range.
 pub struct IRangeInfo {
-    possible: (i64, i64)
+    possible: (i64, i64),
 }
 
 impl EnumEntry {
@@ -172,40 +161,39 @@ impl EnumEntry {
     }
 
     pub fn name(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(::std::mem::transmute(&self.1))
-        }
+        unsafe { CStr::from_ptr(::std::mem::transmute(&self.1)) }
     }
 }
 
 impl EnumInfo {
-    fn continue_loading<T>(device: &T, mut raw: ffi::drm_mode_get_property) ->
-        Result<Self> where T: control::Device {
-            let eblob = ffi_buf!(raw.enum_blob_ptr,
-                                 raw.count_enum_blobs);
+    fn continue_loading<T>(device: &T, mut raw: ffi::drm_mode_get_property) -> Result<Self>
+    where
+        T: control::Device,
+    {
+        let eblob = ffi_buf!(raw.enum_blob_ptr, raw.count_enum_blobs);
 
-            // We set this to zero because an enum won't fill values_ptr
-            // anyways. No need to create a buffer for it.
-            raw.count_values = 0;
+        // We set this to zero because an enum won't fill values_ptr
+        // anyways. No need to create a buffer for it.
+        raw.count_values = 0;
 
-            unsafe {
-                try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(),
-                                                  &mut raw));
-            }
+        unsafe {
+            try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(), &mut raw));
+        }
 
-            // Collect the enums into a list of EnumPropertyValues
-            let enums = eblob.iter().map(| en: &ffi::drm_mode_property_enum | {
+        // Collect the enums into a list of EnumPropertyValues
+        let enums = eblob
+            .iter()
+            .map(|en: &ffi::drm_mode_property_enum| {
                 let val = EnumValue(en.value as RawValue);
                 let name = EnumName(control::RawName(en.name));
                 EnumEntry(val, name)
-            }).collect();
+            })
+            .collect();
 
-            let en = EnumInfo {
-                possible: enums
-            };
+        let en = EnumInfo { possible: enums };
 
-            Ok(en)
-        }
+        Ok(en)
+    }
 
     pub fn entries(&self) -> &[EnumEntry] {
         &self.possible
@@ -213,54 +201,54 @@ impl EnumInfo {
 }
 
 impl URangeInfo {
-    fn continue_loading<T>(device: &T, mut raw: ffi::drm_mode_get_property) ->
-        Result<Self> where T: control::Device {
-            let values: ffi::Buffer<u64> =
-                ffi_buf!(raw.values_ptr, raw.count_values);
+    fn continue_loading<T>(device: &T, mut raw: ffi::drm_mode_get_property) -> Result<Self>
+    where
+        T: control::Device,
+    {
+        let values: ffi::Buffer<u64> = ffi_buf!(raw.values_ptr, raw.count_values);
 
-            unsafe {
-                try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(),
-                                                  &mut raw));
-            }
-
-            let &min = values.get(0).unwrap_or(&0);
-            let &max = values.get(1).unwrap_or(&u64::max_value());
-
-            let range = URangeInfo {
-                possible: (min, max)
-            };
-
-            Ok(range)
+        unsafe {
+            try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(), &mut raw));
         }
+
+        let &min = values.get(0).unwrap_or(&0);
+        let &max = values.get(1).unwrap_or(&u64::max_value());
+
+        let range = URangeInfo {
+            possible: (min, max),
+        };
+
+        Ok(range)
+    }
 }
 
 impl IRangeInfo {
-    fn continue_loading<T>(device: &T, mut raw: ffi::drm_mode_get_property) ->
-        Result<Self> where T: control::Device {
-            let values: ffi::Buffer<i64> =
-                ffi_buf!(raw.values_ptr, raw.count_values);
+    fn continue_loading<T>(device: &T, mut raw: ffi::drm_mode_get_property) -> Result<Self>
+    where
+        T: control::Device,
+    {
+        let values: ffi::Buffer<i64> = ffi_buf!(raw.values_ptr, raw.count_values);
 
-            unsafe {
-                try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(),
-                                                  &mut raw));
-            }
-
-            let &min = values.get(0).unwrap_or(&i64::min_value());
-            let &max = values.get(1).unwrap_or(&i64::max_value());
-
-            let range = IRangeInfo {
-                possible: (min, max)
-            };
-
-            Ok(range)
+        unsafe {
+            try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(), &mut raw));
         }
+
+        let &min = values.get(0).unwrap_or(&i64::min_value());
+        let &max = values.get(1).unwrap_or(&i64::max_value());
+
+        let range = IRangeInfo {
+            possible: (min, max),
+        };
+
+        Ok(range)
+    }
 }
 
 impl PropertyInfoType {
-    fn from_ffi_and_device<T>(device: &T, raw: ffi::drm_mode_get_property)
-                              -> Result<Self>
-        where T: control::Device {
-
+    fn from_ffi_and_device<T>(device: &T, raw: ffi::drm_mode_get_property) -> Result<Self>
+    where
+        T: control::Device,
+    {
         let info = if Self::is_enum(raw.flags) {
             PropertyInfoType::Enum(EnumInfo::continue_loading(device, raw)?)
         } else if Self::is_urange(raw.flags) {
@@ -317,7 +305,7 @@ pub enum Value {
     Plane(control::plane::Handle),
     Property(Handle),
     // TODO: Blob,
-    Unknown
+    Unknown,
 }
 
 impl UnassociatedValue {
@@ -330,41 +318,41 @@ impl UnassociatedValue {
     }
 }
 
-pub trait LoadProperties : ResourceHandle {
+pub trait LoadProperties: ResourceHandle {
     const TYPE: u32;
 
-    fn load_resource_properties<T>(&self, device: &T)
-                                   -> Result<ResourceProperties>
-        where T: control::Device {
-
+    fn load_resource_properties<T>(&self, device: &T) -> Result<ResourceProperties>
+    where
+        T: control::Device,
+    {
         let mut raw: ffi::drm_mode_obj_get_properties = Default::default();
         raw.obj_id = self.as_raw() as u32;
         raw.obj_type = Self::TYPE;
         unsafe {
-            try!(ffi::ioctl_mode_obj_getproperties(device.as_raw_fd(),
-                                                   &mut raw));
+            try!(ffi::ioctl_mode_obj_getproperties(
+                device.as_raw_fd(),
+                &mut raw
+            ));
         }
         let ids = ffi_buf!(raw.props_ptr, raw.count_props);
         let vals = ffi_buf!(raw.prop_values_ptr, raw.count_props);
         unsafe {
-            try!(ffi::ioctl_mode_obj_getproperties(device.as_raw_fd(),
-                                                   &mut raw));
+            try!(ffi::ioctl_mode_obj_getproperties(
+                device.as_raw_fd(),
+                &mut raw
+            ));
         }
         let handles = ids.into_iter()
-            .map(| id | Handle::from_raw(id) )
+            .map(|id| Handle::from_raw(id))
             .zip(vals.into_iter())
-            .map(| (id, val) | {
-                AssociatedPropertyHandle {
-                    handle: id,
-                    value: UnassociatedValue::from_raw(val),
-                    resource: self.as_raw(),
-                }
+            .map(|(id, val)| AssociatedPropertyHandle {
+                handle: id,
+                value: UnassociatedValue::from_raw(val),
+                resource: self.as_raw(),
             })
             .collect();
 
-        let props = ResourceProperties {
-            handles: handles
-        };
+        let props = ResourceProperties { handles: handles };
 
         Ok(props)
     }
@@ -372,9 +360,7 @@ pub trait LoadProperties : ResourceHandle {
 
 impl ::std::fmt::Debug for EnumName {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        let cstr = unsafe {
-            CStr::from_ptr(::std::mem::transmute(&self.0))
-        };
+        let cstr = unsafe { CStr::from_ptr(::std::mem::transmute(&self.0)) };
         write!(f, "{:?}", cstr)
     }
 }

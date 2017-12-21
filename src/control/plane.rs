@@ -2,10 +2,10 @@
 //!
 //! A plane is an object you can attach framebuffers to for use in displays.
 
-use control::{self, ResourceHandle, ResourceInfo, crtc, framebuffer};
+use control::{self, crtc, framebuffer, ResourceHandle, ResourceInfo};
 use result::*;
 use ffi;
-use ::{iRect, uRect};
+use {iRect, uRect};
 
 /// A [`ResourceHandle`] for a plane.
 ///
@@ -44,8 +44,9 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn load_from_device<T>(device: &T, handle: Self::Handle) -> Result<Self>
-        where T: control::Device {
-
+    where
+        T: control::Device,
+    {
         let plane = {
             let mut raw: ffi::drm_mode_get_plane = Default::default();
             raw.plane_id = handle.0;
@@ -64,7 +65,9 @@ impl ResourceInfo for Info {
         Ok(plane)
     }
 
-    fn handle(&self) -> Self::Handle { self.handle }
+    fn handle(&self) -> Self::Handle {
+        self.handle
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -75,10 +78,19 @@ pub enum PresentFlag {
 }
 
 /// Attaches a framebuffer to a CRTC's plane for hardware-composing
-pub fn set<T>(plane: Handle, device: &T, crtc: crtc::Handle, framebuffer: framebuffer::Handle, flags: PresentFlag, crtc_rect: iRect, src_rect: uRect) -> Result<()>
-    where T: control::Device
+pub fn set<T>(
+    plane: Handle,
+    device: &T,
+    crtc: crtc::Handle,
+    framebuffer: framebuffer::Handle,
+    flags: PresentFlag,
+    crtc_rect: iRect,
+    src_rect: uRect,
+) -> Result<()>
+where
+    T: control::Device,
 {
-    let mut raw : ffi::drm_mode_set_plane = Default::default();
+    let mut raw: ffi::drm_mode_set_plane = Default::default();
 
     raw.plane_id = plane.as_raw();
     raw.crtc_id = crtc.as_raw();
@@ -93,7 +105,9 @@ pub fn set<T>(plane: Handle, device: &T, crtc: crtc::Handle, framebuffer: frameb
     raw.src_w = (src_rect.1).0;
     raw.src_h = (src_rect.1).1;
 
-    unsafe { ffi::ioctl_mode_setplane(device.as_raw_fd(), &mut raw)?; }
+    unsafe {
+        ffi::ioctl_mode_setplane(device.as_raw_fd(), &mut raw)?;
+    }
 
     Ok(())
 }

@@ -35,7 +35,7 @@ pub struct Info {
     pitch: u32,
     bpp: u8,
     // TODO: Gem handle?
-    depth: u8
+    depth: u8,
 }
 
 impl control::property::LoadProperties for Handle {
@@ -46,8 +46,9 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn load_from_device<T>(device: &T, handle: Self::Handle) -> Result<Self>
-        where T: control::Device {
-
+    where
+        T: control::Device,
+    {
         let framebuffer = {
             let mut raw: ffi::drm_mode_fb_cmd = Default::default();
             raw.fb_id = handle.as_raw();
@@ -60,14 +61,16 @@ impl ResourceInfo for Info {
                 size: (raw.width, raw.height),
                 pitch: raw.pitch,
                 bpp: raw.bpp as u8,
-                depth: raw.depth as u8
+                depth: raw.depth as u8,
             }
         };
 
         Ok(framebuffer)
     }
 
-    fn handle(&self) -> Self::Handle { self.handle }
+    fn handle(&self) -> Self::Handle {
+        self.handle
+    }
 }
 
 /// Creates a framebuffer from a [`Buffer`], returning
@@ -75,8 +78,10 @@ impl ResourceInfo for Info {
 ///
 /// [`framebuffer::Info`]: framebuffer.Handle.html
 pub fn create<T, U>(device: &T, buffer: &U) -> Result<Info>
-    where T: control::Device, U: super::super::buffer::Buffer {
-
+where
+    T: control::Device,
+    U: super::super::buffer::Buffer,
+{
     let framebuffer = {
         let mut raw: ffi::drm_mode_fb_cmd2 = Default::default();
         let (w, h) = buffer.size();
@@ -89,9 +94,7 @@ pub fn create<T, U>(device: &T, buffer: &U) -> Result<Info>
         raw.offsets[0] = 0; //TODO
         raw.modifier[0]; //TODO
 
-        match unsafe {
-            ffi::ioctl_mode_addfb2(device.as_raw_fd(), &mut raw)
-        } {
+        match unsafe { ffi::ioctl_mode_addfb2(device.as_raw_fd(), &mut raw) } {
             Ok(_) => try!(Info::load_from_device(device, Handle::from_raw(raw.fb_id))),
             Err(_) => {
                 //ioctl addfd2 unsupported
@@ -99,8 +102,18 @@ pub fn create<T, U>(device: &T, buffer: &U) -> Result<Info>
                 raw_old.width = w;
                 raw_old.height = h;
                 raw_old.pitch = buffer.pitch();
-                let depth = try!(buffer.format().depth().ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat)));
-                let bpp = try!(buffer.format().bpp().ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat)));
+                let depth = try!(
+                    buffer
+                        .format()
+                        .depth()
+                        .ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat))
+                );
+                let bpp = try!(
+                    buffer
+                        .format()
+                        .bpp()
+                        .ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat))
+                );
                 raw_old.bpp = bpp as u32;
                 raw_old.depth = depth as u32;
                 raw_old.handle = buffer.handle().as_raw();
@@ -128,8 +141,9 @@ pub type ClipRect = ffi::drm_clip_rect;
 
 /// Mark areas of a framebuffer dirty
 pub fn mark_dirty<T>(device: &T, fb: Handle, clips: &[ClipRect]) -> Result<()>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     let mut raw: ffi::drm_mode_fb_dirty_cmd = Default::default();
 
     raw.fb_id = fb.as_raw();
@@ -145,10 +159,14 @@ pub fn mark_dirty<T>(device: &T, fb: Handle, clips: &[ClipRect]) -> Result<()>
 
 /// Destroy a framebuffer
 pub fn destroy<T>(device: &T, fb: Handle) -> Result<()>
-    where T: control::Device {
-
+where
+    T: control::Device,
+{
     unsafe {
-        try!(ffi::ioctl_mode_rmfb(device.as_raw_fd(), &mut fb.as_raw() as *mut _));
+        try!(ffi::ioctl_mode_rmfb(
+            device.as_raw_fd(),
+            &mut fb.as_raw() as *mut _
+        ));
     }
 
     Ok(())

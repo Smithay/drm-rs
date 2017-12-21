@@ -3,16 +3,16 @@
 extern crate drm;
 extern crate nix;
 
-use std::fs::{OpenOptions, File};
+use std::fs::{File, OpenOptions};
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::sync::{Mutex, MutexGuard, Once, ONCE_INIT};
 use std::time::{Duration, Instant};
 
 use drm::Device as BasicDevice;
 use drm::control::Device as ControlDevice;
-use drm::control::{ResourceInfo, ResourceHandle};
+use drm::control::{ResourceHandle, ResourceInfo};
 
-use drm::control::{connector, encoder, crtc, framebuffer, plane, dumbbuffer};
+use drm::control::{connector, crtc, dumbbuffer, encoder, framebuffer, plane};
 
 #[derive(Debug)]
 // This is our customized struct that implements the traits in drm.
@@ -20,11 +20,13 @@ struct Card(File);
 
 // Need to implement AsRawFd before we can implement drm::Device
 impl AsRawFd for Card {
-    fn as_raw_fd(&self) -> RawFd { self.0.as_raw_fd() }
+    fn as_raw_fd(&self) -> RawFd {
+        self.0.as_raw_fd()
+    }
 }
 
-impl BasicDevice for Card { }
-impl ControlDevice for Card { }
+impl BasicDevice for Card {}
+impl ControlDevice for Card {}
 
 impl Card {
     fn open(path: &str) -> Self {
@@ -50,23 +52,22 @@ static LOCK_INIT: Once = ONCE_INIT;
 
 // Call this function at the beginning of the test if it cannot run parallel.
 fn wait_for_lock() -> MutexGuard<'static, ()> {
-    LOCK_INIT.call_once(|| {
-        unsafe {
-            GLOBAL_LOCK = Some(Mutex::new(()));
-        }
+    LOCK_INIT.call_once(|| unsafe {
+        GLOBAL_LOCK = Some(Mutex::new(()));
     });
 
-    unsafe {
-        GLOBAL_LOCK.as_ref().unwrap().lock().unwrap()
-    }
+    unsafe { GLOBAL_LOCK.as_ref().unwrap().lock().unwrap() }
 }
 
 fn load_information<T, U>(card: &Card, handles: &[T]) -> Vec<U>
-    where T: ResourceHandle, U: ResourceInfo<Handle=T> {
-
-    handles.iter().map(| &h | {
-        card.resource_info(h).expect("Could not load resource info")
-    }).collect()
+where
+    T: ResourceHandle,
+    U: ResourceInfo<Handle = T>,
+{
+    handles
+        .iter()
+        .map(|&h| card.resource_info(h).expect("Could not load resource info"))
+        .collect()
 }
 
 #[test]
@@ -89,7 +90,7 @@ fn unprivileged_global() {
 fn vblank_modeset() {
     use std::any::Any;
     use std::sync::atomic::{AtomicBool, Ordering};
-    use nix::sys::{time, select};
+    use nix::sys::{select, time};
     use nix::sys::time::TimeValLike;
 
     let cleanup = AtomicBool::new(false);
@@ -100,17 +101,23 @@ fn vblank_modeset() {
     let card = Card::open_control();
 
     // Load the information.
-    let res = card.resource_handles().expect("Could not load normal resource ids.");
+    let res = card.resource_handles()
+        .expect("Could not load normal resource ids.");
     let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
     let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
 
     // Filter each connector until we find one that's connected.
-    let con = coninfo.iter().filter(| &i | {
-        i.connection_state() == connector::State::Connected
-    }).next().expect("No connected connectors");
+    let con = coninfo
+        .iter()
+        .filter(|&i| i.connection_state() == connector::State::Connected)
+        .next()
+        .expect("No connected connectors");
 
     // Get the first (usually best) mode
-    let &mode = con.modes().iter().next().expect("No modes found on connector");
+    let &mode = con.modes()
+        .iter()
+        .next()
+        .expect("No modes found on connector");
 
     // Find a crtc and FB
     let crtc = crtcinfo.iter().next().expect("No crtcs found");
@@ -134,12 +141,10 @@ fn vblank_modeset() {
     }
 
     // Create FBs:
-    let fb_infos =  [
-                        framebuffer::create(&card, &db1)
-                            .expect("Could not create FB1"),
-                        framebuffer::create(&card, &db2)
-                            .expect("Could not create FB2")
-                    ];
+    let fb_infos = [
+        framebuffer::create(&card, &db1).expect("Could not create FB1"),
+        framebuffer::create(&card, &db2).expect("Could not create FB2"),
+    ];
 
     println!("{:#?}", mode);
     println!("{:#?}", fb_infos);
@@ -147,9 +152,21 @@ fn vblank_modeset() {
     println!("{:#?}", db2);
 
     // Set the crtc
-    crtc::set(&card, crtc.handle(), fb_infos[0].handle(), &[con.handle()], (0, 0), Some(mode))
-        .expect("Could not set CRTC");
-    crtc::page_flip(&card, crtc.handle(), fb_infos[1].handle(), &[crtc::PageFlipFlags::PageFlipEvent], None::<Box<()>>).expect("Failed to queue Page Flip");
+    crtc::set(
+        &card,
+        crtc.handle(),
+        fb_infos[0].handle(),
+        &[con.handle()],
+        (0, 0),
+        Some(mode),
+    ).expect("Could not set CRTC");
+    crtc::page_flip(
+        &card,
+        crtc.handle(),
+        fb_infos[1].handle(),
+        &[crtc::PageFlipFlags::PageFlipEvent],
+        None::<Box<()>>,
+    ).expect("Failed to queue Page Flip");
 
     struct PageFlipHandler<'a> {
         index: usize,
@@ -161,7 +178,13 @@ fn vblank_modeset() {
     impl<'a, T: ControlDevice> crtc::PageFlipHandler<T> for PageFlipHandler<'a> {
         fn handle_event(&mut self, device: &T, _: u32, _: Duration, userdata: Box<Any>) {
             if !self.cleanup.load(Ordering::Acquire) {
-                crtc::page_flip(device, self.crtc, self.fb_infos[self.index].handle(), &[crtc::PageFlipFlags::PageFlipEvent], userdata).expect("Failed to queue Page Flip");
+                crtc::page_flip(
+                    device,
+                    self.crtc,
+                    self.fb_infos[self.index].handle(),
+                    &[crtc::PageFlipFlags::PageFlipEvent],
+                    userdata,
+                ).expect("Failed to queue Page Flip");
                 self.index = (self.index + 1) % 2;
             }
         }
@@ -178,8 +201,20 @@ fn vblank_modeset() {
     while Instant::now().duration_since(start) < Duration::new(5, 0) {
         let mut readfds = select::FdSet::new();
         readfds.insert(card.as_raw_fd());
-        match select::select(card.as_raw_fd() + 1, Some(&mut readfds), None, None, Some(&mut time::TimeVal::seconds(5))) {
-            Ok(1) => crtc::handle_event(&card, 2, None::<&mut ()>, Some(&mut handler), None::<&mut ()>).expect("Unable to handle event"),
+        match select::select(
+            card.as_raw_fd() + 1,
+            Some(&mut readfds),
+            None,
+            None,
+            Some(&mut time::TimeVal::seconds(5)),
+        ) {
+            Ok(1) => crtc::handle_event(
+                &card,
+                2,
+                None::<&mut ()>,
+                Some(&mut handler),
+                None::<&mut ()>,
+            ).expect("Unable to handle event"),
             Ok(0) => break,
             Ok(_) => unreachable!(),
             Err(_) => break,
@@ -187,7 +222,13 @@ fn vblank_modeset() {
     }
 
     cleanup.store(true, Ordering::Release);
-    crtc::handle_event(&card, 2, None::<&mut ()>, Some(&mut handler), None::<&mut ()>).expect("Unable to handle event");
+    crtc::handle_event(
+        &card,
+        2,
+        None::<&mut ()>,
+        Some(&mut handler),
+        None::<&mut ()>,
+    ).expect("Unable to handle event");
 
     let mut fbs = fb_infos.to_vec();
     for fb in fbs.drain(..) {
@@ -206,17 +247,23 @@ fn gamma_test() {
     let card = Card::open_control();
 
     // Load the information.
-    let res = card.resource_handles().expect("Could not load normal resource ids.");
+    let res = card.resource_handles()
+        .expect("Could not load normal resource ids.");
     let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
     let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
 
     // Filter each connector until we find one that's connected.
-    let con = coninfo.iter().filter(| &i | {
-        i.connection_state() == connector::State::Connected
-    }).next().expect("No connected connectors");
+    let con = coninfo
+        .iter()
+        .filter(|&i| i.connection_state() == connector::State::Connected)
+        .next()
+        .expect("No connected connectors");
 
     // Get the first (usually best) mode
-    let &mode = con.modes().iter().next().expect("No modes found on connector");
+    let &mode = con.modes()
+        .iter()
+        .next()
+        .expect("No modes found on connector");
 
     // Find a crtc and FB
     let crtc = crtcinfo.iter().next().expect("No crtcs found");
@@ -232,27 +279,41 @@ fn gamma_test() {
     }
 
     // Create an FB:
-    let fbinfo = framebuffer::create(&card, &db)
-        .expect("Could not create FB");
+    let fbinfo = framebuffer::create(&card, &db).expect("Could not create FB");
 
     println!("{:#?}", mode);
     println!("{:#?}", fbinfo);
     println!("{:#?}", db);
 
     // Set the crtc
-    crtc::set(&card, crtc.handle(), fbinfo.handle(), &[con.handle()], (0, 0), Some(mode))
-        .expect("Could not set CRTC");
+    crtc::set(
+        &card,
+        crtc.handle(),
+        fbinfo.handle(),
+        &[con.handle()],
+        (0, 0),
+        Some(mode),
+    ).expect("Could not set CRTC");
 
     let five_seconds = ::std::time::Duration::from_millis(5000);
     ::std::thread::sleep(five_seconds);
 
     let gamma = crtc::gamma(&card, crtc.handle()).unwrap();
     println!("{:?}", gamma.red);
-    crtc::set_gamma(&card, crtc.handle(), crtc::GammaRamp {
-        red: gamma.red.iter().map(|_| ::std::u16::MAX).collect::<Vec<u16>>().into_boxed_slice(),
-        green: gamma.green.clone(),
-        blue: gamma.blue.clone(),
-    }).unwrap();
+    crtc::set_gamma(
+        &card,
+        crtc.handle(),
+        crtc::GammaRamp {
+            red: gamma
+                .red
+                .iter()
+                .map(|_| ::std::u16::MAX)
+                .collect::<Vec<u16>>()
+                .into_boxed_slice(),
+            green: gamma.green.clone(),
+            blue: gamma.blue.clone(),
+        },
+    ).unwrap();
 
     ::std::thread::sleep(five_seconds);
     crtc::set_gamma(&card, crtc.handle(), gamma).unwrap();

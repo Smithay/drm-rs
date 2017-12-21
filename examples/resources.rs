@@ -5,7 +5,7 @@ use drm::control::Device as ControlDevice;
 
 use drm::control::ResourceInfo;
 use drm::control::ResourceHandle;
-use drm::control::{connector, encoder, crtc, framebuffer, plane, dumbbuffer};
+use drm::control::{connector, crtc, dumbbuffer, encoder, framebuffer, plane};
 
 use std::fs::File;
 use std::fs::OpenOptions;
@@ -17,11 +17,13 @@ use std::os::unix::io::AsRawFd;
 pub struct Card(File);
 
 impl AsRawFd for Card {
-    fn as_raw_fd(&self) -> RawFd { self.0.as_raw_fd() }
+    fn as_raw_fd(&self) -> RawFd {
+        self.0.as_raw_fd()
+    }
 }
 
-impl BasicDevice for Card { }
-impl ControlDevice for Card { }
+impl BasicDevice for Card {}
+impl ControlDevice for Card {}
 
 impl Card {
     pub fn open(path: &str) -> Self {
@@ -40,8 +42,7 @@ impl Card {
     }
 }
 
-pub fn main()
-{
+pub fn main() {
     let card = Card::open_global();
 
     let res = card.resource_handles().expect("Can't get resource handles");
@@ -61,9 +62,12 @@ pub fn main()
 }
 
 fn load_information<T, U>(card: &Card, handles: &[T]) -> Vec<U>
-    where T: ResourceHandle, U: ResourceInfo<Handle=T> {
-
-    handles.iter().map(| &h | {
-        card.resource_info(h).expect("Could not load resource info")
-    }).collect()
+where
+    T: ResourceHandle,
+    U: ResourceInfo<Handle = T>,
+{
+    handles
+        .iter()
+        .map(|&h| card.resource_info(h).expect("Could not load resource info"))
+        .collect()
 }
