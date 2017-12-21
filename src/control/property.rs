@@ -322,8 +322,8 @@ pub trait LoadProperties: ResourceHandle {
                 &mut raw
             ));
         }
-        let ids = ffi_buf!(raw.props_ptr, raw.count_props);
-        let vals = ffi_buf!(raw.prop_values_ptr, raw.count_props);
+        let ids: ffi::Buffer<Handle> = ffi_buf!(raw.props_ptr, raw.count_props);
+        let vals: ffi::Buffer<UnassociatedValue> = ffi_buf!(raw.prop_values_ptr, raw.count_props);
         unsafe {
             try!(ffi::ioctl_mode_obj_getproperties(
                 device.as_raw_fd(),
@@ -331,11 +331,10 @@ pub trait LoadProperties: ResourceHandle {
             ));
         }
         let handles = ids.into_iter()
-            .map(|id| Handle::from(id))
             .zip(vals.into_iter())
             .map(|(id, val)| AssociatedPropertyHandle {
                 handle: id,
-                value: UnassociatedValue::from(val),
+                value: val,
                 resource: self.into(),
             })
             .collect();
