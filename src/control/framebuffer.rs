@@ -19,11 +19,9 @@ use ffi;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`framebuffer::Info`]: Info.t.html
 /// [`ResourceIds::framebuffers`]: ResourceIds.t.html#method.framebuffers
-#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
-#[HandleType = "framebuffer"]
-#[HandleTrait = "ResourceHandle"]
-#[HandleRaw = "control::RawHandle"]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
 pub struct Handle(control::RawHandle);
+impl ResourceHandle for Handle {}
 
 /// A [`ResourceInfo`] for a framebuffer.
 ///
@@ -51,7 +49,7 @@ impl ResourceInfo for Info {
     {
         let framebuffer = {
             let mut raw: ffi::drm_mode_fb_cmd = Default::default();
-            raw.fb_id = handle.as_raw();
+            raw.fb_id = handle.into();
             unsafe {
                 try!(ffi::ioctl_mode_getfb(device.as_raw_fd(), &mut raw));
             }
@@ -89,13 +87,13 @@ where
         raw.height = h;
         raw.pixel_format = buffer.format().as_raw();
         raw.flags = 0; //TODO
-        raw.handles[0] = buffer.handle().as_raw();
+        raw.handles[0] = buffer.handle().into();
         raw.pitches[0] = buffer.pitch();
         raw.offsets[0] = 0; //TODO
         raw.modifier[0]; //TODO
 
         match unsafe { ffi::ioctl_mode_addfb2(device.as_raw_fd(), &mut raw) } {
-            Ok(_) => try!(Info::load_from_device(device, Handle::from_raw(raw.fb_id))),
+            Ok(_) => try!(Info::load_from_device(device, Handle::from(raw.fb_id))),
             Err(_) => {
                 //ioctl addfd2 unsupported
                 let mut raw_old: ffi::drm_mode_fb_cmd = Default::default();
@@ -116,14 +114,14 @@ where
                 );
                 raw_old.bpp = bpp as u32;
                 raw_old.depth = depth as u32;
-                raw_old.handle = buffer.handle().as_raw();
+                raw_old.handle = buffer.handle().into();
 
                 unsafe {
                     try!(ffi::ioctl_mode_addfb(device.as_raw_fd(), &mut raw_old));
                 }
 
                 Info {
-                    handle: Handle::from_raw(raw_old.fb_id),
+                    handle: Handle::from(raw_old.fb_id),
                     size: (raw_old.width, raw_old.height),
                     pitch: raw_old.pitch,
                     depth: raw_old.depth as u8,
@@ -146,7 +144,7 @@ where
 {
     let mut raw: ffi::drm_mode_fb_dirty_cmd = Default::default();
 
-    raw.fb_id = fb.as_raw();
+    raw.fb_id = fb.into();
     raw.num_clips = clips.len() as u32;
     raw.clips_ptr = clips.as_ptr() as u64;
 
@@ -165,7 +163,7 @@ where
     unsafe {
         try!(ffi::ioctl_mode_rmfb(
             device.as_raw_fd(),
-            &mut fb.as_raw() as *mut _
+            &mut fb.into() as *mut _
         ));
     }
 

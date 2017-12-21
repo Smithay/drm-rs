@@ -110,12 +110,13 @@
 
 #![warn(missing_docs)]
 
-#[macro_use]
-extern crate drm_macros;
 extern crate drm_sys;
 
 #[macro_use]
 extern crate nix;
+
+#[macro_use]
+extern crate derive_more;
 
 #[macro_use]
 extern crate error_chain;
@@ -130,7 +131,7 @@ pub mod buffer;
 use std::os::unix::io::AsRawFd;
 use result::Result;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, From, Into)]
 /// A token unique to the process that determines who opened the device.
 ///
 /// This token can be sent to another process that acts as the DRM Master and

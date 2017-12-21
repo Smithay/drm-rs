@@ -18,11 +18,9 @@ use {iRect, uRect};
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`plane::Info`]: Info.t.html
 /// [`PlaneResourceHandles::planes`]: PlaneResourceHandles.t.html#method.planes
-#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
-#[HandleType = "plane"]
-#[HandleTrait = "ResourceHandle"]
-#[HandleRaw = "control::RawHandle"]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
 pub struct Handle(control::RawHandle);
+impl ResourceHandle for Handle {}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// The `ResourceInfo` on a plane.
@@ -49,15 +47,15 @@ impl ResourceInfo for Info {
     {
         let plane = {
             let mut raw: ffi::drm_mode_get_plane = Default::default();
-            raw.plane_id = handle.0;
+            raw.plane_id = handle.into();
             unsafe {
                 try!(ffi::ioctl_mode_getplane(device.as_raw_fd(), &mut raw));
             }
 
             Self {
                 handle: handle,
-                crtc: control::crtc::Handle::from_raw(raw.crtc_id),
-                fb: control::framebuffer::Handle::from_raw(raw.fb_id),
+                crtc: control::crtc::Handle::from(raw.crtc_id),
+                fb: control::framebuffer::Handle::from(raw.fb_id),
                 gamma_length: raw.gamma_size,
             }
         };
@@ -92,9 +90,9 @@ where
 {
     let mut raw: ffi::drm_mode_set_plane = Default::default();
 
-    raw.plane_id = plane.as_raw();
-    raw.crtc_id = crtc.as_raw();
-    raw.fb_id = framebuffer.as_raw();
+    raw.plane_id = plane.into();
+    raw.crtc_id = crtc.into();
+    raw.fb_id = framebuffer.into();
     raw.flags = flags as u32;
     raw.crtc_x = (crtc_rect.0).0;
     raw.crtc_y = (crtc_rect.0).1;

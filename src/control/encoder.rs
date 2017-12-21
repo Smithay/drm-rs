@@ -18,11 +18,9 @@ use ffi;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`encoder::Info`]: Info.t.html
 /// [`ResourceHandles::encoders`]: ResourceHandles.t.html#method.encoders
-#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
-#[HandleType = "encoder"]
-#[HandleTrait = "ResourceHandle"]
-#[HandleRaw = "control::RawHandle"]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
 pub struct Handle(control::RawHandle);
+impl ResourceHandle for Handle {}
 
 /// A [`ResourceInfo`] for an encoder.
 ///
@@ -67,7 +65,7 @@ impl Info {
 
     /// Returns the currently connected `crtc::Handle`
     pub fn current_crtc(&self) -> Option<control::crtc::Handle> {
-        if self.crtc_id.as_raw() == 0 {
+        if self.crtc_id == control::crtc::Handle::from(0) {
             None
         } else {
             Some(self.crtc_id)
@@ -84,14 +82,14 @@ impl ResourceInfo for Info {
     {
         let enc = {
             let mut raw: ffi::drm_mode_get_encoder = Default::default();
-            raw.encoder_id = handle.as_raw();
+            raw.encoder_id = handle.into();
             unsafe {
                 try!(ffi::ioctl_mode_getencoder(device.as_raw_fd(), &mut raw));
             }
 
             Self {
                 handle: handle,
-                crtc_id: control::crtc::Handle::from_raw(raw.crtc_id),
+                crtc_id: control::crtc::Handle::from(raw.crtc_id),
                 enc_type: Type::from(raw.encoder_type),
                 possible_crtcs: control::CrtcListFilter(raw.possible_crtcs),
                 possible_clones: raw.possible_clones,

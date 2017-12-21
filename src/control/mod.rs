@@ -13,7 +13,7 @@ pub mod dumbbuffer;
 /// The underlying id for a resource.
 pub type RawHandle = u32;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, From, Into)]
 /// An array to hold the name of a property.
 pub struct RawName([i8; 32]);
 
@@ -78,13 +78,7 @@ pub trait Device: Sized + super::Device {
 /// provide some sort of handle that we can use to refer to them. Almost all
 /// operations performed on a `Device` that use an object or resource require
 /// making requests using a handle.
-pub trait ResourceHandle: Eq + Copy + Hash {
-    /// Create this handle from its raw part.
-    fn from_raw(RawHandle) -> Self;
-
-    /// Get the raw part from this handle.
-    fn as_raw(&self) -> RawHandle;
-}
+pub trait ResourceHandle: Copy + Eq + Hash + From<RawHandle> + Into<RawHandle> {}
 
 /// Information about a resource or object managed by a `Device`.
 ///

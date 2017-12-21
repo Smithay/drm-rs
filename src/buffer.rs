@@ -3,7 +3,7 @@ use ffi::fourcc::*;
 /// The underlying handle for a buffer
 pub type RawId = u32;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, From, Into)]
 /// GEM handle of a buffer
 pub struct Id(RawId);
 

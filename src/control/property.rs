@@ -12,11 +12,9 @@ use std::ffi::CStr;
 pub type RawValue = u64;
 
 /// A `ResourceHandle` to a property.
-#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
-#[HandleType = "property"]
-#[HandleTrait = "ResourceHandle"]
-#[HandleRaw = "control::RawHandle"]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
 pub struct Handle(control::RawHandle);
+impl ResourceHandle for Handle {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// The `ResourceInfo` on a property.
@@ -36,7 +34,7 @@ impl ResourceInfo for Info {
         T: control::Device,
     {
         let mut raw: ffi::drm_mode_get_property = Default::default();
-        raw.prop_id = handle.as_raw();
+        raw.prop_id = handle.into();
         unsafe {
             try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(), &mut raw));
         }
@@ -67,15 +65,15 @@ impl Info {
             PropertyInfoType::URange(_) => Value::URange(value.0 as u64),
             PropertyInfoType::IRange(_) => Value::IRange(value.0 as i64),
             PropertyInfoType::Connector => {
-                Value::Connector(control::connector::Handle::from_raw(raw_id))
+                Value::Connector(control::connector::Handle::from(raw_id))
             }
-            PropertyInfoType::Encoder => Value::Encoder(control::encoder::Handle::from_raw(raw_id)),
-            PropertyInfoType::Crtc => Value::Crtc(control::crtc::Handle::from_raw(raw_id)),
+            PropertyInfoType::Encoder => Value::Encoder(control::encoder::Handle::from(raw_id)),
+            PropertyInfoType::Crtc => Value::Crtc(control::crtc::Handle::from(raw_id)),
             PropertyInfoType::Framebuffer => {
-                Value::Framebuffer(control::framebuffer::Handle::from_raw(raw_id))
+                Value::Framebuffer(control::framebuffer::Handle::from(raw_id))
             }
-            PropertyInfoType::Plane => Value::Plane(control::plane::Handle::from_raw(raw_id)),
-            PropertyInfoType::Property => Value::Property(Handle::from_raw(raw_id)),
+            PropertyInfoType::Plane => Value::Plane(control::plane::Handle::from(raw_id)),
+            PropertyInfoType::Property => Value::Property(Handle::from(raw_id)),
             PropertyInfoType::Blob => unimplemented!(),
             PropertyInfoType::Unknown => Value::Unknown,
         }
@@ -125,31 +123,31 @@ impl ResourceProperties {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, From, Into)]
 /// The value of an EnumEntry
 pub struct EnumValue(RawValue);
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 /// The name of an EnumEntry
 pub struct EnumName(control::RawName);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// A possible entry in an EnumInfo
 pub struct EnumEntry(EnumValue, EnumName);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// The possible values of a particular enum.
 pub struct EnumInfo {
     possible: ffi::Buffer<EnumEntry>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// The possible values of a particular unsigned range.
 pub struct URangeInfo {
     possible: (u64, u64),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// The possible values of a particular signed range.
 pub struct IRangeInfo {
     possible: (i64, i64),
@@ -288,7 +286,7 @@ impl PropertyInfoType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, From, Into)]
 /// A generic value that is not associated with any particular type.
 pub struct UnassociatedValue(u64);
 
@@ -308,25 +306,15 @@ pub enum Value {
     Unknown,
 }
 
-impl UnassociatedValue {
-    pub fn from_raw(raw: RawValue) -> Self {
-        UnassociatedValue(raw)
-    }
-
-    pub fn as_raw(&self) -> RawValue {
-        self.0
-    }
-}
-
 pub trait LoadProperties: ResourceHandle {
     const TYPE: u32;
 
-    fn load_resource_properties<T>(&self, device: &T) -> Result<ResourceProperties>
+    fn load_resource_properties<T>(self, device: &T) -> Result<ResourceProperties>
     where
         T: control::Device,
     {
         let mut raw: ffi::drm_mode_obj_get_properties = Default::default();
-        raw.obj_id = self.as_raw() as u32;
+        raw.obj_id = self.into();
         raw.obj_type = Self::TYPE;
         unsafe {
             try!(ffi::ioctl_mode_obj_getproperties(
@@ -343,12 +331,12 @@ pub trait LoadProperties: ResourceHandle {
             ));
         }
         let handles = ids.into_iter()
-            .map(|id| Handle::from_raw(id))
+            .map(|id| Handle::from(id))
             .zip(vals.into_iter())
             .map(|(id, val)| AssociatedPropertyHandle {
                 handle: id,
-                value: UnassociatedValue::from_raw(val),
-                resource: self.as_raw(),
+                value: UnassociatedValue::from(val),
+                resource: self.into(),
             })
             .collect();
 

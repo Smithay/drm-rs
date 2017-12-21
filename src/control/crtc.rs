@@ -37,11 +37,9 @@ use std::time::Duration;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`crtc::Info`]: Info.t.html
 /// [`ResourceIds::crtcs`]: ResourceIds.t.html#method.crtcs
-#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
-#[HandleType = "crtc"]
-#[HandleTrait = "ResourceHandle"]
-#[HandleRaw = "control::RawHandle"]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
 pub struct Handle(control::RawHandle);
+impl ResourceHandle for Handle {}
 
 /// A [`ResourceInfo`] for a CRTC.
 ///
@@ -102,7 +100,7 @@ impl ResourceInfo for Info {
                 } else {
                     None
                 },
-                fb: control::framebuffer::Handle::from_raw(raw.fb_id),
+                fb: control::framebuffer::Handle::from(raw.fb_id),
                 gamma_length: raw.gamma_size,
             }
         };
@@ -131,8 +129,8 @@ where
     let mut raw: ffi::drm_mode_crtc = Default::default();
     raw.x = position.0;
     raw.y = position.1;
-    raw.crtc_id = handle.as_raw();
-    raw.fb_id = fb.as_raw();
+    raw.crtc_id = handle.into();
+    raw.fb_id = fb.into();
     raw.set_connectors_ptr = cons.as_ptr() as u64;
     raw.count_connectors = cons.len() as u32;
 
@@ -171,10 +169,10 @@ where
     T: control::Device,
 {
     let mut raw: ffi::drm_mode_crtc_page_flip = Default::default();
-    raw.fb_id = fb.as_raw();
-    raw.crtc_id = handle.as_raw();
+    raw.fb_id = fb.into();
+    raw.crtc_id = handle.into();
     raw.flags = flags.into_iter().fold(0, |val, flag| val | *flag as u32);
-    raw.user_data = handle.as_raw() as u64;
+    raw.user_data = handle.0 as u64;
 
     unsafe {
         try!(ffi::ioctl_mode_page_flip(device.as_raw_fd(), &mut raw));
@@ -239,7 +237,7 @@ impl Iterator for Events {
                             vblank_event.tv_sec as u64,
                             vblank_event.tv_usec * 100,
                         ),
-                        crtc: Handle::from_raw(vblank_event.user_data as u32),
+                        crtc: Handle::from(vblank_event.user_data as u32),
                     }))
                 }
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
@@ -251,7 +249,7 @@ impl Iterator for Events {
                             vblank_event.tv_sec as u64,
                             vblank_event.tv_usec * 1000,
                         ),
-                        crtc: Handle::from_raw(if vblank_event.crtc_id != 0 {
+                        crtc: Handle::from(if vblank_event.crtc_id != 0 {
                             vblank_event.crtc_id
                         } else {
                             vblank_event.user_data as u32
@@ -304,10 +302,10 @@ where
 
     let mut raw: ffi::drm_mode_cursor = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_BO;
-    raw.crtc_id = handle.as_raw();
+    raw.crtc_id = handle.into();
     raw.width = dimensions.0;
     raw.height = dimensions.1;
-    raw.handle = buffer.handle().as_raw();
+    raw.handle = buffer.handle().into();
 
     unsafe {
         try!(ffi::ioctl_mode_cursor(device.as_raw_fd(), &mut raw));
@@ -327,10 +325,10 @@ where
 
     let mut raw: ffi::drm_mode_cursor2 = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_BO;
-    raw.crtc_id = handle.as_raw();
+    raw.crtc_id = handle.into();
     raw.width = dimensions.0;
     raw.height = dimensions.1;
-    raw.handle = buffer.handle().as_raw();
+    raw.handle = buffer.handle().into();
     raw.hot_x = hotspot.0;
     raw.hot_y = hotspot.1;
 
@@ -348,7 +346,7 @@ where
 {
     let mut raw: ffi::drm_mode_cursor = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_MOVE;
-    raw.crtc_id = handle.as_raw();
+    raw.crtc_id = handle.into();
     raw.x = to.0;
     raw.y = to.1;
 
@@ -366,7 +364,7 @@ where
 {
     let mut raw: ffi::drm_mode_cursor = Default::default();
     raw.flags = ffi::DRM_MODE_CURSOR_BO;
-    raw.crtc_id = handle.as_raw();
+    raw.crtc_id = handle.into();
     raw.width = 0;
     raw.height = 0;
     raw.handle = 0;
@@ -397,7 +395,7 @@ where
     let info = Info::load_from_device(device, handle)?;
 
     let mut raw: ffi::drm_mode_crtc_lut = Default::default();
-    raw.crtc_id = handle.as_raw();
+    raw.crtc_id = handle.into();
     raw.gamma_size = info.gamma_length;
     let red = ffi_buf!(raw.red, info.gamma_length as usize);
     let green = ffi_buf!(raw.green, info.gamma_length as usize);
@@ -441,7 +439,7 @@ where
     }
 
     let mut raw: ffi::drm_mode_crtc_lut = Default::default();
-    raw.crtc_id = handle.as_raw();
+    raw.crtc_id = handle.into();
     raw.gamma_size = info.gamma_length;
     raw.red = gamma.red.as_mut_ptr() as u64;
     raw.green = gamma.green.as_mut_ptr() as u64;

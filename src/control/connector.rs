@@ -18,11 +18,9 @@ use result::*;
 /// [`ResourceHandle`]: ../ResourceHandle.t.html
 /// [`connector::Info`]: Info.t.html
 /// [`ResourceHandles::connectors`]: ../ResourceHandles.t.html#method.connectors
-#[derive(Handle, Clone, Copy, PartialEq, Eq, Hash)]
-#[HandleType = "connector"]
-#[HandleTrait = "ResourceHandle"]
-#[HandleRaw = "control::RawHandle"]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
 pub struct Handle(control::RawHandle);
+impl ResourceHandle for Handle {}
 
 /// A [`ResourceInfo`] for a connector.
 ///
@@ -98,7 +96,7 @@ impl Info {
 
     /// Returns the currently active encoder
     pub fn current_encoder(&self) -> Option<control::encoder::Handle> {
-        if self.encoder.as_raw() == 0 {
+        if self.encoder == control::encoder::Handle::from(0) {
             None
         } else {
             Some(self.encoder)
@@ -126,7 +124,7 @@ impl ResourceInfo for Info {
             // TODO: Change to immutable once we no longer need to modify
             // raw.count_props
             let mut raw: ffi::drm_mode_get_connector = Default::default();
-            raw.connector_id = handle.as_raw();
+            raw.connector_id = handle.into();
             unsafe {
                 try!(ffi::ioctl_mode_getconnector(device.as_raw_fd(), &mut raw));
             }
@@ -137,7 +135,7 @@ impl ResourceInfo for Info {
             let con = Self {
                 handle: handle,
                 modes: ffi_buf!(raw.modes_ptr, raw.count_modes),
-                encoder: control::encoder::Handle::from_raw(raw.encoder_id),
+                encoder: control::encoder::Handle::from(raw.encoder_id),
                 encoders: ffi_buf!(raw.encoders_ptr, raw.count_encoders),
                 con_type: Type::from(raw.connector_type),
                 con_state: State::from(raw.connection),

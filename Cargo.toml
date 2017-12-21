@@ -8,8 +8,8 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
 drm-sys = "0.0.9"
-drm-macros = "0.0.1"
 nix = "0.8.1"
+derive_more = "*"
 
 [dependencies.error-chain]
 version = "0.11.0"
