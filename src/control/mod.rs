@@ -1,7 +1,7 @@
 use result::*;
 use ffi;
 use std::ffi::CStr;
-use std::hash::Hash;
+use std::hash::{Hash, Hasher};
 pub mod connector;
 pub mod encoder;
 pub mod crtc;
@@ -328,7 +328,7 @@ impl Mode {
 // We need to implement PartialEq manually for Mode
 impl PartialEq for Mode {
     fn eq(&self, other: &Mode) -> bool {
-        self.mode.clock == other.mode.clock && self.mode.clock == other.mode.clock
+        self.mode.clock == other.mode.clock
             && self.mode.hdisplay == other.mode.hdisplay
             && self.mode.hsync_start == other.mode.hsync_start
             && self.mode.hsync_end == other.mode.hsync_end
@@ -339,11 +339,28 @@ impl PartialEq for Mode {
             && self.mode.vtotal == other.mode.vtotal && self.mode.vscan == other.mode.vscan
             && self.mode.vrefresh == other.mode.vrefresh
             && self.mode.flags == other.mode.flags && self.mode.type_ == other.mode.type_
-            && self.mode.name == other.mode.name
     }
 }
 
 impl Eq for Mode {}
+
+impl Hash for Mode {
+    fn hash<H>(&self, state: &mut H)
+        where H: Hasher
+    {
+        self.mode.clock.hash(state);
+        self.mode.hdisplay.hash(state);
+        self.mode.hsync_start.hash(state);
+        self.mode.hsync_end.hash(state);
+        self.mode.htotal.hash(state);
+        self.mode.vdisplay.hash(state);
+        self.mode.vsync_start.hash(state);
+        self.mode.vsync_end.hash(state);
+        self.mode.vtotal.hash(state);
+        self.mode.vrefresh.hash(state);
+        self.mode.flags.hash(state);
+    }
+}
 
 impl ::std::fmt::Debug for RawName {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
