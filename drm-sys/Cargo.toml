@@ -1,18 +1,18 @@
 [package]
 name = "drm-sys"
 description = "Bindings to the Direct Rendering Manager API"
-version = "0.0.9"
+version = "develop"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 license = "MIT"
 build = "build.rs"
 
 [dependencies]
-libc = "0.2.23"
+libc = "*"
 
 [features]
 default = []
 use_bindgen = ["bindgen", "pkg-config"]
 
 [build-dependencies]
-bindgen = { version = "0.26.3", optional = true }
-pkg-config = { version = "0.3.9", optional = true }
+bindgen = { version = "*", optional = true }
+pkg-config = { version = "*", optional = true }
