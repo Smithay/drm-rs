@@ -319,6 +319,11 @@ impl Mode {
         self.mode.vscan
     }
 
+    /// Returns the vertical refresh rate of this mode
+    pub fn vrefresh(&self) -> u32 {
+        self.mode.vrefresh
+    }
+
     /// Returns the name of the mode.
     pub fn name(&self) -> &CStr {
         unsafe { CStr::from_ptr(&self.mode.name as *const _) }
