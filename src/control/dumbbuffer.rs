@@ -89,12 +89,14 @@ impl DumbBuffer {
         let map = {
             use nix::sys::mman;
             let addr = ::std::ptr::null_mut();
-            let prot = mman::PROT_READ | mman::PROT_WRITE;
-            let flags = mman::MAP_SHARED;
+            let prot = mman::ProtFlags::PROT_READ | mman::ProtFlags::PROT_WRITE;
+            let flags = mman::MapFlags::MAP_SHARED;
             let length = self.length;
             let fd = device.as_raw_fd();
             let offset = raw.offset as i64;
-            try!(mman::mmap(addr, length, prot, flags, fd, offset))
+            unsafe {
+                try!(mman::mmap(addr, length, prot, flags, fd, offset))
+            }
         };
 
         let mapping = DumbMapping {
@@ -116,7 +118,9 @@ impl<'a> Drop for DumbMapping<'a> {
     fn drop(&mut self) {
         use nix::sys::mman;
 
-        mman::munmap(self.map.as_mut_ptr() as *mut _, self.map.len()).expect("Unmap failed");
+        unsafe {
+            mman::munmap(self.map.as_mut_ptr() as *mut _, self.map.len()).expect("Unmap failed");
+        }
     }
 }
 

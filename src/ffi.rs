@@ -33,28 +33,28 @@ ioctl!(readwrite ioctl_get_map with DRM_IOCTL_BASE, 0x04; drm_map);
 ioctl!(readwrite ioctl_get_client with DRM_IOCTL_BASE, 0x05; drm_client);
 ioctl!(read ioctl_get_stats with DRM_IOCTL_BASE, 0x06; drm_stats);
 ioctl!(readwrite ioctl_set_version with DRM_IOCTL_BASE, 0x07; drm_set_version);
-ioctl!(write ioctl_modeset_ctl with DRM_IOCTL_BASE, 0x08; drm_modeset_ctl);
-ioctl!(write ioctl_gem_close with DRM_IOCTL_BASE, 0x09; drm_gem_close);
+ioctl!(write_ptr ioctl_modeset_ctl with DRM_IOCTL_BASE, 0x08; drm_modeset_ctl);
+ioctl!(write_ptr ioctl_gem_close with DRM_IOCTL_BASE, 0x09; drm_gem_close);
 ioctl!(readwrite ioctl_gem_flink with DRM_IOCTL_BASE, 0x0a; drm_gem_flink);
 ioctl!(readwrite ioctl_gem_open with DRM_IOCTL_BASE, 0x0b; drm_gem_open);
 ioctl!(readwrite ioctl_get_cap with DRM_IOCTL_BASE, 0x0c; drm_get_cap);
-ioctl!(write ioctl_set_client_cap with DRM_IOCTL_BASE, 0x0d; drm_set_client_cap);
+ioctl!(write_ptr ioctl_set_client_cap with DRM_IOCTL_BASE, 0x0d; drm_set_client_cap);
 
-ioctl!(write ioctl_set_unique with DRM_IOCTL_BASE, 0x10; drm_unique);
-ioctl!(write ioctl_auth_magic with DRM_IOCTL_BASE, 0x11; drm_auth);
+ioctl!(write_ptr ioctl_set_unique with DRM_IOCTL_BASE, 0x10; drm_unique);
+ioctl!(write_ptr ioctl_auth_magic with DRM_IOCTL_BASE, 0x11; drm_auth);
 ioctl!(readwrite ioctl_block with DRM_IOCTL_BASE, 0x12; drm_block);
 ioctl!(readwrite ioctl_unblock with DRM_IOCTL_BASE, 0x13; drm_block);
-ioctl!(write ioctl_control with DRM_IOCTL_BASE, 0x14; drm_control);
+ioctl!(write_ptr ioctl_control with DRM_IOCTL_BASE, 0x14; drm_control);
 ioctl!(readwrite ioctl_add_map with DRM_IOCTL_BASE, 0x15; drm_map);
 ioctl!(readwrite ioctl_add_bufs with DRM_IOCTL_BASE, 0x16; drm_buf_desc);
-ioctl!(write ioctl_mark_bufs with DRM_IOCTL_BASE, 0x17; drm_buf_desc);
+ioctl!(write_ptr ioctl_mark_bufs with DRM_IOCTL_BASE, 0x17; drm_buf_desc);
 ioctl!(readwrite ioctl_info_bufs with DRM_IOCTL_BASE, 0x18; drm_buf_info);
 ioctl!(readwrite ioctl_map_bufs with DRM_IOCTL_BASE, 0x19; drm_buf_map);
-ioctl!(write ioctl_free_bufs with DRM_IOCTL_BASE, 0x1a; drm_buf_free);
+ioctl!(write_ptr ioctl_free_bufs with DRM_IOCTL_BASE, 0x1a; drm_buf_free);
 
-ioctl!(write ioctl_rm_map with DRM_IOCTL_BASE, 0x1b; drm_map);
+ioctl!(write_ptr ioctl_rm_map with DRM_IOCTL_BASE, 0x1b; drm_map);
 
-ioctl!(write ioctl_set_sarea_ctx with DRM_IOCTL_BASE, 0x1c; drm_ctx_priv_map);
+ioctl!(write_ptr ioctl_set_sarea_ctx with DRM_IOCTL_BASE, 0x1c; drm_ctx_priv_map);
 ioctl!(readwrite ioctl_get_sarea_ctx
        with DRM_IOCTL_BASE, 0x1d; drm_ctx_priv_map);
 
@@ -63,17 +63,17 @@ ioctl!(none ioctl_drop_master with DRM_IOCTL_BASE, 0x1f);
 
 ioctl!(readwrite ioctl_add_ctx with DRM_IOCTL_BASE, 0x20; drm_ctx);
 ioctl!(readwrite ioctl_rm_ctx with DRM_IOCTL_BASE, 0x21; drm_ctx);
-ioctl!(write ioctl_mod_ctx with DRM_IOCTL_BASE, 0x22; drm_ctx);
+ioctl!(write_ptr ioctl_mod_ctx with DRM_IOCTL_BASE, 0x22; drm_ctx);
 ioctl!(readwrite ioctl_get_ctx with DRM_IOCTL_BASE, 0x23; drm_ctx);
-ioctl!(write ioctl_switch_ctx with DRM_IOCTL_BASE, 0x24; drm_ctx);
-ioctl!(write ioctl_new_ctx with DRM_IOCTL_BASE, 0x25; drm_ctx);
+ioctl!(write_ptr ioctl_switch_ctx with DRM_IOCTL_BASE, 0x24; drm_ctx);
+ioctl!(write_ptr ioctl_new_ctx with DRM_IOCTL_BASE, 0x25; drm_ctx);
 ioctl!(readwrite ioctl_res_ctx with DRM_IOCTL_BASE, 0x26; drm_ctx_res);
 ioctl!(readwrite ioctl_add_draw with DRM_IOCTL_BASE, 0x27; drm_draw);
 ioctl!(readwrite ioctl_rm_draw with DRM_IOCTL_BASE, 0x28; drm_draw);
 ioctl!(readwrite ioctl_dma with DRM_IOCTL_BASE, 0x29; drm_dma);
-ioctl!(write ioctl_lock with DRM_IOCTL_BASE, 0x2a; drm_lock);
-ioctl!(write ioctl_unlock with DRM_IOCTL_BASE, 0x2b; drm_lock);
-ioctl!(write ioctl_finish with DRM_IOCTL_BASE, 0x2c; drm_lock);
+ioctl!(write_ptr ioctl_lock with DRM_IOCTL_BASE, 0x2a; drm_lock);
+ioctl!(write_ptr ioctl_unlock with DRM_IOCTL_BASE, 0x2b; drm_lock);
+ioctl!(write_ptr ioctl_finish with DRM_IOCTL_BASE, 0x2c; drm_lock);
 
 ioctl!(readwrite ioctl_prime_handle_to_fd
        with DRM_IOCTL_BASE, 0x2d; drm_prime_handle);
@@ -82,19 +82,19 @@ ioctl!(readwrite ioctl_prime_fd_to_handle
 
 ioctl!(none ioctl_agp_acquire with DRM_IOCTL_BASE, 0x30);
 ioctl!(none ioctl_agp_release with DRM_IOCTL_BASE, 0x31);
-ioctl!(write ioctl_agp_enable with DRM_IOCTL_BASE, 0x32; drm_agp_mode);
+ioctl!(write_ptr ioctl_agp_enable with DRM_IOCTL_BASE, 0x32; drm_agp_mode);
 ioctl!(read ioctl_agp_info with DRM_IOCTL_BASE, 0x33; drm_agp_info);
 ioctl!(readwrite ioctl_agp_alloc with DRM_IOCTL_BASE, 0x34; drm_agp_buffer);
-ioctl!(write ioctl_agp_free with DRM_IOCTL_BASE, 0x35; drm_agp_buffer);
-ioctl!(write ioctl_agp_bind with DRM_IOCTL_BASE, 0x36; drm_agp_binding);
-ioctl!(write ioctl_agp_unbind with DRM_IOCTL_BASE, 0x37; drm_agp_binding);
+ioctl!(write_ptr ioctl_agp_free with DRM_IOCTL_BASE, 0x35; drm_agp_buffer);
+ioctl!(write_ptr ioctl_agp_bind with DRM_IOCTL_BASE, 0x36; drm_agp_binding);
+ioctl!(write_ptr ioctl_agp_unbind with DRM_IOCTL_BASE, 0x37; drm_agp_binding);
 
 ioctl!(readwrite ioctl_sg_alloc with DRM_IOCTL_BASE, 0x38; drm_scatter_gather);
-ioctl!(write ioctl_sg_free with DRM_IOCTL_BASE, 0x39; drm_scatter_gather);
+ioctl!(write_ptr ioctl_sg_free with DRM_IOCTL_BASE, 0x39; drm_scatter_gather);
 
 ioctl!(readwrite ioctl_wait_vblank with DRM_IOCTL_BASE, 0x3a; drm_wait_vblank);
 
-ioctl!(write ioctl_update_draw with DRM_IOCTL_BASE, 0x3f; drm_update_draw);
+ioctl!(write_ptr ioctl_update_draw with DRM_IOCTL_BASE, 0x3f; drm_update_draw);
 
 ioctl!(readwrite ioctl_mode_getresources
        with DRM_IOCTL_BASE, 0xA0; drm_mode_card_res);
