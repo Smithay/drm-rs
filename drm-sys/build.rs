@@ -6,8 +6,6 @@ mod use_bindgen {
     use self::bindgen::Builder;
     use std::env::var;
     use std::path::PathBuf;
-    use std::fs::File;
-    use std::io::Write;
 
     const MACROS: &'static [&str] = &[
         "DRM_MODE_PROP_SIGNED_RANGE",
@@ -25,42 +23,39 @@ mod use_bindgen {
         temp_bind + &undef + &new_bind
     }
 
-    pub fn generate_header() {
-        let out_path = String::from(var("OUT_DIR").unwrap());
-        let header = out_path.clone() + "/bindings.h";
-
-        let mut f = File::create(header).expect("Could not create header");
+    pub fn generate_header_content() -> String {
         let includes = "#include <drm.h>\n#include <drm_mode.h>\n".to_string();
-        f.write(includes.as_bytes()).expect("Could not write header.");
+        let mvec: Vec<_> = MACROS.iter().map(| m | {
+            bind_function_macro(m)
+        }).collect();
 
-        for m in MACROS {
-            f.write(bind_function_macro(m).as_bytes())
-                .expect("Could not write header");
-        }
+        includes + &mvec.concat()
     }
 
     pub fn generate_bindings() {
-        let out_path = String::from(var("OUT_DIR").unwrap());
-        let header = out_path.clone() + "/bindings.h";
-
         let pkgconf = pkg_config::Config::new();
         let lib = pkgconf.probe("libdrm").unwrap();
 
-        let mut builder = Builder::default()
-            .header(header)
+        let header_content = generate_header_content();
+        let bindings = Builder::default()
+            .header_contents("bindings.h", &header_content)
             .ctypes_prefix("libc")
-            .emit_builtins()
-            .emit_clang_ast()
-            .emit_ir()
+            .constified_enum_module("DRM_CAP_*")
+            .layout_tests(false)
+            .rustfmt_bindings(true)
+            .blacklist_type("drm_set_client_cap")
+            .derive_copy(true)
             .derive_debug(true)
-            .derive_default(true);
+            .derive_default(true)
+            .derive_hash(true)
+            .derive_eq(true)
+            .clang_args(lib.include_paths.into_iter().map(| path | {
+                "-I".to_string() + &path.into_os_string().into_string().unwrap()
+            }))
+            .generate()
+            .expect("Unable to generate libdrm bindings");
 
-        for path in lib.include_paths {
-            let arg = "-I".to_string() + &path.into_os_string().into_string().unwrap();
-            builder = builder.clang_arg(arg)
-        }
-        let bindings = builder.generate().expect("Unable to generate libdrm bindings");
-
+        let out_path = String::from(var("OUT_DIR").unwrap());
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
 
         bindings.write_to_file(bind_file).expect("Could not write bindings");
@@ -69,7 +64,6 @@ mod use_bindgen {
 
 #[cfg(feature = "use_bindgen")]
 pub fn main() {
-    use_bindgen::generate_header();
     use_bindgen::generate_bindings();
 }
 
