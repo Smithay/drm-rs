@@ -1,7 +1,7 @@
 use result::*;
 use ffi;
 use std::ffi::CStr;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 pub mod connector;
 pub mod encoder;
 pub mod crtc;

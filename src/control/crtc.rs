@@ -20,7 +20,6 @@ use ffi;
 use control::framebuffer::Handle as FBHandle;
 use control::connector::Handle as ConHandle;
 
-use std::any::Any;
 use std::boxed::Box;
 use std::io::Read;
 use std::mem;
