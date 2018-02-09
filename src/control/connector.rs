@@ -18,14 +18,14 @@ use result::*;
 /// [`ResourceHandle`]: ../ResourceHandle.t.html
 /// [`connector::Info`]: Info.t.html
 /// [`ResourceHandles::connectors`]: ../ResourceHandles.t.html#method.connectors
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 pub struct Handle(control::RawHandle);
 impl ResourceHandle for Handle {}
 
 /// A [`ResourceInfo`] for a connector.
 ///
 /// [`ResourceInfo`]: ../ResourceInfo.t.html
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Info {
     handle: Handle,
     // TODO: properties
@@ -40,7 +40,7 @@ pub struct Info {
 }
 
 /// The physical type of connector.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum Type {
     Unknown,
@@ -64,7 +64,7 @@ pub enum Type {
 }
 
 /// The connection state of a connector.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum State {
     Connected,

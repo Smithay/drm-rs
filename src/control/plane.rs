@@ -18,11 +18,11 @@ use {iRect, uRect};
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`plane::Info`]: Info.t.html
 /// [`PlaneResourceHandles::planes`]: PlaneResourceHandles.t.html#method.planes
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 pub struct Handle(control::RawHandle);
 impl ResourceHandle for Handle {}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// The `ResourceInfo` on a plane.
 pub struct Info {
     handle: Handle,
@@ -68,7 +68,7 @@ impl ResourceInfo for Info {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum PresentFlag {
     TopField = (0 << 1),

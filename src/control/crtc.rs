@@ -37,14 +37,14 @@ use std::time::Duration;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`crtc::Info`]: Info.t.html
 /// [`ResourceIds::crtcs`]: ResourceIds.t.html#method.crtcs
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 pub struct Handle(control::RawHandle);
 impl ResourceHandle for Handle {}
 
 /// A [`ResourceInfo`] for a CRTC.
 ///
 /// [`ResourceInfo`]: ResourceInfo.t.html
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Info {
     handle: Handle,
     position: (u32, u32),
@@ -150,7 +150,7 @@ where
 }
 
 #[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// Flags to alter the behaviour of a page flip
 pub enum PageFlipFlags {
     /// Request a vblank event on page flip
@@ -182,6 +182,7 @@ where
 }
 
 /// Iterator over `Event`s of a device. Create via `receive_events`.
+#[derive(Copy, Clone)]
 pub struct Events {
     event_buf: [u8; 1024],
     amount: usize,
@@ -189,6 +190,7 @@ pub struct Events {
 }
 
 /// An event from a device.
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Event {
     /// A vblank happened
     Vblank(VblankEvent),
@@ -199,6 +201,7 @@ pub enum Event {
 }
 
 /// Vblank event
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct VblankEvent {
     /// sequence of the frame
     pub frame: u32,
@@ -209,6 +212,7 @@ pub struct VblankEvent {
 }
 
 /// Page Flip event
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct PageFlipEvent {
     /// sequence of the frame
     pub frame: u32,
@@ -376,7 +380,7 @@ where
     Ok(())
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// The hardware gamma ramp
 pub struct GammaRamp {
     /// Red color component

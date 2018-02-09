@@ -12,11 +12,11 @@ use std::ffi::CStr;
 pub type RawValue = u64;
 
 /// A `ResourceHandle` to a property.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 pub struct Handle(control::RawHandle);
 impl ResourceHandle for Handle {}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// The `ResourceInfo` on a property.
 pub struct Info {
     handle: Handle,
@@ -80,7 +80,7 @@ impl Info {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum PropertyInfoType {
     Enum(EnumInfo),
     URange(URangeInfo),
@@ -95,7 +95,7 @@ pub enum PropertyInfoType {
     Unknown,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// A `ResourceHandle` to a property with an associated resource and `Value`
 pub struct AssociatedPropertyHandle {
     handle: Handle,
@@ -103,7 +103,7 @@ pub struct AssociatedPropertyHandle {
     resource: control::RawHandle,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// The set of `AssociatedPropertyHandle`s for a specific property.
 pub struct ResourceProperties {
     handles: ffi::Buffer<AssociatedPropertyHandle>,
@@ -123,31 +123,31 @@ impl ResourceProperties {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// The value of an EnumEntry
 pub struct EnumValue(RawValue);
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// The name of an EnumEntry
 pub struct EnumName(control::RawName);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// A possible entry in an EnumInfo
 pub struct EnumEntry(EnumValue, EnumName);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// The possible values of a particular enum.
 pub struct EnumInfo {
     possible: ffi::Buffer<EnumEntry>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// The possible values of a particular unsigned range.
 pub struct URangeInfo {
     possible: (u64, u64),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// The possible values of a particular signed range.
 pub struct IRangeInfo {
     possible: (i64, i64),
@@ -286,11 +286,11 @@ impl PropertyInfoType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// A generic value that is not associated with any particular type.
 pub struct UnassociatedValue(u64);
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// A value that has a type association.
 pub enum Value {
     Enum(EnumValue),

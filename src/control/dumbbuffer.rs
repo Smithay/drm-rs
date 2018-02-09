@@ -9,7 +9,7 @@ use result::*;
 use control;
 use buffer;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// Slow, but generic `Buffer` implementation
 pub struct DumbBuffer {
     size: (u32, u32),

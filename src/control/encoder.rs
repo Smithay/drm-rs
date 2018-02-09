@@ -18,14 +18,14 @@ use ffi;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`encoder::Info`]: Info.t.html
 /// [`ResourceHandles::encoders`]: ResourceHandles.t.html#method.encoders
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 pub struct Handle(control::RawHandle);
 impl ResourceHandle for Handle {}
 
 /// A [`ResourceInfo`] for an encoder.
 ///
 /// [`ResourceInfo`]: ResourceInfo.t.html
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Info {
     handle: Handle,
     crtc_id: control::crtc::Handle,
@@ -35,7 +35,7 @@ pub struct Info {
 }
 
 /// The type of encoder.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum Type {
     None,

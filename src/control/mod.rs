@@ -13,7 +13,7 @@ pub mod dumbbuffer;
 /// The underlying id for a resource.
 pub type RawHandle = u32;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, From, Into)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// An array to hold the name of a property.
 pub struct RawName([i8; 32]);
 
@@ -100,7 +100,7 @@ pub trait ResourceInfo: Clone + Eq {
     fn handle(&self) -> Self::Handle;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// The set of resource ids that are associated with a DRM device.
 pub struct ResourceHandles {
     connectors: ffi::Buffer<connector::Handle>,
@@ -111,7 +111,7 @@ pub struct ResourceHandles {
     height: (u32, u32),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// The set of plane ids that are associated with a DRM device.
 pub struct PlaneResourceHandles {
     planes: ffi::Buffer<plane::Handle>,
@@ -226,7 +226,7 @@ impl PlaneResourceHandles {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum Type {
     Connector,
@@ -256,7 +256,7 @@ impl From<Type> for u32 {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// A handle to a generic resource id
 pub enum ResourceHandleType {
     Connector(connector::Handle),
@@ -267,7 +267,7 @@ pub enum ResourceHandleType {
     Property(property::Handle),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 // TODO: Document
 pub struct GammaLookupTable {
     pub red: ffi::Buffer<u16>,
@@ -275,12 +275,12 @@ pub struct GammaLookupTable {
     pub blue: ffi::Buffer<u16>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 /// A filter that can be used with a ResourceHandles to determine the set of
 /// Crtcs that can attach to a specific encoder.
 pub struct CrtcListFilter(u32);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Mode {
     // We're using the FFI struct because the DRM API expects it when giving it
     // to a CRTC or creating a blob from it. Maybe in the future we can look at
@@ -327,43 +327,6 @@ impl Mode {
     /// Returns the name of the mode.
     pub fn name(&self) -> &CStr {
         unsafe { CStr::from_ptr(&self.mode.name as *const _) }
-    }
-}
-
-// We need to implement PartialEq manually for Mode
-impl PartialEq for Mode {
-    fn eq(&self, other: &Mode) -> bool {
-        self.mode.clock == other.mode.clock
-            && self.mode.hdisplay == other.mode.hdisplay
-            && self.mode.hsync_start == other.mode.hsync_start
-            && self.mode.hsync_end == other.mode.hsync_end
-            && self.mode.htotal == other.mode.htotal && self.mode.hskew == other.mode.hskew
-            && self.mode.vdisplay == other.mode.vdisplay
-            && self.mode.vsync_start == other.mode.vsync_start
-            && self.mode.vsync_end == other.mode.vsync_end
-            && self.mode.vtotal == other.mode.vtotal && self.mode.vscan == other.mode.vscan
-            && self.mode.vrefresh == other.mode.vrefresh
-            && self.mode.flags == other.mode.flags && self.mode.type_ == other.mode.type_
-    }
-}
-
-impl Eq for Mode {}
-
-impl Hash for Mode {
-    fn hash<H>(&self, state: &mut H)
-        where H: Hasher
-    {
-        self.mode.clock.hash(state);
-        self.mode.hdisplay.hash(state);
-        self.mode.hsync_start.hash(state);
-        self.mode.hsync_end.hash(state);
-        self.mode.htotal.hash(state);
-        self.mode.vdisplay.hash(state);
-        self.mode.vsync_start.hash(state);
-        self.mode.vsync_end.hash(state);
-        self.mode.vtotal.hash(state);
-        self.mode.vrefresh.hash(state);
-        self.mode.flags.hash(state);
     }
 }
 

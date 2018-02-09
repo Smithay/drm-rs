@@ -131,14 +131,14 @@ pub mod buffer;
 use std::os::unix::io::AsRawFd;
 use result::Result;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// A token unique to the process that determines who opened the device.
 ///
 /// This token can be sent to another process that acts as the DRM Master and
 /// then authenticated to give extra privileges.
 pub struct AuthToken(u32);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// Capabilities that the process understands.
 ///
 /// These can be used to tell the DRM device what capabilities the process can

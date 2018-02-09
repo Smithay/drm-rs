@@ -19,14 +19,14 @@ use ffi;
 /// [`ResourceHandle`]: ResourceHandle.t.html
 /// [`framebuffer::Info`]: Info.t.html
 /// [`ResourceIds::framebuffers`]: ResourceIds.t.html#method.framebuffers
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 pub struct Handle(control::RawHandle);
 impl ResourceHandle for Handle {}
 
 /// A [`ResourceInfo`] for a framebuffer.
 ///
 /// [`ResourceInfo`]: ResourceInfo.t.html
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Info {
     handle: Handle,
     size: (u32, u32),
