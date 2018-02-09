@@ -382,32 +382,63 @@ pub struct drm_control {
     pub func: drm_control__bindgen_ty_1,
     pub irq: libc::c_int,
 }
-pub const drm_control_DRM_ADD_COMMAND: drm_control__bindgen_ty_1 = 0;
-pub const drm_control_DRM_RM_COMMAND: drm_control__bindgen_ty_1 = 1;
-pub const drm_control_DRM_INST_HANDLER: drm_control__bindgen_ty_1 = 2;
-pub const drm_control_DRM_UNINST_HANDLER: drm_control__bindgen_ty_1 = 3;
+pub const DRM_ADD_COMMAND: drm_control__bindgen_ty_1 = 0;
+pub const DRM_RM_COMMAND: drm_control__bindgen_ty_1 = 1;
+pub const DRM_INST_HANDLER: drm_control__bindgen_ty_1 = 2;
+pub const DRM_UNINST_HANDLER: drm_control__bindgen_ty_1 = 3;
 pub type drm_control__bindgen_ty_1 = u32;
 impl Default for drm_control {
     fn default() -> Self {
         unsafe { ::std::mem::zeroed() }
     }
 }
-pub const drm_map_type__DRM_FRAME_BUFFER: drm_map_type = 0;
-pub const drm_map_type__DRM_REGISTERS: drm_map_type = 1;
-pub const drm_map_type__DRM_SHM: drm_map_type = 2;
-pub const drm_map_type__DRM_AGP: drm_map_type = 3;
-pub const drm_map_type__DRM_SCATTER_GATHER: drm_map_type = 4;
-pub const drm_map_type__DRM_CONSISTENT: drm_map_type = 5;
-pub type drm_map_type = u32;
-pub const drm_map_flags__DRM_RESTRICTED: drm_map_flags = 1;
-pub const drm_map_flags__DRM_READ_ONLY: drm_map_flags = 2;
-pub const drm_map_flags__DRM_LOCKED: drm_map_flags = 4;
-pub const drm_map_flags__DRM_KERNEL: drm_map_flags = 8;
-pub const drm_map_flags__DRM_WRITE_COMBINING: drm_map_flags = 16;
-pub const drm_map_flags__DRM_CONTAINS_LOCK: drm_map_flags = 32;
-pub const drm_map_flags__DRM_REMOVABLE: drm_map_flags = 64;
-pub const drm_map_flags__DRM_DRIVER: drm_map_flags = 128;
-pub type drm_map_flags = u32;
+pub mod drm_map_type {
+    pub type Type = u32;
+    pub const _DRM_FRAME_BUFFER: Type = 0;
+    pub const _DRM_REGISTERS: Type = 1;
+    pub const _DRM_SHM: Type = 2;
+    pub const _DRM_AGP: Type = 3;
+    pub const _DRM_SCATTER_GATHER: Type = 4;
+    pub const _DRM_CONSISTENT: Type = 5;
+}
+pub const _DRM_RESTRICTED: drm_map_flags = drm_map_flags(1);
+pub const _DRM_READ_ONLY: drm_map_flags = drm_map_flags(2);
+pub const _DRM_LOCKED: drm_map_flags = drm_map_flags(4);
+pub const _DRM_KERNEL: drm_map_flags = drm_map_flags(8);
+pub const _DRM_WRITE_COMBINING: drm_map_flags = drm_map_flags(16);
+pub const _DRM_CONTAINS_LOCK: drm_map_flags = drm_map_flags(32);
+pub const _DRM_REMOVABLE: drm_map_flags = drm_map_flags(64);
+pub const _DRM_DRIVER: drm_map_flags = drm_map_flags(128);
+impl ::std::ops::BitOr<drm_map_flags> for drm_map_flags {
+    type Output = Self;
+    #[inline]
+    fn bitor(self, other: Self) -> Self {
+        drm_map_flags(self.0 | other.0)
+    }
+}
+impl ::std::ops::BitOrAssign for drm_map_flags {
+    #[inline]
+    fn bitor_assign(&mut self, rhs: drm_map_flags) {
+        self.0 |= rhs.0;
+    }
+}
+impl ::std::ops::BitAnd<drm_map_flags> for drm_map_flags {
+    type Output = Self;
+    #[inline]
+    fn bitand(self, other: Self) -> Self {
+        drm_map_flags(self.0 & other.0)
+    }
+}
+impl ::std::ops::BitAndAssign for drm_map_flags {
+    #[inline]
+    fn bitand_assign(&mut self, rhs: drm_map_flags) {
+        self.0 &= rhs.0;
+    }
+}
+#[repr(C)]
+/// Memory mapping flags.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct drm_map_flags(pub u32);
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_ctx_priv_map {
@@ -433,7 +464,7 @@ pub struct drm_map {
     /// < Requested physical size (bytes)
     pub size: libc::c_ulong,
     /// < Type of memory to map
-    pub type_: drm_map_type,
+    pub type_: drm_map_type::Type,
     /// < Flags
     pub flags: drm_map_flags,
     /// < User-space: "Handle" to pass to mmap() */
@@ -464,22 +495,24 @@ pub struct drm_client {
     /// < Ioctl count
     pub iocs: libc::c_ulong,
 }
-pub const drm_stat_type__DRM_STAT_LOCK: drm_stat_type = 0;
-pub const drm_stat_type__DRM_STAT_OPENS: drm_stat_type = 1;
-pub const drm_stat_type__DRM_STAT_CLOSES: drm_stat_type = 2;
-pub const drm_stat_type__DRM_STAT_IOCTLS: drm_stat_type = 3;
-pub const drm_stat_type__DRM_STAT_LOCKS: drm_stat_type = 4;
-pub const drm_stat_type__DRM_STAT_UNLOCKS: drm_stat_type = 5;
-pub const drm_stat_type__DRM_STAT_VALUE: drm_stat_type = 6;
-pub const drm_stat_type__DRM_STAT_BYTE: drm_stat_type = 7;
-pub const drm_stat_type__DRM_STAT_COUNT: drm_stat_type = 8;
-pub const drm_stat_type__DRM_STAT_IRQ: drm_stat_type = 9;
-pub const drm_stat_type__DRM_STAT_PRIMARY: drm_stat_type = 10;
-pub const drm_stat_type__DRM_STAT_SECONDARY: drm_stat_type = 11;
-pub const drm_stat_type__DRM_STAT_DMA: drm_stat_type = 12;
-pub const drm_stat_type__DRM_STAT_SPECIAL: drm_stat_type = 13;
-pub const drm_stat_type__DRM_STAT_MISSED: drm_stat_type = 14;
-pub type drm_stat_type = u32;
+pub mod drm_stat_type {
+    pub type Type = u32;
+    pub const _DRM_STAT_LOCK: Type = 0;
+    pub const _DRM_STAT_OPENS: Type = 1;
+    pub const _DRM_STAT_CLOSES: Type = 2;
+    pub const _DRM_STAT_IOCTLS: Type = 3;
+    pub const _DRM_STAT_LOCKS: Type = 4;
+    pub const _DRM_STAT_UNLOCKS: Type = 5;
+    pub const _DRM_STAT_VALUE: Type = 6;
+    pub const _DRM_STAT_BYTE: Type = 7;
+    pub const _DRM_STAT_COUNT: Type = 8;
+    pub const _DRM_STAT_IRQ: Type = 9;
+    pub const _DRM_STAT_PRIMARY: Type = 10;
+    pub const _DRM_STAT_SECONDARY: Type = 11;
+    pub const _DRM_STAT_DMA: Type = 12;
+    pub const _DRM_STAT_SPECIAL: Type = 13;
+    pub const _DRM_STAT_MISSED: Type = 14;
+}
 /// DRM_IOCTL_GET_STATS ioctl argument type.
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -491,7 +524,7 @@ pub struct drm_stats {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_stats__bindgen_ty_1 {
     pub value: libc::c_ulong,
-    pub type_: drm_stat_type,
+    pub type_: drm_stat_type::Type,
 }
 impl Default for drm_stats__bindgen_ty_1 {
     fn default() -> Self {
@@ -503,13 +536,42 @@ impl Default for drm_stats {
         unsafe { ::std::mem::zeroed() }
     }
 }
-pub const drm_lock_flags__DRM_LOCK_READY: drm_lock_flags = 1;
-pub const drm_lock_flags__DRM_LOCK_QUIESCENT: drm_lock_flags = 2;
-pub const drm_lock_flags__DRM_LOCK_FLUSH: drm_lock_flags = 4;
-pub const drm_lock_flags__DRM_LOCK_FLUSH_ALL: drm_lock_flags = 8;
-pub const drm_lock_flags__DRM_HALT_ALL_QUEUES: drm_lock_flags = 16;
-pub const drm_lock_flags__DRM_HALT_CUR_QUEUES: drm_lock_flags = 32;
-pub type drm_lock_flags = u32;
+pub const _DRM_LOCK_READY: drm_lock_flags = drm_lock_flags(1);
+pub const _DRM_LOCK_QUIESCENT: drm_lock_flags = drm_lock_flags(2);
+pub const _DRM_LOCK_FLUSH: drm_lock_flags = drm_lock_flags(4);
+pub const _DRM_LOCK_FLUSH_ALL: drm_lock_flags = drm_lock_flags(8);
+pub const _DRM_HALT_ALL_QUEUES: drm_lock_flags = drm_lock_flags(16);
+pub const _DRM_HALT_CUR_QUEUES: drm_lock_flags = drm_lock_flags(32);
+impl ::std::ops::BitOr<drm_lock_flags> for drm_lock_flags {
+    type Output = Self;
+    #[inline]
+    fn bitor(self, other: Self) -> Self {
+        drm_lock_flags(self.0 | other.0)
+    }
+}
+impl ::std::ops::BitOrAssign for drm_lock_flags {
+    #[inline]
+    fn bitor_assign(&mut self, rhs: drm_lock_flags) {
+        self.0 |= rhs.0;
+    }
+}
+impl ::std::ops::BitAnd<drm_lock_flags> for drm_lock_flags {
+    type Output = Self;
+    #[inline]
+    fn bitand(self, other: Self) -> Self {
+        drm_lock_flags(self.0 & other.0)
+    }
+}
+impl ::std::ops::BitAndAssign for drm_lock_flags {
+    #[inline]
+    fn bitand_assign(&mut self, rhs: drm_lock_flags) {
+        self.0 &= rhs.0;
+    }
+}
+#[repr(C)]
+/// Hardware locking flags.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct drm_lock_flags(pub u32);
 /// DRM_IOCTL_LOCK, DRM_IOCTL_UNLOCK and DRM_IOCTL_FINISH ioctl argument type.
 ///
 /// \sa drmGetLock() and drmUnlock().
@@ -524,13 +586,47 @@ impl Default for drm_lock {
         unsafe { ::std::mem::zeroed() }
     }
 }
-pub const drm_dma_flags__DRM_DMA_BLOCK: drm_dma_flags = 1;
-pub const drm_dma_flags__DRM_DMA_WHILE_LOCKED: drm_dma_flags = 2;
-pub const drm_dma_flags__DRM_DMA_PRIORITY: drm_dma_flags = 4;
-pub const drm_dma_flags__DRM_DMA_WAIT: drm_dma_flags = 16;
-pub const drm_dma_flags__DRM_DMA_SMALLER_OK: drm_dma_flags = 32;
-pub const drm_dma_flags__DRM_DMA_LARGER_OK: drm_dma_flags = 64;
-pub type drm_dma_flags = u32;
+pub const _DRM_DMA_BLOCK: drm_dma_flags = drm_dma_flags(1);
+pub const _DRM_DMA_WHILE_LOCKED: drm_dma_flags = drm_dma_flags(2);
+pub const _DRM_DMA_PRIORITY: drm_dma_flags = drm_dma_flags(4);
+pub const _DRM_DMA_WAIT: drm_dma_flags = drm_dma_flags(16);
+pub const _DRM_DMA_SMALLER_OK: drm_dma_flags = drm_dma_flags(32);
+pub const _DRM_DMA_LARGER_OK: drm_dma_flags = drm_dma_flags(64);
+impl ::std::ops::BitOr<drm_dma_flags> for drm_dma_flags {
+    type Output = Self;
+    #[inline]
+    fn bitor(self, other: Self) -> Self {
+        drm_dma_flags(self.0 | other.0)
+    }
+}
+impl ::std::ops::BitOrAssign for drm_dma_flags {
+    #[inline]
+    fn bitor_assign(&mut self, rhs: drm_dma_flags) {
+        self.0 |= rhs.0;
+    }
+}
+impl ::std::ops::BitAnd<drm_dma_flags> for drm_dma_flags {
+    type Output = Self;
+    #[inline]
+    fn bitand(self, other: Self) -> Self {
+        drm_dma_flags(self.0 & other.0)
+    }
+}
+impl ::std::ops::BitAndAssign for drm_dma_flags {
+    #[inline]
+    fn bitand_assign(&mut self, rhs: drm_dma_flags) {
+        self.0 &= rhs.0;
+    }
+}
+#[repr(C)]
+/// DMA flags
+///
+/// \warning
+/// These values \e must match xf86drm.h.
+///
+/// \sa drm_dma.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct drm_dma_flags(pub u32);
 /// DRM_IOCTL_ADD_BUFS and DRM_IOCTL_MARK_BUFS ioctl argument type.
 ///
 /// \sa drmAddBufs().
@@ -551,11 +647,11 @@ pub struct drm_buf_desc {
     /// in the AGP aperture
     pub agp_start: libc::c_ulong,
 }
-pub const drm_buf_desc__DRM_PAGE_ALIGN: drm_buf_desc__bindgen_ty_1 = 1;
-pub const drm_buf_desc__DRM_AGP_BUFFER: drm_buf_desc__bindgen_ty_1 = 2;
-pub const drm_buf_desc__DRM_SG_BUFFER: drm_buf_desc__bindgen_ty_1 = 4;
-pub const drm_buf_desc__DRM_FB_BUFFER: drm_buf_desc__bindgen_ty_1 = 8;
-pub const drm_buf_desc__DRM_PCI_BUFFER_RO: drm_buf_desc__bindgen_ty_1 = 16;
+pub const _DRM_PAGE_ALIGN: drm_buf_desc__bindgen_ty_1 = 1;
+pub const _DRM_AGP_BUFFER: drm_buf_desc__bindgen_ty_1 = 2;
+pub const _DRM_SG_BUFFER: drm_buf_desc__bindgen_ty_1 = 4;
+pub const _DRM_FB_BUFFER: drm_buf_desc__bindgen_ty_1 = 8;
+pub const _DRM_PCI_BUFFER_RO: drm_buf_desc__bindgen_ty_1 = 16;
 pub type drm_buf_desc__bindgen_ty_1 = u32;
 impl Default for drm_buf_desc {
     fn default() -> Self {
@@ -656,9 +752,37 @@ impl Default for drm_dma {
         unsafe { ::std::mem::zeroed() }
     }
 }
-pub const drm_ctx_flags__DRM_CONTEXT_PRESERVED: drm_ctx_flags = 1;
-pub const drm_ctx_flags__DRM_CONTEXT_2DONLY: drm_ctx_flags = 2;
-pub type drm_ctx_flags = u32;
+pub const _DRM_CONTEXT_PRESERVED: drm_ctx_flags = drm_ctx_flags(1);
+pub const _DRM_CONTEXT_2DONLY: drm_ctx_flags = drm_ctx_flags(2);
+impl ::std::ops::BitOr<drm_ctx_flags> for drm_ctx_flags {
+    type Output = Self;
+    #[inline]
+    fn bitor(self, other: Self) -> Self {
+        drm_ctx_flags(self.0 | other.0)
+    }
+}
+impl ::std::ops::BitOrAssign for drm_ctx_flags {
+    #[inline]
+    fn bitor_assign(&mut self, rhs: drm_ctx_flags) {
+        self.0 |= rhs.0;
+    }
+}
+impl ::std::ops::BitAnd<drm_ctx_flags> for drm_ctx_flags {
+    type Output = Self;
+    #[inline]
+    fn bitand(self, other: Self) -> Self {
+        drm_ctx_flags(self.0 & other.0)
+    }
+}
+impl ::std::ops::BitAndAssign for drm_ctx_flags {
+    #[inline]
+    fn bitand_assign(&mut self, rhs: drm_ctx_flags) {
+        self.0 &= rhs.0;
+    }
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct drm_ctx_flags(pub u32);
 /// DRM_IOCTL_ADD_CTX ioctl argument type.
 ///
 /// \sa drmCreateContext() and drmDestroyContext().
@@ -691,7 +815,7 @@ impl Default for drm_ctx_res {
 pub struct drm_draw {
     pub handle: drm_drawable_t,
 }
-pub const drm_drawable_info_type_t_DRM_DRAWABLE_CLIPRECTS: drm_drawable_info_type_t = 0;
+pub const DRM_DRAWABLE_CLIPRECTS: drm_drawable_info_type_t = 0;
 pub type drm_drawable_info_type_t = u32;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -722,14 +846,14 @@ pub struct drm_irq_busid {
     /// < function number
     pub funcnum: libc::c_int,
 }
-pub const drm_vblank_seq_type__DRM_VBLANK_ABSOLUTE: drm_vblank_seq_type = 0;
-pub const drm_vblank_seq_type__DRM_VBLANK_RELATIVE: drm_vblank_seq_type = 1;
-pub const drm_vblank_seq_type__DRM_VBLANK_HIGH_CRTC_MASK: drm_vblank_seq_type = 62;
-pub const drm_vblank_seq_type__DRM_VBLANK_EVENT: drm_vblank_seq_type = 67108864;
-pub const drm_vblank_seq_type__DRM_VBLANK_FLIP: drm_vblank_seq_type = 134217728;
-pub const drm_vblank_seq_type__DRM_VBLANK_NEXTONMISS: drm_vblank_seq_type = 268435456;
-pub const drm_vblank_seq_type__DRM_VBLANK_SECONDARY: drm_vblank_seq_type = 536870912;
-pub const drm_vblank_seq_type__DRM_VBLANK_SIGNAL: drm_vblank_seq_type = 1073741824;
+pub const _DRM_VBLANK_ABSOLUTE: drm_vblank_seq_type = 0;
+pub const _DRM_VBLANK_RELATIVE: drm_vblank_seq_type = 1;
+pub const _DRM_VBLANK_HIGH_CRTC_MASK: drm_vblank_seq_type = 62;
+pub const _DRM_VBLANK_EVENT: drm_vblank_seq_type = 67108864;
+pub const _DRM_VBLANK_FLIP: drm_vblank_seq_type = 134217728;
+pub const _DRM_VBLANK_NEXTONMISS: drm_vblank_seq_type = 268435456;
+pub const _DRM_VBLANK_SECONDARY: drm_vblank_seq_type = 536870912;
+pub const _DRM_VBLANK_SIGNAL: drm_vblank_seq_type = 1073741824;
 pub type drm_vblank_seq_type = u32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -1050,14 +1174,14 @@ pub struct drm_mode_get_encoder {
     pub possible_crtcs: __u32,
     pub possible_clones: __u32,
 }
-pub const drm_mode_subconnector_DRM_MODE_SUBCONNECTOR_Automatic: drm_mode_subconnector = 0;
-pub const drm_mode_subconnector_DRM_MODE_SUBCONNECTOR_Unknown: drm_mode_subconnector = 0;
-pub const drm_mode_subconnector_DRM_MODE_SUBCONNECTOR_DVID: drm_mode_subconnector = 3;
-pub const drm_mode_subconnector_DRM_MODE_SUBCONNECTOR_DVIA: drm_mode_subconnector = 4;
-pub const drm_mode_subconnector_DRM_MODE_SUBCONNECTOR_Composite: drm_mode_subconnector = 5;
-pub const drm_mode_subconnector_DRM_MODE_SUBCONNECTOR_SVIDEO: drm_mode_subconnector = 6;
-pub const drm_mode_subconnector_DRM_MODE_SUBCONNECTOR_Component: drm_mode_subconnector = 8;
-pub const drm_mode_subconnector_DRM_MODE_SUBCONNECTOR_SCART: drm_mode_subconnector = 9;
+pub const DRM_MODE_SUBCONNECTOR_Automatic: drm_mode_subconnector = 0;
+pub const DRM_MODE_SUBCONNECTOR_Unknown: drm_mode_subconnector = 0;
+pub const DRM_MODE_SUBCONNECTOR_DVID: drm_mode_subconnector = 3;
+pub const DRM_MODE_SUBCONNECTOR_DVIA: drm_mode_subconnector = 4;
+pub const DRM_MODE_SUBCONNECTOR_Composite: drm_mode_subconnector = 5;
+pub const DRM_MODE_SUBCONNECTOR_SVIDEO: drm_mode_subconnector = 6;
+pub const DRM_MODE_SUBCONNECTOR_Component: drm_mode_subconnector = 8;
+pub const DRM_MODE_SUBCONNECTOR_SCART: drm_mode_subconnector = 9;
 pub type drm_mode_subconnector = u32;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -1406,12 +1530,12 @@ pub type drm_unique_t = drm_unique;
 pub type drm_list_t = drm_list;
 pub type drm_block_t = drm_block;
 pub type drm_control_t = drm_control;
-pub use self::drm_map_type as drm_map_type_t;
+pub use self::drm_map_type::Type as drm_map_type_t;
 pub use self::drm_map_flags as drm_map_flags_t;
 pub type drm_ctx_priv_map_t = drm_ctx_priv_map;
 pub type drm_map_t = drm_map;
 pub type drm_client_t = drm_client;
-pub use self::drm_stat_type as drm_stat_type_t;
+pub use self::drm_stat_type::Type as drm_stat_type_t;
 pub type drm_stats_t = drm_stats;
 pub use self::drm_lock_flags as drm_lock_flags_t;
 pub type drm_lock_t = drm_lock;
