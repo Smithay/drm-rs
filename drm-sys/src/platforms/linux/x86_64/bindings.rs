@@ -886,6 +886,13 @@ pub struct drm_get_cap {
     pub capability: __u64,
     pub value: __u64,
 }
+/// DRM_IOCTL_SET_CLIENT_CAP ioctl argument type
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_set_client_cap {
+    pub capability: __u64,
+    pub value: __u64,
+}
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_prime_handle {
