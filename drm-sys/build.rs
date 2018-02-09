@@ -43,7 +43,6 @@ mod use_bindgen {
             .constified_enum_module("DRM_CAP_*")
             .layout_tests(false)
             .rustfmt_bindings(true)
-            .blacklist_type("drm_set_client_cap")
             .derive_copy(true)
             .derive_debug(true)
             .derive_default(true)
