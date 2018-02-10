@@ -94,9 +94,7 @@ impl DumbBuffer {
             let length = self.length;
             let fd = device.as_raw_fd();
             let offset = raw.offset as i64;
-            unsafe {
-                try!(mman::mmap(addr, length, prot, flags, fd, offset))
-            }
+            unsafe { try!(mman::mmap(addr, length, prot, flags, fd, offset)) }
         };
 
         let mapping = DumbMapping {

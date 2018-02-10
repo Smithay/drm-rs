@@ -122,6 +122,9 @@ extern crate derive_more;
 extern crate error_chain;
 
 #[macro_use]
+extern crate failure;
+
+#[macro_use]
 pub mod ffi;
 pub mod result;
 
@@ -131,42 +134,11 @@ pub mod buffer;
 use std::os::unix::io::AsRawFd;
 use result::Result;
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-/// A token unique to the process that determines who opened the device.
-///
-/// This token can be sent to another process that acts as the DRM Master and
-/// then authenticated to give extra privileges.
-pub struct AuthToken(u32);
+use failure::Error;
+/// This trait can be implemented by any object that acts as a DRM device. It is
+/// a prerequisite for using any DRM functionality.
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// Capabilities that the process understands.
-///
-/// These can be used to tell the DRM device what capabilities the process can
-/// use.
-pub enum ClientCapability {
-    /// Stereoscopic 3D Support
-    Stereo3D = ffi::DRM_CLIENT_CAP_STEREO_3D as isize,
-    /// Universal plane access and api
-    UniversalPlanes = ffi::DRM_CLIENT_CAP_UNIVERSAL_PLANES as isize,
-    /// Atomic modesetting support
-    Atomic = ffi::DRM_CLIENT_CAP_ATOMIC as isize,
-}
-
-/// A trait for all DRM devices.
 pub trait Device: AsRawFd {
-    /// Generates and returns a magic token unique to the current process.
-    ///
-    /// This token can be used to authenticate with the DRM Master.
-    fn get_auth_token(&self) -> Result<AuthToken> {
-        let token = {
-            let mut raw: ffi::drm_auth_t = Default::default();
-            unsafe { ffi::ioctl_get_magic(self.as_raw_fd(), &mut raw)? };
-            raw.magic
-        };
-
-        Ok(AuthToken(token))
-    }
-
     /// Tells the DRM device whether we understand or do not understand a
     /// particular capability.
     ///
@@ -185,20 +157,80 @@ pub trait Device: AsRawFd {
         Ok(())
     }
 
-    /// Attempts to acquire the DRM Master lock.
+    /// Acquires the DRM Master lock for this process.
+    ///
+    /// # Notes
+    ///
+    /// Acquiring the DRM Master is done automatically when the device is
+    /// opened. If you do not already have the lock, another process probably
+    /// beat it to it.
+    ///
+    /// This function is only available to processes with CAP_SYS_ADMIN
+    /// privileges (usually as root)
     fn set_master(&self) -> Result<()> {
         unsafe { ffi::ioctl_set_master(self.as_raw_fd())? };
 
         Ok(())
     }
 
-    /// Attempts to release the DRM Master lock.
+    /// Releases the DRM Master lock for another process to use.
     fn drop_master(&self) -> Result<()> {
         unsafe { ffi::ioctl_drop_master(self.as_raw_fd())? };
 
         Ok(())
     }
+
+    #[deprecated(note = "DRM Deprecated: Consider opening a render node instead")]
+    /// Generates an [AuthToken](AuthToken.t.html) for this process.
+    fn generate_auth_token(&self) -> Result<AuthToken> {
+        let token = {
+            let mut raw: ffi::drm_auth_t = Default::default();
+            unsafe { ffi::ioctl_get_magic(self.as_raw_fd(), &mut raw)? };
+            raw.magic
+        };
+
+        Ok(AuthToken(token))
+    }
+
+    #[deprecated(note = "DRM Deprecated: Consider opening a render node instead")]
+    /// Authenticates an [AuthToken](AuthToken.t.html) from another process.
+    fn authenticate_auth_token(&self, token: AuthToken) -> Result<()> {
+        let mut raw = ffi::drm_auth_t {
+            magic: token.into(),
+        };
+        unsafe { ffi::ioctl_auth_magic(self.as_raw_fd(), &mut raw)? };
+        Ok(())
+    }
 }
+
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+/// Capabilities that the process understands.
+///
+/// These can be used to tell the DRM device what capabilities the process can
+/// use.
+pub enum ClientCapability {
+    /// Stereoscopic 3D Support
+    Stereo3D = ffi::DRM_CLIENT_CAP_STEREO_3D as isize,
+    /// Universal plane access and api
+    UniversalPlanes = ffi::DRM_CLIENT_CAP_UNIVERSAL_PLANES as isize,
+    /// Atomic modesetting support
+    Atomic = ffi::DRM_CLIENT_CAP_ATOMIC as isize,
+}
+
+#[deprecated(note = "DRM Deprecated: Consider opening a render node instead")]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+/// An authentication token, unique to the process that determines who opened the
+/// device.
+///
+/// This token can be sent to another process that acts as the DRM Master to
+/// allow unprivileged use of the device.
+///
+/// # Deprecated
+///
+/// This method of authentication is deprecated. If you need to use the DRM
+/// device for unprivileged use, consider opening a Render Node, which requires
+/// no authentication to use.
+pub struct AuthToken(u32);
 
 #[allow(non_camel_case_types)]
 /// Signed point
