@@ -379,14 +379,16 @@ pub struct drm_block {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_control {
-    pub func: drm_control__bindgen_ty_1,
+    pub func: drm_control__bindgen_ty_1::Type,
     pub irq: libc::c_int,
 }
-pub const DRM_ADD_COMMAND: drm_control__bindgen_ty_1 = 0;
-pub const DRM_RM_COMMAND: drm_control__bindgen_ty_1 = 1;
-pub const DRM_INST_HANDLER: drm_control__bindgen_ty_1 = 2;
-pub const DRM_UNINST_HANDLER: drm_control__bindgen_ty_1 = 3;
-pub type drm_control__bindgen_ty_1 = u32;
+pub mod drm_control__bindgen_ty_1 {
+    pub type Type = u32;
+    pub const DRM_ADD_COMMAND: Type = 0;
+    pub const DRM_RM_COMMAND: Type = 1;
+    pub const DRM_INST_HANDLER: Type = 2;
+    pub const DRM_UNINST_HANDLER: Type = 3;
+}
 impl Default for drm_control {
     fn default() -> Self {
         unsafe { ::std::mem::zeroed() }
@@ -1174,15 +1176,17 @@ pub struct drm_mode_get_encoder {
     pub possible_crtcs: __u32,
     pub possible_clones: __u32,
 }
-pub const DRM_MODE_SUBCONNECTOR_Automatic: drm_mode_subconnector = 0;
-pub const DRM_MODE_SUBCONNECTOR_Unknown: drm_mode_subconnector = 0;
-pub const DRM_MODE_SUBCONNECTOR_DVID: drm_mode_subconnector = 3;
-pub const DRM_MODE_SUBCONNECTOR_DVIA: drm_mode_subconnector = 4;
-pub const DRM_MODE_SUBCONNECTOR_Composite: drm_mode_subconnector = 5;
-pub const DRM_MODE_SUBCONNECTOR_SVIDEO: drm_mode_subconnector = 6;
-pub const DRM_MODE_SUBCONNECTOR_Component: drm_mode_subconnector = 8;
-pub const DRM_MODE_SUBCONNECTOR_SCART: drm_mode_subconnector = 9;
-pub type drm_mode_subconnector = u32;
+pub mod drm_mode_subconnector {
+    pub type Type = u32;
+    pub const DRM_MODE_SUBCONNECTOR_Automatic: Type = 0;
+    pub const DRM_MODE_SUBCONNECTOR_Unknown: Type = 0;
+    pub const DRM_MODE_SUBCONNECTOR_DVID: Type = 3;
+    pub const DRM_MODE_SUBCONNECTOR_DVIA: Type = 4;
+    pub const DRM_MODE_SUBCONNECTOR_Composite: Type = 5;
+    pub const DRM_MODE_SUBCONNECTOR_SVIDEO: Type = 6;
+    pub const DRM_MODE_SUBCONNECTOR_Component: Type = 8;
+    pub const DRM_MODE_SUBCONNECTOR_SCART: Type = 9;
+}
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_mode_get_connector {
@@ -1561,7 +1565,7 @@ pub type drm_agp_binding_t = drm_agp_binding;
 pub type drm_agp_info_t = drm_agp_info;
 pub type drm_scatter_gather_t = drm_scatter_gather;
 pub type drm_set_version_t = drm_set_version;
-pub const _DRM_MODE_PROP_SIGNED_RANGE: libc::c_uint = 128;
+pub const __RS_DRM_SYS_TMP_DRM_MODE_PROP_SIGNED_RANGE: libc::c_uint = 128;
 pub const DRM_MODE_PROP_SIGNED_RANGE: libc::c_uint = 128;
-pub const _DRM_MODE_PROP_OBJECT: libc::c_uint = 64;
+pub const __RS_DRM_SYS_TMP_DRM_MODE_PROP_OBJECT: libc::c_uint = 64;
 pub const DRM_MODE_PROP_OBJECT: libc::c_uint = 64;
