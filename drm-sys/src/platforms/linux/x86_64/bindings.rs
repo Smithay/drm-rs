@@ -1565,7 +1565,331 @@ pub type drm_agp_binding_t = drm_agp_binding;
 pub type drm_agp_info_t = drm_agp_info;
 pub type drm_scatter_gather_t = drm_scatter_gather;
 pub type drm_set_version_t = drm_set_version;
-pub const __RS_DRM_SYS_TMP_DRM_MODE_PROP_SIGNED_RANGE: libc::c_uint = 128;
 pub const DRM_MODE_PROP_SIGNED_RANGE: libc::c_uint = 128;
-pub const __RS_DRM_SYS_TMP_DRM_MODE_PROP_OBJECT: libc::c_uint = 64;
 pub const DRM_MODE_PROP_OBJECT: libc::c_uint = 64;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_VERSION"]
+    pub static mut DRM_IOCTL_VERSION: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GET_UNIQUE"]
+    pub static mut DRM_IOCTL_GET_UNIQUE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GET_MAGIC"]
+    pub static mut DRM_IOCTL_GET_MAGIC: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_IRQ_BUSID"]
+    pub static mut DRM_IOCTL_IRQ_BUSID: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GET_MAP"]
+    pub static mut DRM_IOCTL_GET_MAP: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GET_CLIENT"]
+    pub static mut DRM_IOCTL_GET_CLIENT: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GET_STATS"]
+    pub static mut DRM_IOCTL_GET_STATS: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_SET_VERSION"]
+    pub static mut DRM_IOCTL_SET_VERSION: libc::c_uint;
+}
+pub const DRM_IOCTL_MODESET_CTL: libc::c_uint = 1074291720;
+pub const DRM_IOCTL_GEM_CLOSE: libc::c_uint = 1074291721;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GEM_FLINK"]
+    pub static mut DRM_IOCTL_GEM_FLINK: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GEM_OPEN"]
+    pub static mut DRM_IOCTL_GEM_OPEN: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GET_CAP"]
+    pub static mut DRM_IOCTL_GET_CAP: libc::c_uint;
+}
+pub const DRM_IOCTL_SET_CLIENT_CAP: libc::c_uint = 1074816013;
+pub const DRM_IOCTL_SET_UNIQUE: libc::c_uint = 1074816016;
+pub const DRM_IOCTL_AUTH_MAGIC: libc::c_uint = 1074029585;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_BLOCK"]
+    pub static mut DRM_IOCTL_BLOCK: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_UNBLOCK"]
+    pub static mut DRM_IOCTL_UNBLOCK: libc::c_uint;
+}
+pub const DRM_IOCTL_CONTROL: libc::c_uint = 1074291732;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_ADD_MAP"]
+    pub static mut DRM_IOCTL_ADD_MAP: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_ADD_BUFS"]
+    pub static mut DRM_IOCTL_ADD_BUFS: libc::c_uint;
+}
+pub const DRM_IOCTL_MARK_BUFS: libc::c_uint = 1075864599;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_INFO_BUFS"]
+    pub static mut DRM_IOCTL_INFO_BUFS: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MAP_BUFS"]
+    pub static mut DRM_IOCTL_MAP_BUFS: libc::c_uint;
+}
+pub const DRM_IOCTL_FREE_BUFS: libc::c_uint = 1074816026;
+pub const DRM_IOCTL_RM_MAP: libc::c_uint = 1076388891;
+pub const DRM_IOCTL_SET_SAREA_CTX: libc::c_uint = 1074816028;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GET_SAREA_CTX"]
+    pub static mut DRM_IOCTL_GET_SAREA_CTX: libc::c_uint;
+}
+pub const DRM_IOCTL_SET_MASTER: libc::c_uint = 25630;
+pub const DRM_IOCTL_DROP_MASTER: libc::c_uint = 25631;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_ADD_CTX"]
+    pub static mut DRM_IOCTL_ADD_CTX: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_RM_CTX"]
+    pub static mut DRM_IOCTL_RM_CTX: libc::c_uint;
+}
+pub const DRM_IOCTL_MOD_CTX: libc::c_uint = 1074291746;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_GET_CTX"]
+    pub static mut DRM_IOCTL_GET_CTX: libc::c_uint;
+}
+pub const DRM_IOCTL_SWITCH_CTX: libc::c_uint = 1074291748;
+pub const DRM_IOCTL_NEW_CTX: libc::c_uint = 1074291749;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_RES_CTX"]
+    pub static mut DRM_IOCTL_RES_CTX: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_ADD_DRAW"]
+    pub static mut DRM_IOCTL_ADD_DRAW: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_RM_DRAW"]
+    pub static mut DRM_IOCTL_RM_DRAW: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_DMA"]
+    pub static mut DRM_IOCTL_DMA: libc::c_uint;
+}
+pub const DRM_IOCTL_LOCK: libc::c_uint = 1074291754;
+pub const DRM_IOCTL_UNLOCK: libc::c_uint = 1074291755;
+pub const DRM_IOCTL_FINISH: libc::c_uint = 1074291756;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_PRIME_HANDLE_TO_FD"]
+    pub static mut DRM_IOCTL_PRIME_HANDLE_TO_FD: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_PRIME_FD_TO_HANDLE"]
+    pub static mut DRM_IOCTL_PRIME_FD_TO_HANDLE: libc::c_uint;
+}
+pub const DRM_IOCTL_AGP_ACQUIRE: libc::c_uint = 25648;
+pub const DRM_IOCTL_AGP_RELEASE: libc::c_uint = 25649;
+pub const DRM_IOCTL_AGP_ENABLE: libc::c_uint = 1074291762;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_AGP_INFO"]
+    pub static mut DRM_IOCTL_AGP_INFO: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_AGP_ALLOC"]
+    pub static mut DRM_IOCTL_AGP_ALLOC: libc::c_uint;
+}
+pub const DRM_IOCTL_AGP_FREE: libc::c_uint = 1075864629;
+pub const DRM_IOCTL_AGP_BIND: libc::c_uint = 1074816054;
+pub const DRM_IOCTL_AGP_UNBIND: libc::c_uint = 1074816055;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_SG_ALLOC"]
+    pub static mut DRM_IOCTL_SG_ALLOC: libc::c_uint;
+}
+pub const DRM_IOCTL_SG_FREE: libc::c_uint = 1074816057;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_WAIT_VBLANK"]
+    pub static mut DRM_IOCTL_WAIT_VBLANK: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_CRTC_GET_SEQUENCE"]
+    pub static mut DRM_IOCTL_CRTC_GET_SEQUENCE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_CRTC_QUEUE_SEQUENCE"]
+    pub static mut DRM_IOCTL_CRTC_QUEUE_SEQUENCE: libc::c_uint;
+}
+pub const DRM_IOCTL_UPDATE_DRAW: libc::c_uint = 1075340351;
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETRESOURCES"]
+    pub static mut DRM_IOCTL_MODE_GETRESOURCES: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETCRTC"]
+    pub static mut DRM_IOCTL_MODE_GETCRTC: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_SETCRTC"]
+    pub static mut DRM_IOCTL_MODE_SETCRTC: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_CURSOR"]
+    pub static mut DRM_IOCTL_MODE_CURSOR: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETGAMMA"]
+    pub static mut DRM_IOCTL_MODE_GETGAMMA: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_SETGAMMA"]
+    pub static mut DRM_IOCTL_MODE_SETGAMMA: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETENCODER"]
+    pub static mut DRM_IOCTL_MODE_GETENCODER: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETCONNECTOR"]
+    pub static mut DRM_IOCTL_MODE_GETCONNECTOR: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_ATTACHMODE"]
+    pub static mut DRM_IOCTL_MODE_ATTACHMODE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_DETACHMODE"]
+    pub static mut DRM_IOCTL_MODE_DETACHMODE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETPROPERTY"]
+    pub static mut DRM_IOCTL_MODE_GETPROPERTY: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_SETPROPERTY"]
+    pub static mut DRM_IOCTL_MODE_SETPROPERTY: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETPROPBLOB"]
+    pub static mut DRM_IOCTL_MODE_GETPROPBLOB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETFB"]
+    pub static mut DRM_IOCTL_MODE_GETFB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_ADDFB"]
+    pub static mut DRM_IOCTL_MODE_ADDFB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_RMFB"]
+    pub static mut DRM_IOCTL_MODE_RMFB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_PAGE_FLIP"]
+    pub static mut DRM_IOCTL_MODE_PAGE_FLIP: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_DIRTYFB"]
+    pub static mut DRM_IOCTL_MODE_DIRTYFB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_CREATE_DUMB"]
+    pub static mut DRM_IOCTL_MODE_CREATE_DUMB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_MAP_DUMB"]
+    pub static mut DRM_IOCTL_MODE_MAP_DUMB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_DESTROY_DUMB"]
+    pub static mut DRM_IOCTL_MODE_DESTROY_DUMB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETPLANERESOURCES"]
+    pub static mut DRM_IOCTL_MODE_GETPLANERESOURCES: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GETPLANE"]
+    pub static mut DRM_IOCTL_MODE_GETPLANE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_SETPLANE"]
+    pub static mut DRM_IOCTL_MODE_SETPLANE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_ADDFB2"]
+    pub static mut DRM_IOCTL_MODE_ADDFB2: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_OBJ_GETPROPERTIES"]
+    pub static mut DRM_IOCTL_MODE_OBJ_GETPROPERTIES: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_OBJ_SETPROPERTY"]
+    pub static mut DRM_IOCTL_MODE_OBJ_SETPROPERTY: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_CURSOR2"]
+    pub static mut DRM_IOCTL_MODE_CURSOR2: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_ATOMIC"]
+    pub static mut DRM_IOCTL_MODE_ATOMIC: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_CREATEPROPBLOB"]
+    pub static mut DRM_IOCTL_MODE_CREATEPROPBLOB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_DESTROYPROPBLOB"]
+    pub static mut DRM_IOCTL_MODE_DESTROYPROPBLOB: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_SYNCOBJ_CREATE"]
+    pub static mut DRM_IOCTL_SYNCOBJ_CREATE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_SYNCOBJ_DESTROY"]
+    pub static mut DRM_IOCTL_SYNCOBJ_DESTROY: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD"]
+    pub static mut DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE"]
+    pub static mut DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_SYNCOBJ_WAIT"]
+    pub static mut DRM_IOCTL_SYNCOBJ_WAIT: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_SYNCOBJ_RESET"]
+    pub static mut DRM_IOCTL_SYNCOBJ_RESET: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_SYNCOBJ_SIGNAL"]
+    pub static mut DRM_IOCTL_SYNCOBJ_SIGNAL: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_CREATE_LEASE"]
+    pub static mut DRM_IOCTL_MODE_CREATE_LEASE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_LIST_LESSEES"]
+    pub static mut DRM_IOCTL_MODE_LIST_LESSEES: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_GET_LEASE"]
+    pub static mut DRM_IOCTL_MODE_GET_LEASE: libc::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}DRM_IOCTL_MODE_REVOKE_LEASE"]
+    pub static mut DRM_IOCTL_MODE_REVOKE_LEASE: libc::c_uint;
+}
