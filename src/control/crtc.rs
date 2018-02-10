@@ -232,8 +232,7 @@ impl Iterator for Events {
             self.i += event.length as usize;
             match event.type_ {
                 x if x == ffi::DRM_EVENT_VBLANK => {
-                    let vblank_event: &ffi::drm_event_vblank =
-                        unsafe { mem::transmute(event) };
+                    let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
                     Some(Event::Vblank(VblankEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(
@@ -244,8 +243,7 @@ impl Iterator for Events {
                     }))
                 }
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
-                    let vblank_event: &ffi::drm_event_vblank =
-                        unsafe { mem::transmute(event) };
+                    let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
                     Some(Event::PageFlip(PageFlipEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(
