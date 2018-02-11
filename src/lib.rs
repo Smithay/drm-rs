@@ -161,9 +161,9 @@ pub trait Device: AsRawFd {
     ///
     /// # Notes
     ///
-    /// Acquiring the DRM Master is done automatically when the device is
-    /// opened. If you do not already have the lock, another process probably
-    /// beat it to it.
+    /// Acquiring the DRM Master is done automatically when the primary device
+    /// node is opened. If you opened the primary device node and did not
+    /// acquire the lock, another process likely has the lock.
     ///
     /// This function is only available to processes with CAP_SYS_ADMIN
     /// privileges (usually as root)
@@ -180,7 +180,7 @@ pub trait Device: AsRawFd {
         Ok(())
     }
 
-    #[deprecated(note = "DRM Deprecated: Consider opening a render node instead")]
+    #[deprecated(note = "DRM Deprecated: Consider using a render node")]
     /// Generates an [AuthToken](AuthToken.t.html) for this process.
     fn generate_auth_token(&self) -> Result<AuthToken> {
         let token = {
@@ -192,7 +192,7 @@ pub trait Device: AsRawFd {
         Ok(AuthToken(token))
     }
 
-    #[deprecated(note = "DRM Deprecated: Consider opening a render node instead")]
+    #[deprecated(note = "DRM Deprecated: Consider using a render node")]
     /// Authenticates an [AuthToken](AuthToken.t.html) from another process.
     fn authenticate_auth_token(&self, token: AuthToken) -> Result<()> {
         let mut raw = ffi::drm_auth_t {
