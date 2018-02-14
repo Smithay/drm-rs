@@ -169,7 +169,7 @@ pub(crate) mod mode {
     ioctl!(readwrite get_property
            with DRM_IOCTL_BASE, 0xAA; drm_mode_get_property);
 
-    ioctl!(readwrite set_property
+    ioctl!(readwrite connector_set_property
            with DRM_IOCTL_BASE, 0xAB; drm_mode_connector_set_property);
 
     ioctl!(readwrite obj_get_properties
