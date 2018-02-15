@@ -75,7 +75,7 @@ ioctl!(none acquire_master with DRM_IOCTL_BASE, 0x1e);
 /// # Locks DRM mutex: No
 /// # Permissions: Root
 /// # Nodes: Primary
-ioctl!(none drop_master with DRM_IOCTL_BASE, 0x1f);
+ioctl!(none release_master with DRM_IOCTL_BASE, 0x1f);
 
 /// IRQ Control
 ///

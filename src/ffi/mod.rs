@@ -9,7 +9,7 @@ use nix::libc::{c_int, c_char};
 use nix::Error;
 pub use drm_sys::*;
 
-mod ioctl;
+pub mod ioctl;
 
 /// Wrappers for the raw DRM structures.
 pub(crate) trait Wrapper {
