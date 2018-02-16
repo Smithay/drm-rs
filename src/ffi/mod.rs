@@ -57,6 +57,7 @@ macro_rules! impl_wrapper {
                 use ffi::PrepareBuffers;
                 self.prepare_buffers();
                 unsafe { $ioctl(fd, &mut self.raw)? };
+                self.coerce_buf_sizes();
                 Ok(())
             }
         }
@@ -84,6 +85,7 @@ pub(crate) type Buffer<T> = [T; 32];
 /// to set up the inner DRM structure's fields to point to them properly.
 pub(crate) trait PrepareBuffers {
     fn prepare_buffers(&mut self);
+    fn coerce_buf_sizes(&mut self);
 }
 
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -98,6 +100,12 @@ impl PrepareBuffers for BusID {
     fn prepare_buffers(&mut self) {
         self.raw.unique = (&mut self.unique_buf).as_mut_ptr();
         self.raw.unique_len = self.unique_buf.len() as u64;
+    }
+
+    fn coerce_buf_sizes(&mut self) {
+        if self.raw.unique_len > self.unique_buf.len() as u64 {
+            self.raw.unique_len = self.unique_buf.len() as u64;
+        }
     }
 }
 
@@ -122,8 +130,38 @@ pub(crate) struct SetVersion(drm_set_version);
 impl_wrapper!(SetVersion, drm_set_version, ioctl::set_version);
 
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct GetVersion(drm_version);
-impl_wrapper!(GetVersion, drm_version, ioctl::get_version);
+pub(crate) struct GetVersion {
+    raw: drm_version,
+    pub name_buf: Buffer<c_char>,
+    pub date_buf: Buffer<c_char>,
+    pub desc_buf: Buffer<c_char>,
+}
+
+impl_wrapper!(full GetVersion, drm_version, ioctl::get_version);
+
+impl PrepareBuffers for GetVersion {
+    fn prepare_buffers(&mut self) {
+        self.raw.name = (&mut self.name_buf).as_mut_ptr();
+        self.raw.date = (&mut self.date_buf).as_mut_ptr();
+        self.raw.desc = (&mut self.desc_buf).as_mut_ptr();
+
+        self.raw.name_len = self.name_buf.len() as u64;
+        self.raw.date_len = self.date_buf.len() as u64;
+        self.raw.desc_len = self.desc_buf.len() as u64;
+    }
+
+    fn coerce_buf_sizes(&mut self) {
+        if self.raw.name_len > self.name_buf.len() as u64 {
+            self.raw.name_len = self.name_buf.len() as u64;
+        }
+        if self.raw.date_len > self.date_buf.len() as u64 {
+            self.raw.date_len = self.date_buf.len() as u64;
+        }
+        if self.raw.desc_len > self.desc_buf.len() as u64 {
+            self.raw.desc_len = self.desc_buf.len() as u64;
+        }
+    }
+}
 
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 pub(crate) struct GetToken(drm_auth);
@@ -172,13 +210,29 @@ pub(crate) mod mode {
     impl PrepareBuffers for CardRes {
         fn prepare_buffers(&mut self) {
             self.raw.connector_id_ptr = (&mut self.con_buf).as_mut_ptr() as u64;
-            self.raw.count_connectors = self.con_buf.len() as u32;
             self.raw.encoder_id_ptr = (&mut self.enc_buf).as_mut_ptr() as u64;
-            self.raw.count_encoders = self.enc_buf.len() as u32;
             self.raw.crtc_id_ptr = (&mut self.crtc_buf).as_mut_ptr() as u64;
-            self.raw.count_crtcs = self.crtc_buf.len() as u32;
             self.raw.fb_id_ptr = (&mut self.fb_buf).as_mut_ptr() as u64;
+
+            self.raw.count_connectors = self.con_buf.len() as u32;
+            self.raw.count_encoders = self.enc_buf.len() as u32;
+            self.raw.count_crtcs = self.crtc_buf.len() as u32;
             self.raw.count_fbs = self.fb_buf.len() as u32;
+        }
+
+        fn coerce_buf_sizes(&mut self) {
+            if self.raw.count_connectors > self.con_buf.len() as u32 {
+                self.raw.count_connectors = self.con_buf.len() as u32;
+            }
+            if self.raw.count_encoders > self.enc_buf.len() as u32 {
+                self.raw.count_encoders = self.enc_buf.len() as u32;
+            }
+            if self.raw.count_crtcs > self.crtc_buf.len() as u32 {
+                self.raw.count_crtcs = self.crtc_buf.len() as u32;
+            }
+            if self.raw.count_fbs > self.fb_buf.len() as u32 {
+                self.raw.count_fbs = self.fb_buf.len() as u32;
+            }
         }
     }
 
@@ -196,6 +250,12 @@ pub(crate) mod mode {
             self.raw.plane_id_ptr = (&mut self.plane_buf).as_mut_ptr() as u64;
             self.raw.count_planes = self.plane_buf.len() as u32;
         }
+
+        fn coerce_buf_sizes(&mut self) {
+            if self.raw.count_planes > self.plane_buf.len() as u32 {
+                self.raw.count_planes = self.plane_buf.len() as u32;
+            }
+        }
     }
 
     #[derive(Debug, Default, Copy, Clone, Hash)]
@@ -212,12 +272,25 @@ pub(crate) mod mode {
     impl PrepareBuffers for GetConnector {
         fn prepare_buffers(&mut self) {
             self.raw.encoders_ptr = (&mut self.enc_buf).as_mut_ptr() as u64;
-            self.raw.count_encoders = self.enc_buf.len() as u32;
             self.raw.props_ptr = (&mut self.prop_buf).as_mut_ptr() as u64;
             self.raw.prop_values_ptr = (&mut self.prop_val_buf).as_mut_ptr() as u64;
-            self.raw.count_props = self.prop_buf.len() as u32;
             self.raw.modes_ptr = (&mut self.mode_buf).as_mut_ptr() as u64;
+
+            self.raw.count_encoders = self.enc_buf.len() as u32;
+            self.raw.count_props = self.prop_buf.len() as u32;
             self.raw.count_modes = self.mode_buf.len() as u32;
+        }
+
+        fn coerce_buf_sizes(&mut self) {
+            if self.raw.count_encoders > self.enc_buf.len() as u32 {
+                self.raw.count_encoders = self.enc_buf.len() as u32;
+            }
+            if self.raw.count_props > self.prop_buf.len() as u32 {
+                self.raw.count_props = self.prop_buf.len() as u32;
+            }
+            if self.raw.count_modes > self.mode_buf.len() as u32 {
+                self.raw.count_modes = self.mode_buf.len() as u32;
+            }
         }
     }
 
@@ -233,6 +306,12 @@ pub(crate) mod mode {
         fn prepare_buffers(&mut self) {
             self.raw.set_connectors_ptr = (&mut self.conn_buf).as_mut_ptr() as u64;
             self.raw.count_connectors = self.conn_buf.len() as u32;
+        }
+
+        fn coerce_buf_sizes(&mut self) {
+            if self.raw.count_connectors > self.conn_buf.len() as u32 {
+                self.raw.count_connectors = self.conn_buf.len() as u32;
+            }
         }
     }
 
@@ -264,6 +343,12 @@ pub(crate) mod mode {
         fn prepare_buffers(&mut self) {
             self.raw.format_type_ptr = (&mut self.format_buf).as_mut_ptr() as u64;
             self.raw.count_format_types = self.format_buf.len() as u32;
+        }
+
+        fn coerce_buf_sizes(&mut self) {
+            if self.raw.count_format_types > self.format_buf.len() as u32 {
+                self.raw.count_format_types = self.format_buf.len() as u32 ;
+            }
         }
     }
 
@@ -349,7 +434,14 @@ pub(crate) mod mode {
             self.raw.count_props_ptr = (&mut self.count_props_buf).as_mut_ptr() as u64;
             self.raw.props_ptr = (&mut self.props_buf).as_mut_ptr() as u64;
             self.raw.prop_values_ptr = (&mut self.vals_buf).as_mut_ptr() as u64;
+
             self.raw.count_objs = self.objs_buf.len() as u32;
+        }
+
+        fn coerce_buf_sizes(&mut self) {
+            if self.raw.count_objs > self.objs_buf.len() as u32 {
+                self.raw.count_objs = self.objs_buf.len() as u32;
+            }
         }
     }
 }
