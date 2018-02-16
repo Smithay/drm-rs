@@ -1,32 +1,25 @@
-use result::*;
+use ffi::Wrapper;
 use ffi;
-use std::ffi::CStr;
-use std::hash::Hash;
-pub mod connector;
-pub mod encoder;
-pub mod crtc;
-pub mod framebuffer;
-pub mod plane;
-pub mod property;
-pub mod dumbbuffer;
+use result::Result;
+//pub mod connector;
+//pub mod encoder;
+//pub mod crtc;
+//pub mod framebuffer;
+//pub mod plane;
+//pub mod property;
+//pub mod dumbbuffer;
 
-/// The underlying id for a resource.
-pub type RawHandle = u32;
-
-#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-/// An array to hold the name of a property.
-pub struct RawName([i8; 32]);
-
-/// A trait for devices that provide control (modesetting) functionality.
-pub trait Device: Sized + super::Device {
+pub trait Device: super::Device {
     /// See [`ResourceHandles::load_from_device`]
     ///
     /// [`ResourceHandles::load_from_device`]:
     ///     ResourceHandles.t.html#method.load_from_device
     fn resource_handles(&self) -> Result<ResourceHandles> {
-        ResourceHandles::load_from_device(self)
+        let mut t = ffi::mode::CardRes::default();
+        t.ioctl(self.as_raw_fd())?;
+        Ok(ResourceHandles(t))
     }
-
+/*
     /// See [`PlaneResourceHandles::load_from_device`]
     ///
     /// [`PlaneResourceHandles::load_from_device`]:
@@ -69,7 +62,7 @@ pub trait Device: Sized + super::Device {
         U: super::buffer::Buffer,
     {
         framebuffer::create(self, buffer)
-    }
+    }*/
 }
 
 /// A generalization of a handle that represents an object managed by a `Device`.
@@ -78,7 +71,7 @@ pub trait Device: Sized + super::Device {
 /// provide some sort of handle that we can use to refer to them. Almost all
 /// operations performed on a `Device` that use an object or resource require
 /// making requests using a handle.
-pub trait ResourceHandle: Copy + Eq + Hash + From<RawHandle> + Into<RawHandle> {}
+//pub trait ResourceHandle: Copy + Eq + Hash + From<RawHandle> + Into<RawHandle> {}
 
 /// Information about a resource or object managed by a `Device`.
 ///
@@ -87,7 +80,7 @@ pub trait ResourceHandle: Copy + Eq + Hash + From<RawHandle> + Into<RawHandle> {
 /// guarantees that this resource has existed or will exist at any point in
 /// time. A process should treat a `ResourceInfo` as merely a hint to the
 /// current state of the `Device`.
-pub trait ResourceInfo: Clone + Eq {
+/*pub trait ResourceInfo: Clone + Eq {
     /// The type of handle used to load this trait.
     type Handle: ResourceHandle;
 
@@ -98,56 +91,18 @@ pub trait ResourceInfo: Clone + Eq {
 
     /// Get the `ResourceHandle` for this resource.
     fn handle(&self) -> Self::Handle;
-}
+}*/
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-/// The set of resource ids that are associated with a DRM device.
-pub struct ResourceHandles {
-    connectors: ffi::Buffer<connector::Handle>,
-    encoders: ffi::Buffer<encoder::Handle>,
-    crtcs: ffi::Buffer<crtc::Handle>,
-    framebuffers: ffi::Buffer<framebuffer::Handle>,
-    width: (u32, u32),
-    height: (u32, u32),
-}
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct ResourceHandles(ffi::mode::CardRes);
 
+/*
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// The set of plane ids that are associated with a DRM device.
 pub struct PlaneResourceHandles {
     planes: ffi::Buffer<plane::Handle>,
 }
-
 impl ResourceHandles {
-    /// Attempts to acquire a copy of the device's ResourceHandles.
-    pub fn load_from_device<T>(device: &T) -> Result<Self>
-    where
-        T: Device,
-    {
-        let fd = device.as_raw_fd();
-
-        let ids = {
-            let mut raw: ffi::drm_mode_card_res = Default::default();
-            unsafe { ffi::ioctl_mode_getresources(fd, &mut raw)? };
-
-            let ids = ResourceHandles {
-                connectors: ffi_buf!(raw.connector_id_ptr, raw.count_connectors),
-                encoders: ffi_buf!(raw.encoder_id_ptr, raw.count_encoders),
-                crtcs: ffi_buf!(raw.crtc_id_ptr, raw.count_crtcs),
-                framebuffers: ffi_buf!(raw.fb_id_ptr, raw.count_fbs),
-                width: (raw.min_width, raw.max_width),
-                height: (raw.min_height, raw.max_height),
-            };
-
-            unsafe {
-                try!(ffi::ioctl_mode_getresources(device.as_raw_fd(), &mut raw));
-            }
-
-            ids
-        };
-
-        Ok(ids)
-    }
-
     /// Returns a slice to the list of connector handles.
     pub fn connectors<'a>(&'a self) -> &'a [connector::Handle] {
         &self.connectors
@@ -166,25 +121,6 @@ impl ResourceHandles {
     /// Returns a slice to the list of framebuffer handle.
     pub fn framebuffers<'a>(&'a self) -> &'a [framebuffer::Handle] {
         &self.framebuffers
-    }
-
-    /// TODO: Learn and document.
-    pub fn width(&self) -> (u32, u32) {
-        (self.width)
-    }
-
-    /// TODO: Learn and document.
-    pub fn height(&self) -> (u32, u32) {
-        (self.height)
-    }
-
-    pub fn filter_crtcs(&self, filter: CrtcListFilter) -> ffi::Buffer<crtc::Handle> {
-        self.crtcs
-            .iter()
-            .enumerate()
-            .filter(|&(n, _)| (1 << n) & filter.0 != 0)
-            .map(|(_, &e)| e)
-            .collect()
     }
 }
 
@@ -336,3 +272,4 @@ impl ::std::fmt::Debug for RawName {
         write!(f, "{:?}", cstr)
     }
 }
+*/
