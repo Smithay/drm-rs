@@ -52,8 +52,8 @@ use result::Result;
 ///
 /// This crate does not provide a concrete device object due to the various ways
 /// it can be implemented. The user of this crate is expected to implement it
-/// themselves and derive this trait as necessary. The example below demonstrates
-/// how to do this using a small wrapper.
+/// themselves and derive this trait as necessary. The example below
+/// demonstrates how to do this using a small wrapper.
 ///
 /// # Example
 ///
