@@ -153,6 +153,51 @@ pub trait Device: AsRawFd {
 
         Ok(())
     }
+
+    #[allow(missing_docs)]
+    fn get_bus_id(&self) {
+        unimplemented!();
+    }
+
+    #[allow(missing_docs)]
+    fn get_client(&self) {
+        unimplemented!();
+    }
+
+    #[allow(missing_docs)]
+    fn get_stats(&self) {
+        unimplemented!();
+    }
+
+    #[allow(missing_docs)]
+    fn get_capability(&self) {
+        unimplemented!();
+    }
+
+    #[allow(missing_docs)]
+    fn set_version(&self) {
+        unimplemented!();
+    }
+
+    #[allow(missing_docs)]
+    fn get_version(&self) {
+        unimplemented!();
+    }
+
+    #[allow(missing_docs)]
+    fn set_irq_handler(&self) {
+        unimplemented!();
+    }
+
+    #[allow(missing_docs)]
+    fn wait_vblank(&self) {
+        unimplemented!();
+    }
+
+    #[allow(missing_docs)]
+    fn modeset_control(&self) {
+        unimplemented!();
+    }
 }
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
