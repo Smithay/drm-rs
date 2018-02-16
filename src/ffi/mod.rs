@@ -199,7 +199,7 @@ pub(crate) mod mode {
     #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct CardRes {
         raw: drm_mode_card_res,
-        pub con_buf: Buffer<uint32_t>,
+        pub conn_buf: Buffer<uint32_t>,
         pub enc_buf: Buffer<uint32_t>,
         pub crtc_buf: Buffer<uint32_t>,
         pub fb_buf: Buffer<uint32_t>
@@ -209,20 +209,20 @@ pub(crate) mod mode {
 
     impl PrepareBuffers for CardRes {
         fn prepare_buffers(&mut self) {
-            self.raw.connector_id_ptr = (&mut self.con_buf).as_mut_ptr() as u64;
+            self.raw.connector_id_ptr = (&mut self.conn_buf).as_mut_ptr() as u64;
             self.raw.encoder_id_ptr = (&mut self.enc_buf).as_mut_ptr() as u64;
             self.raw.crtc_id_ptr = (&mut self.crtc_buf).as_mut_ptr() as u64;
             self.raw.fb_id_ptr = (&mut self.fb_buf).as_mut_ptr() as u64;
 
-            self.raw.count_connectors = self.con_buf.len() as u32;
+            self.raw.count_connectors = self.conn_buf.len() as u32;
             self.raw.count_encoders = self.enc_buf.len() as u32;
             self.raw.count_crtcs = self.crtc_buf.len() as u32;
             self.raw.count_fbs = self.fb_buf.len() as u32;
         }
 
         fn coerce_buf_sizes(&mut self) {
-            if self.raw.count_connectors > self.con_buf.len() as u32 {
-                self.raw.count_connectors = self.con_buf.len() as u32;
+            if self.raw.count_connectors > self.conn_buf.len() as u32 {
+                self.raw.count_connectors = self.conn_buf.len() as u32;
             }
             if self.raw.count_encoders > self.enc_buf.len() as u32 {
                 self.raw.count_encoders = self.enc_buf.len() as u32;
