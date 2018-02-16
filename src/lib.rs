@@ -42,6 +42,8 @@ extern crate error_chain;
 pub(crate) mod ffi;
 pub mod result;
 
+pub mod control;
+
 use ffi::Wrapper;
 
 use std::os::unix::io::AsRawFd;
