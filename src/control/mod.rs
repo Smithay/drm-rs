@@ -96,34 +96,52 @@ pub trait Device: super::Device {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct ResourceHandles(ffi::mode::CardRes);
 
-/*
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-/// The set of plane ids that are associated with a DRM device.
-pub struct PlaneResourceHandles {
-    planes: ffi::Buffer<plane::Handle>,
-}
 impl ResourceHandles {
     /// Returns a slice to the list of connector handles.
-    pub fn connectors<'a>(&'a self) -> &'a [connector::Handle] {
-        &self.connectors
-    }
+    pub fn connectors(&self) -> &[u32] {
+        use std::slice;
 
+        let ptr = self.0.conn_buf.as_ptr();
+        let len = self.0.raw_ref().count_connectors as usize;
+        unsafe {
+            slice::from_raw_parts(ptr, len)
+        }
+    }
     /// Returns a slice to the list of encoder handle.
-    pub fn encoders<'a>(&'a self) -> &'a [encoder::Handle] {
-        &self.encoders
+    pub fn encoders(&self) -> &[u32] {
+        use std::slice;
+
+        let ptr = self.0.enc_buf.as_ptr();
+        let len = self.0.raw_ref().count_encoders as usize;
+        unsafe {
+            slice::from_raw_parts(ptr, len)
+        }
     }
 
     /// Returns a slice to the list of CRTC handles.
-    pub fn crtcs<'a>(&'a self) -> &'a [crtc::Handle] {
-        &self.crtcs
+    pub fn crtcs(&self) -> &[u32] {
+        use std::slice;
+
+        let ptr = self.0.crtc_buf.as_ptr();
+        let len = self.0.raw_ref().count_crtcs as usize;
+        unsafe {
+            slice::from_raw_parts(ptr, len)
+        }
     }
 
     /// Returns a slice to the list of framebuffer handle.
-    pub fn framebuffers<'a>(&'a self) -> &'a [framebuffer::Handle] {
-        &self.framebuffers
+    pub fn framebuffers(&self) -> &[u32] {
+        use std::slice;
+
+        let ptr = self.0.fb_buf.as_ptr();
+        let len = self.0.raw_ref().count_fbs as usize;
+        unsafe {
+            slice::from_raw_parts(ptr, len)
+        }
     }
 }
 
+/*
 impl PlaneResourceHandles {
     /// Loads the plane ids from a device.
     pub fn load_from_device<T>(device: &T) -> Result<Self>
