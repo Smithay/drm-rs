@@ -1,193 +1,152 @@
-use ffi::Wrapper;
-use ffi;
+//! Modesetting operations that the DRM subsystem exposes.
+//!
+//! # Summary
+//!
+//! The DRM subsystem provides Kernel Modesetting (KMS) functionality by
+//! exposing the following resource types:
+//!
+//! * FrameBuffer - Specific to an individual process, these wrap around generic
+//! GPU buffers so that they can be attached to a Plane.
+//!
+//! * Planes - Dedicated memory objects which contain a buffer that can then be
+//! scanned out by a CRTC. There exist a few different types of planes depending
+//! on the use case.
+//!
+//! * CRTC - Scanout engines that read pixel data from a Plane and sends it to
+//! a Connector. Each CRTC has at least one Primary Plane.
+//!
+//! * Connector - Respresents the physical output, such as a DisplayPort or
+//! VGA connector.
+//!
+//! * Encoder - Encodes pixel data from a CRTC into something a Connector can
+//! understand.
+//!
+//! Further details on each resource can be found in their respective modules.
+//!
+//! # Usage
+//!
+//! To begin using modesetting functionality, the [Device trait](Device.t.html)
+//! must be implemented on top of the [basic Device trait](../Device.t.html).
+
+use ffi::{self, Wrapper, mode::RawHandle};
 use result::Result;
-//pub mod connector;
-//pub mod encoder;
-//pub mod crtc;
-//pub mod framebuffer;
+
+mod debug;
+
+pub mod connector;
+pub mod encoder;
+pub mod crtc;
+pub mod framebuffer;
 //pub mod plane;
 //pub mod property;
 //pub mod dumbbuffer;
 
+/// This trait should be implemented by any object that acts as a DRM device and
+/// provides modesetting functionality.
+///
+/// Like the parent [Device](../Device.t.html) trait, this crate does not
+/// provide a concrete object for this trait.
+///
+/// # Example
+/// ```
+/// use drm::control::Device as ControlDevice;
+///
+/// // Assuming the `Card` wrapper already implements drm::Device
+/// impl ControlDevice for Card {}
+/// ```
 pub trait Device: super::Device {
-    /// See [`ResourceHandles::load_from_device`]
-    ///
-    /// [`ResourceHandles::load_from_device`]:
-    ///     ResourceHandles.t.html#method.load_from_device
+    /// Gets the set of resource handles that this device currently controls.
     fn resource_handles(&self) -> Result<ResourceHandles> {
         let mut t = ffi::mode::CardRes::default();
         t.ioctl(self.as_raw_fd())?;
         Ok(ResourceHandles(t))
     }
-/*
-    /// See [`PlaneResourceHandles::load_from_device`]
-    ///
-    /// [`PlaneResourceHandles::load_from_device`]:
-    ///     PlaneResourceHandles.t.html#method.load_from_device
+
+    /// Gets the set of plane handles that this device currently controls.
     fn plane_handles(&self) -> Result<PlaneResourceHandles> {
-        PlaneResourceHandles::load_from_device(self)
+        let mut t = ffi::mode::PlaneRes::default();
+        t.ioctl(self.as_raw_fd())?;
+        Ok(PlaneResourceHandles(t))
     }
 
-    /// See [`ResourceInfo::load_from_device`]
-    ///
-    /// [`ResourceInfo::load_from_device`]:
-    ///     ResourceInfo.t.html#method.load_from_device
-    fn resource_info<T>(&self, handle: T::Handle) -> Result<T>
-    where
-        T: ResourceInfo,
-    {
+    /// Returns detailed information of an object given its handle.
+    fn info<T: ResourceInfo>(&self, handle: T::Handle) -> Result<T>
+    where Self: Sized {
         T::load_from_device(self, handle)
     }
-
-    /// Attaches a framebuffer to a CRTC's built-in plane, attaches the CRTC to
-    /// a connector, and sets the CRTC's mode to output the pixel data.
-    fn set_crtc(
-        &self,
-        crtc: crtc::Handle,
-        fb: framebuffer::Handle,
-        cons: &[connector::Handle],
-        position: (u32, u32),
-        mode: Option<Mode>,
-    ) -> Result<()> {
-        crtc::set(self, crtc, fb, cons, position, mode)
-    }
-
-    /// Creates a framebuffer from a [`Buffer`], returning
-    /// [`framebuffer::Info`].
-    ///
-    /// [`Buffer`]: ../buffer/Buffer.t.html
-    /// [`framebuffer::Info`]: framebuffer/Info.t.html
-    fn create_framebuffer<U>(&self, buffer: &U) -> Result<framebuffer::Info>
-    where
-        U: super::buffer::Buffer,
-    {
-        framebuffer::create(self, buffer)
-    }*/
 }
 
-/// A generalization of a handle that represents an object managed by a `Device`.
-///
-/// In most cases, all objects and resources that are managed by a `Device`
-/// provide some sort of handle that we can use to refer to them. Almost all
-/// operations performed on a `Device` that use an object or resource require
-/// making requests using a handle.
-//pub trait ResourceHandle: Copy + Eq + Hash + From<RawHandle> + Into<RawHandle> {}
+/// Objects that derive this trait are handles to device resources, and are
+/// used for nearly all modesetting operations.
+pub trait ResourceHandle: From<RawHandle> + Into<RawHandle> {
+    #[doc(hidden)]
+    const DEBUG_NAME: &'static str;
 
-/// Information about a resource or object managed by a `Device`.
-///
-/// Due to external events such as hot plugging, other tasks, and even buggy
-/// drivers, object information could change at any time. In fact, there are no
-/// guarantees that this resource has existed or will exist at any point in
-/// time. A process should treat a `ResourceInfo` as merely a hint to the
-/// current state of the `Device`.
-/*pub trait ResourceInfo: Clone + Eq {
-    /// The type of handle used to load this trait.
+    fn from_checked(n: RawHandle) -> Option<Self> {
+        match n {
+            0 => None,
+            id => Some(Self::from(id))
+        }
+    }
+}
+
+/// Objects that derive this trait can be retrieved using a
+/// [ResourceHandle](ResourceHandle.t.html) on a [Device](Device.t.html)
+pub trait ResourceInfo: Sized {
+    #[allow(missing_docs)]
     type Handle: ResourceHandle;
-
-    /// Load the resource from a `Device` given its `ResourceHandle`
-    fn load_from_device<T>(&T, Self::Handle) -> Result<Self>
-    where
-        T: Device;
-
-    /// Get the `ResourceHandle` for this resource.
+    /// Attempts to retrieve information about a resource.
+    fn load_from_device<T: Device>(&T, Self::Handle) -> Result<Self>;
+    /// Returns the handle used to acquire this object.
     fn handle(&self) -> Self::Handle;
-}*/
+}
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+/// The set of [ResourceHandles](ResourceHandle.t.html) that a
+/// [Device](Device.t.html) exposes. Excluding Plane resources.
 pub struct ResourceHandles(ffi::mode::CardRes);
 
 impl ResourceHandles {
-    /// Returns a slice to the list of connector handles.
-    pub fn connectors(&self) -> &[u32] {
-        use std::slice;
-
-        let ptr = self.0.conn_buf.as_ptr();
-        let len = self.0.raw_ref().count_connectors as usize;
-        unsafe {
-            slice::from_raw_parts(ptr, len)
-        }
-    }
-    /// Returns a slice to the list of encoder handle.
-    pub fn encoders(&self) -> &[u32] {
-        use std::slice;
-
-        let ptr = self.0.enc_buf.as_ptr();
-        let len = self.0.raw_ref().count_encoders as usize;
-        unsafe {
-            slice::from_raw_parts(ptr, len)
-        }
+    /// Returns the set of [connector::Handles](connector/Handle.t.html)
+    pub fn connectors(&self) -> &[connector::Handle] {
+        slice_from_wrapper!(self.0, conn_buf, count_connectors)
     }
 
-    /// Returns a slice to the list of CRTC handles.
-    pub fn crtcs(&self) -> &[u32] {
-        use std::slice;
-
-        let ptr = self.0.crtc_buf.as_ptr();
-        let len = self.0.raw_ref().count_crtcs as usize;
-        unsafe {
-            slice::from_raw_parts(ptr, len)
-        }
+    /// Returns the set of [encoder::Handles](encoder/Handle.t.html)
+    pub fn encoders(&self) -> &[encoder::Handle] {
+        slice_from_wrapper!(self.0, enc_buf, count_encoders)
     }
 
-    /// Returns a slice to the list of framebuffer handle.
-    pub fn framebuffers(&self) -> &[u32] {
-        use std::slice;
+    /// Returns the set of [crtc::Handles](crtc/Handle.t.html)
+    pub fn crtcs(&self) -> &[crtc::Handle] {
+        slice_from_wrapper!(self.0, crtc_buf, count_crtcs)
+    }
 
-        let ptr = self.0.fb_buf.as_ptr();
-        let len = self.0.raw_ref().count_fbs as usize;
-        unsafe {
-            slice::from_raw_parts(ptr, len)
-        }
+    /// Returns the set of [framebuffer::Handles](framebuffer/Handle.t.html)
+    pub fn framebuffers(&self) -> &[framebuffer::Handle] {
+        slice_from_wrapper!(self.0, fb_buf, count_fbs)
+    }
+}
+
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+/// The set of [plane::Handles](plane/Handle.t.html) that a
+/// [Device](Device.t.html) exposes.
+pub struct PlaneResourceHandles(ffi::mode::PlaneRes);
+
+impl PlaneResourceHandles {
+    /// Returns the set of [plane::Handles](plane/Handle.t.html)
+    pub fn planes(&self) -> &[u32] {
+        slice_from_wrapper!(self.0, plane_buf, count_planes)
     }
 }
 
 /*
-impl PlaneResourceHandles {
-    /// Loads the plane ids from a device.
-    pub fn load_from_device<T>(device: &T) -> Result<Self>
-    where
-        T: Device,
-    {
-        let phandles = {
-            let mut raw: ffi::drm_mode_get_plane_res = Default::default();
-            unsafe {
-                try!(ffi::ioctl_mode_getplaneresources(
-                    device.as_raw_fd(),
-                    &mut raw
-                ));
-            }
-
-            let phandles = PlaneResourceHandles {
-                planes: ffi_buf!(raw.plane_id_ptr, raw.count_planes),
-            };
-
-            unsafe {
-                try!(ffi::ioctl_mode_getplaneresources(
-                    device.as_raw_fd(),
-                    &mut raw
-                ));
-            }
-
-            phandles
-        };
-
-        Ok(phandles)
-    }
-
-    /// Returns a slice to the list of plane ids.
-    pub fn planes<'a>(&'a self) -> &'a [plane::Handle] {
-        &self.planes
-    }
-}
-
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum Type {
     Connector,
     Encoder,
-    Property,
-    Framebuffer,
-    Blob,
+    Property, Framebuffer, Blob,
     Plane,
     Crtc,
     Unknown,
@@ -284,10 +243,4 @@ impl Mode {
     }
 }
 
-impl ::std::fmt::Debug for RawName {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        let cstr = unsafe { CStr::from_ptr(::std::mem::transmute(&self)) };
-        write!(f, "{:?}", cstr)
-    }
-}
 */

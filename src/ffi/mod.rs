@@ -64,6 +64,20 @@ macro_rules! impl_wrapper {
     };
 }
 
+macro_rules! slice_from_wrapper {
+    ($wrapper:expr, $buf:ident, $len:ident) => {
+        {
+            use std::slice;
+
+            let ptr = $wrapper.$buf.as_ptr() as *const _;
+            let len = $wrapper.raw_ref().$len as usize;
+            unsafe {
+                slice::from_raw_parts(ptr, len)
+            }
+        }
+    }
+}
+
 /// Many DRM structures have fields that act as pointers to buffers. In libdrm,
 /// these buffers are allocated at runtime using `drmMalloc` after determining
 /// the size of the buffer.
@@ -196,6 +210,8 @@ pub(crate) mod mode {
     use nix::Error;
     use super::*;
 
+    pub(crate) type RawHandle = u32;
+
     #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct CardRes {
         raw: drm_mode_card_res,
@@ -236,7 +252,7 @@ pub(crate) mod mode {
         }
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct PlaneRes {
         raw: drm_mode_get_plane_res,
         pub plane_buf: Buffer<uint32_t>
@@ -258,7 +274,7 @@ pub(crate) mod mode {
         }
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct GetConnector {
         raw: drm_mode_get_connector,
         pub enc_buf: Buffer<uint32_t>,
@@ -294,7 +310,11 @@ pub(crate) mod mode {
         }
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+    pub(crate) struct GetEncoder(drm_mode_get_encoder);
+    impl_wrapper!(GetEncoder, drm_mode_get_encoder, ioctl::mode::get_encoder);
+
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct GetCrtc {
         raw: drm_mode_crtc,
         pub conn_buf: Buffer<uint32_t>
@@ -315,23 +335,23 @@ pub(crate) mod mode {
         }
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct GetFB(drm_mode_fb_cmd);
     impl_wrapper!(GetFB, drm_mode_fb_cmd, ioctl::mode::get_fb);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct AddFB(drm_mode_fb_cmd);
     impl_wrapper!(AddFB, drm_mode_fb_cmd, ioctl::mode::add_fb);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct AddFB2(drm_mode_fb_cmd2);
     impl_wrapper!(AddFB2, drm_mode_fb_cmd2, ioctl::mode::add_fb2);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct RmFB(c_uint);
     impl_wrapper!(RmFB, c_uint, ioctl::mode::rm_fb);
 
-    #[derive(Debug, Default, Copy, Clone, Hash)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct GetPlane {
         raw: drm_mode_get_plane,
         pub format_buf: Buffer<uint32_t>
@@ -352,27 +372,27 @@ pub(crate) mod mode {
         }
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct SetPlane(drm_mode_set_plane);
     impl_wrapper!(SetPlane, drm_mode_set_plane, ioctl::mode::set_plane);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct CreateDumb(drm_mode_create_dumb);
     impl_wrapper!(CreateDumb, drm_mode_create_dumb, ioctl::mode::create_dumb);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct MapDumb(drm_mode_map_dumb);
     impl_wrapper!(MapDumb, drm_mode_map_dumb, ioctl::mode::map_dumb);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct DestroyDumb(drm_mode_destroy_dumb);
     impl_wrapper!(DestroyDumb, drm_mode_destroy_dumb, ioctl::mode::destroy_dumb);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct Cursor(drm_mode_cursor);
     impl_wrapper!(Cursor, drm_mode_cursor, ioctl::mode::cursor);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct Cursor2(drm_mode_cursor2);
     impl_wrapper!(Cursor2, drm_mode_cursor2, ioctl::mode::cursor2);
 
@@ -382,7 +402,7 @@ pub(crate) mod mode {
         raw: drm_mode_get_property,
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct ConnectorSetProperty(drm_mode_connector_set_property);
     impl_wrapper!(ConnectorSetProperty, drm_mode_connector_set_property,
                   ioctl::mode::connector_set_property);
@@ -395,25 +415,25 @@ pub(crate) mod mode {
         pub vals_buf: Buffer<uint64_t>
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct ObjSetProperty(drm_mode_obj_set_property);
     impl_wrapper!(ObjSetProperty, drm_mode_obj_set_property,
                   ioctl::mode::obj_set_property);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct CreateBlob(drm_mode_create_blob);
     impl_wrapper!(CreateBlob, drm_mode_create_blob, ioctl::mode::create_blob);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct DestroyBlob(drm_mode_destroy_blob);
     impl_wrapper!(DestroyBlob, drm_mode_destroy_blob, ioctl::mode::destroy_blob);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct CrtcPageFlip(drm_mode_crtc_page_flip);
     impl_wrapper!(CrtcPageFlip, drm_mode_crtc_page_flip,
                   ioctl::mode::crtc_page_flip);
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct FBDirtyCmd(drm_mode_fb_dirty_cmd);
     impl_wrapper!(FBDirtyCmd, drm_mode_fb_dirty_cmd, ioctl::mode::dirty_fb);
 

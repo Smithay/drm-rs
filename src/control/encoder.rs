@@ -3,40 +3,65 @@
 //! An encoder is a bridge between a CRTC and a connector that takes the pixel
 //! data of the CRTC and encodes it into a format the connector understands.
 
-use control::{self, ResourceHandle, ResourceInfo};
-use result::*;
-use ffi;
+use ffi::{self, Wrapper, mode::RawHandle};
+use control::{ResourceHandle, ResourceInfo, Device};
+use control::crtc;
+use result::Result;
 
-/// A [`ResourceHandle`] for an encoder.
-///
-/// Like all control resources, every encoder has a unique `Handle` associated
-/// with it. This `Handle` can be used to acquire information about the encoder
-/// (see [`encoder::Info`]) or change the encoder's state.
-///
-/// These can be retrieved by using [`ResourceHandles::encoders`].
-///
-/// [`ResourceHandle`]: ResourceHandle.t.html
-/// [`encoder::Info`]: Info.t.html
-/// [`ResourceHandles::encoders`]: ResourceHandles.t.html#method.encoders
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub struct Handle(control::RawHandle);
-impl ResourceHandle for Handle {}
+#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+/// A [ResourceHandle](../ResourceHandle.t.html) representing an encoder.
+pub struct Handle(RawHandle);
 
-/// A [`ResourceInfo`] for an encoder.
-///
-/// [`ResourceInfo`]: ResourceInfo.t.html
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Info {
-    handle: Handle,
-    crtc_id: control::crtc::Handle,
-    enc_type: Type,
-    possible_crtcs: control::CrtcListFilter,
-    possible_clones: u32,
+impl ResourceHandle for Handle {
+    const DEBUG_NAME: &'static str = "encoder::Handle";
 }
 
-/// The type of encoder.
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+/// A [ResourceInfo](../ResourceInfo.t.html) object about an encoder.
+pub struct Info(ffi::mode::GetEncoder);
+
+impl ResourceInfo for Info {
+    type Handle = Handle;
+
+    fn load_from_device<T: Device>(device: &T, id: Handle) -> Result<Self> {
+        let mut t = ffi::mode::GetEncoder::default();
+        t.raw_mut_ref().encoder_id = id.into();
+        t.ioctl(device.as_raw_fd())?;
+        Ok(Info(t))
+    }
+
+    fn handle(&self) -> Handle {
+        Handle::from(self.0.raw_ref().encoder_id)
+    }
+}
+
+impl Info {
+    /// Returns the type of encoder associated.
+    pub fn encoder_type(&self) -> Type {
+        Type::from(self.0.raw_ref().encoder_type)
+    }
+
+    /// Returns a filter that can be used to determine which CRTC resources
+    /// are compatible with this encoder.
+    pub fn possible_crtcs(&self) -> u32 {
+        self.0.raw_ref().possible_crtcs
+    }
+
+    /// Returns a filter that can be used to determine which encoder resources
+    /// are likely clones of this one.
+    pub fn possible_clones(&self) -> u32 {
+        self.0.raw_ref().possible_clones
+    }
+
+    /// Returns the handle associated with the currently attached CRTC.
+    pub fn current_crtc(&self) -> Option<crtc::Handle> {
+        crtc::Handle::from_checked(self.0.raw_ref().crtc_id)
+    }
+}
+
 #[allow(missing_docs)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+/// The type of encoder.
 pub enum Type {
     None,
     DAC,
@@ -47,61 +72,6 @@ pub enum Type {
     DSI,
     DPMST,
     DPI,
-}
-
-impl Info {
-    /// Returns the [`Type`] of the connector.
-    ///
-    /// [`Type`]: Type.t.html
-    pub fn encoder_type(&self) -> Type {
-        self.enc_type
-    }
-
-    /// Returns a filter for determining which CRTCs are compatible with this
-    /// encoder.
-    pub fn possible_crtcs(&self) -> control::CrtcListFilter {
-        self.possible_crtcs
-    }
-
-    /// Returns the currently connected `crtc::Handle`
-    pub fn current_crtc(&self) -> Option<control::crtc::Handle> {
-        if self.crtc_id == control::crtc::Handle::from(0) {
-            None
-        } else {
-            Some(self.crtc_id)
-        }
-    }
-}
-
-impl ResourceInfo for Info {
-    type Handle = Handle;
-
-    fn load_from_device<T>(device: &T, handle: Handle) -> Result<Self>
-    where
-        T: control::Device,
-    {
-        let enc = {
-            let mut raw: ffi::drm_mode_get_encoder = Default::default();
-            raw.encoder_id = handle.into();
-            unsafe {
-                try!(ffi::ioctl_mode_getencoder(device.as_raw_fd(), &mut raw));
-            }
-
-            Self {
-                handle: handle,
-                crtc_id: control::crtc::Handle::from(raw.crtc_id),
-                enc_type: Type::from(raw.encoder_type),
-                possible_crtcs: control::CrtcListFilter(raw.possible_crtcs),
-                possible_clones: raw.possible_clones,
-            }
-        };
-
-        Ok(enc)
-    }
-
-    fn handle(&self) -> Self::Handle {
-        self.handle
-    }
 }
 
 impl From<u32> for Type {
@@ -120,3 +90,12 @@ impl From<u32> for Type {
         }
     }
 }
+
+/// Encoder related commands that can be executed by a
+/// [control::Device](../Device.t.html).
+pub trait Commands: super::Device {
+}
+
+/* TODO:
+impl<T: super::Device> Commands for T {
+}*/

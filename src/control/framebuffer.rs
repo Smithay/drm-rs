@@ -1,76 +1,51 @@
 //! # Framebuffer
 //!
-//! A framebuffer is pixel data that can be attached to a plane.
+//! Process specific GPU buffers that can be attached to a plane.
 
-use control::{self, ResourceHandle, ResourceInfo};
-use result::*;
-use ffi;
+use ffi::{self, Wrapper, mode::RawHandle};
+use control::{ResourceHandle, ResourceInfo, Device};
+use result::Result;
 
-/// A [`ResourceHandle`] for a framebuffer.
-///
-/// Like all control resources, every framebuffer has a unique `Handle`
-/// associated with it. This `Handle` can be used to acquire information about
-/// the framebuffer (see [`framebuffer::Info`]) or change the framebuffer's
-/// state.
-///
-/// These can be retrieved by using [`ResourceIds::framebuffers`], but most
-/// often you will create your own using [`Device::create_framebuffer`].
-///
-/// [`ResourceHandle`]: ResourceHandle.t.html
-/// [`framebuffer::Info`]: Info.t.html
-/// [`ResourceIds::framebuffers`]: ResourceIds.t.html#method.framebuffers
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub struct Handle(control::RawHandle);
-impl ResourceHandle for Handle {}
+#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+/// A [ResourceHandle](../ResourceHandle.t.html) representing a framebuffer.
+pub struct Handle(RawHandle);
 
-/// A [`ResourceInfo`] for a framebuffer.
-///
-/// [`ResourceInfo`]: ResourceInfo.t.html
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Info {
-    handle: Handle,
-    size: (u32, u32),
-    pitch: u32,
-    bpp: u8,
-    // TODO: Gem handle?
-    depth: u8,
+impl ResourceHandle for Handle {
+    const DEBUG_NAME: &'static str = "framebuffer::Handle";
 }
 
-impl control::property::LoadProperties for Handle {
-    const TYPE: u32 = ffi::DRM_MODE_OBJECT_FB;
-}
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+/// A [ResourceInfo](../ResourceInfo.t.html) object about a framebuffer.
+pub struct Info(ffi::mode::GetFB);
 
 impl ResourceInfo for Info {
     type Handle = Handle;
 
-    fn load_from_device<T>(device: &T, handle: Self::Handle) -> Result<Self>
-    where
-        T: control::Device,
-    {
-        let framebuffer = {
-            let mut raw: ffi::drm_mode_fb_cmd = Default::default();
-            raw.fb_id = handle.into();
-            unsafe {
-                try!(ffi::ioctl_mode_getfb(device.as_raw_fd(), &mut raw));
-            }
-
-            Self {
-                handle: handle,
-                size: (raw.width, raw.height),
-                pitch: raw.pitch,
-                bpp: raw.bpp as u8,
-                depth: raw.depth as u8,
-            }
-        };
-
-        Ok(framebuffer)
+    fn load_from_device<T: Device>(device: &T, id: Handle) -> Result<Self> {
+        let mut t = ffi::mode::GetFB::default();
+        t.raw_mut_ref().fb_id = id.into();
+        t.ioctl(device.as_raw_fd())?;
+        Ok(Info(t))
     }
 
-    fn handle(&self) -> Self::Handle {
-        self.handle
+    fn handle(&self) -> Handle {
+        Handle::from(self.0.raw_ref().fb_id)
     }
 }
 
+/// Framebuffer related commands that can be executed by a
+/// [control::Device](../Device.t.html).
+pub trait Commands: super::Device {
+    fn create(&self, Handle) -> Result<()>;
+    fn destroy(&self, Handle) -> Result<()>;
+    fn mark_dirty(&self, Handle) -> Result<()>;
+}
+
+/* TODO:
+impl<T: super::Device> Commands for T {
+}*/
+
+/*
 /// Creates a framebuffer from a [`Buffer`], returning
 /// [`framebuffer::Info`].
 ///
@@ -169,3 +144,4 @@ where
 
     Ok(())
 }
+*/

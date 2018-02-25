@@ -24,6 +24,7 @@
 //! To begin using this crate, the [Device trait](Device.t.html) must be
 //! implemented. See the trait's [example](Device.t.html#example) section for
 //! details on how to implement it.
+//!
 
 #![warn(missing_docs)]
 
