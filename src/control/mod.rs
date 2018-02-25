@@ -82,6 +82,7 @@ pub trait ResourceHandle: From<RawHandle> + Into<RawHandle> {
     #[doc(hidden)]
     const DEBUG_NAME: &'static str;
 
+    /// Returns None if the input is zero.
     fn from_checked(n: RawHandle) -> Option<Self> {
         match n {
             0 => None,

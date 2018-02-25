@@ -4,7 +4,10 @@
 
 use ffi::{self, Wrapper, mode::RawHandle};
 use control::{ResourceHandle, ResourceInfo, Device};
+use buffer;
 use result::Result;
+
+use std::ops::Deref;
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// A [ResourceHandle](../ResourceHandle.t.html) representing a framebuffer.
@@ -36,14 +39,34 @@ impl ResourceInfo for Info {
 /// Framebuffer related commands that can be executed by a
 /// [control::Device](../Device.t.html).
 pub trait Commands: super::Device {
-    fn create(&self, Handle) -> Result<()>;
-    fn destroy(&self, Handle) -> Result<()>;
-    fn mark_dirty(&self, Handle) -> Result<()>;
+    /// Creates a Framebuffer object from a specified buffer.
+    fn create<B>(&self, buffer: &B) -> Result<Handle>
+        where B: Deref<Target=buffer::Buffer>;
+
+    /// Removes the specified Framebuffer from the device.
+    fn destroy(&self, handle: Handle) -> Result<()>;
+
+    fn mark_dirty(&self, handle: Handle) -> Result<()>;
 }
 
-/* TODO:
 impl<T: super::Device> Commands for T {
-}*/
+    fn create<B>(&self, _buffer: &B) -> Result<Handle>
+        where B: Deref<Target=buffer::Buffer> {
+
+        unimplemented!();
+    }
+
+    fn destroy(&self, handle: Handle) -> Result<()> {
+        let mut t = ffi::mode::RmFB::default();
+        *t.raw_mut_ref() = handle.into();
+        t.ioctl(self.as_raw_fd())?;
+        Ok(())
+    }
+
+    fn mark_dirty(&self, _handle: Handle) -> Result<()> {
+        unimplemented!();
+    }
+}
 
 /*
 /// Creates a framebuffer from a [`Buffer`], returning
@@ -125,21 +148,6 @@ where
 
     unsafe {
         try!(ffi::ioctl_mode_dirtyfb(device.as_raw_fd(), &mut raw));
-    }
-
-    Ok(())
-}
-
-/// Destroy a framebuffer
-pub fn destroy<T>(device: &T, fb: Handle) -> Result<()>
-where
-    T: control::Device,
-{
-    unsafe {
-        try!(ffi::ioctl_mode_rmfb(
-            device.as_raw_fd(),
-            &mut fb.into() as *mut _
-        ));
     }
 
     Ok(())

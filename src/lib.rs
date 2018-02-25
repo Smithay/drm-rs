@@ -44,6 +44,7 @@ pub(crate) mod ffi;
 pub mod result;
 
 pub mod control;
+pub mod buffer;
 
 use ffi::Wrapper;
 

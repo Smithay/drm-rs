@@ -15,7 +15,11 @@
 use ffi::{self, Wrapper, mode::RawHandle};
 use control::{ResourceHandle, ResourceInfo, Device};
 use control::framebuffer;
+use control::connector;
+use buffer;
 use result::Result;
+
+use std::ops::Deref;
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// A [ResourceHandle](../ResourceHandle.t.html) representing a CRTC.
@@ -69,84 +73,152 @@ impl Info {
 /// CRTC related commands that can be executed by a
 /// [control::Device](../Device.t.html).
 pub trait Commands: super::Device {
-    fn set(&self, Handle) -> Result<()>;
-    fn page_flip(&self, Handle) -> Result<()>;
+    /// Sets the specified CRTC's output connectors, input framebuffer,
+    /// position, and mode.
+    fn set(&self, handle: Handle, connectors: &[connector::Handle],
+           fb: framebuffer::Handle, position: (u32, u32),
+           mode: Option<()>) -> Result<()>;
+
+    /// Updates a cursor image.
+    fn set_cursor<B>(&self, handle: Handle, buffer: &B, size: (u32, u32),
+                     hot: Option<(i32, i32)>) -> Result<()>
+        where B: Deref<Target=buffer::Buffer>;
+
+    /// Moves the cursor to a new position.
+    fn move_cursor(&self, handle: Handle, position: (i32, i32)) -> Result<()>;
+
+    /// Clears the cursor's buffer, resetting it.
+    fn clear_cursor(&self, handle: Handle) -> Result<()>;
+
+    /// Requests a page flip on the given CRTC.
+    fn page_flip(&self, handle: Handle, fb: framebuffer::Handle,
+                 flags: PageFlipFlag, target: Option<()>) -> Result<()>;
+
+    /// Returns the currently set gamma ramp for the given CRTC.
+    fn get_gamma(&self, handle: Handle) -> Result<()>;
+
+    /// Sets a new gamma ramp for the given CRTC.
+    fn set_gamma(&self, handle: Handle) -> Result<()>;
 }
 
-/* TODO:
 impl<T: super::Device> Commands for T {
-}*/
+    fn set(&self, handle: Handle, connectors: &[connector::Handle],
+           fb: framebuffer::Handle, position: (u32, u32),
+           mode: Option<()>) -> Result<()> {
 
+        let mut t = ffi::mode::SetCrtc::default();
+        t.raw_mut_ref().crtc_id = handle.into();
+        t.raw_mut_ref().set_connectors_ptr = connectors.as_ptr() as u64;
+        t.raw_mut_ref().count_connectors = connectors.len() as u32;
+        t.raw_mut_ref().fb_id = fb.into();
+        t.raw_mut_ref().x = position.0;
+        t.raw_mut_ref().y = position.1;
 
-/*
-/// Attaches a framebuffer to a CRTC's built-in plane, attaches the CRTC to
-/// a connector, and sets the CRTC's mode to output the pixel data.
-pub fn set<T>(
-    device: &T,
-    handle: Handle,
-    fb: FBHandle,
-    cons: &[ConHandle],
-    position: (u32, u32),
-    mode: Option<control::Mode>,
-) -> Result<()>
-where
-    T: control::Device,
-{
-    let mut raw: ffi::drm_mode_crtc = Default::default();
-    raw.x = position.0;
-    raw.y = position.1;
-    raw.crtc_id = handle.into();
-    raw.fb_id = fb.into();
-    raw.set_connectors_ptr = cons.as_ptr() as u64;
-    raw.count_connectors = cons.len() as u32;
-
-    match mode {
-        Some(m) => {
-            raw.mode = m.mode;
-            raw.mode_valid = 1;
+        match mode {
+            Some(_m) => {
+                // TODO: Get Mode type working first
+                unimplemented!();
+                //t.raw_mut_ref().mode = m;
+                //t.raw_mut_ref().mode_valid = 1;
+            },
+            None => {
+                t.raw_mut_ref().mode_valid = 0;
+            }
         }
-        _ => (),
-    };
 
-    unsafe {
-        try!(ffi::ioctl_mode_setcrtc(device.as_raw_fd(), &mut raw));
+        t.ioctl(self.as_raw_fd())?;
+        Ok(())
     }
 
-    Ok(())
+    fn set_cursor<B>(&self, handle: Handle, _buffer: &B, size: (u32, u32),
+                     hot: Option<(i32, i32)>) -> Result<()>
+        where B: Deref<Target=buffer::Buffer> {
+
+        // Determines if we use Cursor or Cursor2
+        match hot {
+            None => {
+                let mut t = ffi::mode::Cursor::default();
+                t.raw_mut_ref().flags = ffi::DRM_MODE_CURSOR_BO;
+                t.raw_mut_ref().crtc_id = handle.into();
+                t.raw_mut_ref().width = size.0;
+                // TODO: Get buffer working first
+                unimplemented!();
+                //t.raw_mut_ref().handle = buffer.???;
+                t.ioctl(self.as_raw_fd())?;
+            },
+            Some(h) => {
+                let mut t = ffi::mode::Cursor2::default();
+                t.raw_mut_ref().flags = ffi::DRM_MODE_CURSOR_BO;
+                t.raw_mut_ref().crtc_id = handle.into();
+                t.raw_mut_ref().width = size.0;
+                t.raw_mut_ref().height = size.1;
+                t.raw_mut_ref().hot_x = h.0;
+                t.raw_mut_ref().hot_y = h.1;
+                // TODO: Get buffer working first
+                unimplemented!();
+                //t.raw_mut_ref().handle = buffer.???;
+                t.ioctl(self.as_raw_fd())?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn move_cursor(&self, handle: Handle, position: (i32, i32)) -> Result<()> {
+        let mut t = ffi::mode::Cursor::default();
+        t.raw_mut_ref().flags = ffi::DRM_MODE_CURSOR_MOVE;
+        t.raw_mut_ref().crtc_id = handle.into();
+        t.raw_mut_ref().x = position.0;
+        t.raw_mut_ref().y = position.1;
+        t.ioctl(self.as_raw_fd())?;
+        Ok(())
+    }
+
+    fn clear_cursor(&self, handle: Handle) -> Result<()> {
+        let mut t = ffi::mode::Cursor::default();
+        t.raw_mut_ref().flags = ffi::DRM_MODE_CURSOR_BO;
+        t.raw_mut_ref().crtc_id = handle.into();
+        t.ioctl(self.as_raw_fd())?;
+        Ok(())
+    }
+
+    fn page_flip(&self, handle: Handle, fb: framebuffer::Handle,
+                 flags: PageFlipFlag, target: Option<()>) -> Result<()> {
+
+        match target {
+            Some(_) => unimplemented!(),
+            None => {
+                let mut t = ffi::mode::CrtcPageFlip::default();
+                t.raw_mut_ref().crtc_id = handle.into();
+                t.raw_mut_ref().fb_id = fb.into();
+                t.raw_mut_ref().flags = flags as u32;
+                t.ioctl(self.as_raw_fd())?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn get_gamma(&self, _handle: Handle) -> Result<()> {
+        unimplemented!();
+    }
+
+    fn set_gamma(&self, _handle: Handle) -> Result<()> {
+        unimplemented!();
+    }
 }
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// Flags to alter the behaviour of a page flip
-pub enum PageFlipFlags {
+pub enum PageFlipFlag {
     /// Request a vblank event on page flip
-    PageFlipEvent = ffi::DRM_MODE_PAGE_FLIP_EVENT,
+    Event = ffi::DRM_MODE_PAGE_FLIP_EVENT,
     /// Request page flip as soon as possible, not waiting for vblank
-    PageFlipAsync = ffi::DRM_MODE_PAGE_FLIP_ASYNC,
+    Async = ffi::DRM_MODE_PAGE_FLIP_ASYNC,
 }
 
-/// Queue a page flip on the given crtc.
-///
-/// On the next vblank the given framebuffer will be attached to the
-/// crtc and an event will be triggered by the device, which will be indicated by it's fd becoming
-/// readable. The event can be received using `handle_event`.
-pub fn page_flip<T>(device: &T, handle: Handle, fb: FBHandle, flags: &[PageFlipFlags]) -> Result<()>
-where
-    T: control::Device,
-{
-    let mut raw: ffi::drm_mode_crtc_page_flip = Default::default();
-    raw.fb_id = fb.into();
-    raw.crtc_id = handle.into();
-    raw.flags = flags.into_iter().fold(0, |val, flag| val | *flag as u32);
-    raw.user_data = handle.0 as u64;
-
-    unsafe {
-        try!(ffi::ioctl_mode_page_flip(device.as_raw_fd(), &mut raw));
-    }
-
-    Ok(())
-}
-
+/*
 /// Iterator over `Event`s of a device. Create via `receive_events`.
 #[derive(Copy, Clone)]
 pub struct Events {
@@ -258,90 +330,6 @@ where
         amount,
         i: 0,
     })
-}
-
-/// Sets a hardware-cursor on the given crtc with the image of a given buffer
-pub fn set_cursor<T, B>(device: &T, handle: Handle, buffer: &B) -> Result<()>
-where
-    T: control::Device,
-    B: buffer::Buffer,
-{
-    let dimensions = buffer.size();
-
-    let mut raw: ffi::drm_mode_cursor = Default::default();
-    raw.flags = ffi::DRM_MODE_CURSOR_BO;
-    raw.crtc_id = handle.into();
-    raw.width = dimensions.0;
-    raw.height = dimensions.1;
-    raw.handle = buffer.handle().into();
-
-    unsafe {
-        try!(ffi::ioctl_mode_cursor(device.as_raw_fd(), &mut raw));
-    }
-
-    Ok(())
-}
-
-/// Sets a hardware-cursor on the given crtc with the image of a given buffer and a hotspot marking
-/// the click point of the cursor
-pub fn set_cursor2<T, B>(device: &T, handle: Handle, buffer: &B, hotspot: iPoint) -> Result<()>
-where
-    T: control::Device,
-    B: buffer::Buffer,
-{
-    let dimensions = buffer.size();
-
-    let mut raw: ffi::drm_mode_cursor2 = Default::default();
-    raw.flags = ffi::DRM_MODE_CURSOR_BO;
-    raw.crtc_id = handle.into();
-    raw.width = dimensions.0;
-    raw.height = dimensions.1;
-    raw.handle = buffer.handle().into();
-    raw.hot_x = hotspot.0;
-    raw.hot_y = hotspot.1;
-
-    unsafe {
-        try!(ffi::ioctl_mode_cursor2(device.as_raw_fd(), &mut raw));
-    }
-
-    Ok(())
-}
-
-/// Moves a set cursor on a given crtc
-pub fn move_cursor<T>(device: &T, handle: Handle, to: iPoint) -> Result<()>
-where
-    T: control::Device,
-{
-    let mut raw: ffi::drm_mode_cursor = Default::default();
-    raw.flags = ffi::DRM_MODE_CURSOR_MOVE;
-    raw.crtc_id = handle.into();
-    raw.x = to.0;
-    raw.y = to.1;
-
-    unsafe {
-        try!(ffi::ioctl_mode_cursor(device.as_raw_fd(), &mut raw));
-    }
-
-    Ok(())
-}
-
-/// Clears any hardware-cursor on the given crtc
-pub fn clear_cursor<T>(device: &T, handle: Handle) -> Result<()>
-where
-    T: control::Device,
-{
-    let mut raw: ffi::drm_mode_cursor = Default::default();
-    raw.flags = ffi::DRM_MODE_CURSOR_BO;
-    raw.crtc_id = handle.into();
-    raw.width = 0;
-    raw.height = 0;
-    raw.handle = 0;
-
-    unsafe {
-        try!(ffi::ioctl_mode_cursor(device.as_raw_fd(), &mut raw));
-    }
-
-    Ok(())
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]

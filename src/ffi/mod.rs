@@ -336,6 +336,27 @@ pub(crate) mod mode {
     }
 
     #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+    pub(crate) struct SetCrtc {
+        raw: drm_mode_crtc,
+        pub conn_buf: Buffer<uint32_t>
+    }
+
+    impl_wrapper!(full SetCrtc, drm_mode_crtc, ioctl::mode::set_crtc);
+
+    impl PrepareBuffers for SetCrtc {
+        fn prepare_buffers(&mut self) {
+            self.raw.set_connectors_ptr = (&mut self.conn_buf).as_mut_ptr() as u64;
+            self.raw.count_connectors = self.conn_buf.len() as u32;
+        }
+
+        fn coerce_buf_sizes(&mut self) {
+            if self.raw.count_connectors > self.conn_buf.len() as u32 {
+                self.raw.count_connectors = self.conn_buf.len() as u32;
+            }
+        }
+    }
+
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
     pub(crate) struct GetFB(drm_mode_fb_cmd);
     impl_wrapper!(GetFB, drm_mode_fb_cmd, ioctl::mode::get_fb);
 

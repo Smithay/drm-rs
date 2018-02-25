@@ -140,12 +140,3 @@ impl From<u32> for State {
         }
     }
 }
-
-/// Connector related commands that can be executed by a
-/// [control::Device](../Device.t.html).
-pub trait Commands: super::Device {
-}
-
-/* TODO:
-impl<T: super::Device> Commands for T {
-}*/
