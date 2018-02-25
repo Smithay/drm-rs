@@ -8,110 +8,77 @@
 //! supports. For example, you can have a CRTC that can not output to analog
 //! connectors. These are built in hardware limitations.
 //!
-//! Each CRTC has a built in plane, which can be attached to a framebuffer. It
-//! can also use pixel data from other planes to perform hardware compositing.
+//! Each CRTC has a built in plane, which can have a framebuffer attached to it,
+//! but they can also use pixel data from other planes to perform hardware
+//! compositing.
 
-use iPoint;
-use buffer;
-use control::{self, ResourceHandle, ResourceInfo};
-use result::*;
-use ffi;
+use ffi::{self, Wrapper, mode::RawHandle};
+use control::{ResourceHandle, ResourceInfo, Device};
+use control::framebuffer;
+use result::Result;
 
-use control::framebuffer::Handle as FBHandle;
-use control::connector::Handle as ConHandle;
+#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+/// A [ResourceHandle](../ResourceHandle.t.html) representing a CRTC.
+pub struct Handle(RawHandle);
 
-use std::boxed::Box;
-use std::io::Read;
-use std::mem;
-use std::time::Duration;
-
-/// A [`ResourceHandle`] for a CRTC.
-///
-/// Like all control resources, every CRTC has a unique `Handle` associated with
-/// it. This `Handle` can be used to acquire information about the CRTC (see
-/// [`crtc::Info`]) or change the CRTC's state.
-///
-/// These can be retrieved by using [`ResourceIds::crtcs`].
-///
-/// [`ResourceHandle`]: ResourceHandle.t.html
-/// [`crtc::Info`]: Info.t.html
-/// [`ResourceIds::crtcs`]: ResourceIds.t.html#method.crtcs
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub struct Handle(control::RawHandle);
-impl ResourceHandle for Handle {}
-
-/// A [`ResourceInfo`] for a CRTC.
-///
-/// [`ResourceInfo`]: ResourceInfo.t.html
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Info {
-    handle: Handle,
-    position: (u32, u32),
-    mode: Option<control::Mode>,
-    fb: control::framebuffer::Handle,
-    gamma_length: u32,
+impl ResourceHandle for Handle {
+    const DEBUG_NAME: &'static str = "crtc::Handle";
 }
 
-impl Info {
-    /// Returns the current position
-    pub fn position(&self) -> (u32, u32) {
-        self.position
-    }
-
-    /// Returns the currently set [`Mode`].
-    ///
-    /// [`Mode`]: ../Mode.t.html
-    pub fn mode(&self) -> Option<control::Mode> {
-        self.mode.clone()
-    }
-
-    /// Returns the currently active framebuffer
-    pub fn fb(&self) -> FBHandle {
-        self.fb
-    }
-}
-
-impl control::property::LoadProperties for Handle {
-    const TYPE: u32 = ffi::DRM_MODE_OBJECT_CRTC;
-}
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+/// A [ResourceInfo](../ResourceInfo.t.html) object about a CRTC.
+pub struct Info(ffi::mode::GetCrtc);
 
 impl ResourceInfo for Info {
     type Handle = Handle;
 
-    fn load_from_device<T>(device: &T, handle: Handle) -> Result<Self>
-    where
-        T: control::Device,
-    {
-        let crtc = {
-            let mut raw: ffi::drm_mode_crtc = Default::default();
-            raw.crtc_id = handle.0;
-            unsafe {
-                try!(ffi::ioctl_mode_getcrtc(device.as_raw_fd(), &mut raw));
-            }
-
-            Self {
-                handle: handle,
-                position: (raw.x, raw.y),
-                mode: if raw.mode_valid != 0 {
-                    Some(control::Mode {
-                        mode: raw.mode.clone(),
-                    })
-                } else {
-                    None
-                },
-                fb: control::framebuffer::Handle::from(raw.fb_id),
-                gamma_length: raw.gamma_size,
-            }
-        };
-
-        Ok(crtc)
+    fn load_from_device<T: Device>(device: &T, id: Handle) -> Result<Self> {
+        let mut t = ffi::mode::GetCrtc::default();
+        t.raw_mut_ref().crtc_id = id.into();
+        t.ioctl(device.as_raw_fd())?;
+        Ok(Info(t))
     }
 
-    fn handle(&self) -> Self::Handle {
-        self.handle
+    fn handle(&self) -> Handle {
+        Handle::from(self.0.raw_ref().crtc_id)
     }
 }
 
+impl Info {
+    /// Returns the origin this CRTC starts to scan from.
+    pub fn position(&self) -> (u32, u32) {
+        (self.0.raw_ref().x, self.0.raw_ref().y)
+    }
+
+    /// Returns the current mode this CRTC is outputting at.
+    pub fn mode(&self) {
+        unimplemented!()
+    }
+
+    /// Returns the handle associated with the currently attached framebuffer.
+    pub fn fb(&self) -> Option<framebuffer::Handle> {
+        framebuffer::Handle::from_checked(self.0.raw_ref().fb_id)
+    }
+
+    /// Returns the size of the gamma buffers.
+    pub fn gamma_size(&self) -> u32 {
+        self.0.raw_ref().gamma_size
+    }
+}
+
+/// CRTC related commands that can be executed by a
+/// [control::Device](../Device.t.html).
+pub trait Commands: super::Device {
+    fn set(&self, Handle) -> Result<()>;
+    fn page_flip(&self, Handle) -> Result<()>;
+}
+
+/* TODO:
+impl<T: super::Device> Commands for T {
+}*/
+
+
+/*
 /// Attaches a framebuffer to a CRTC's built-in plane, attaches the CRTC to
 /// a connector, and sets the CRTC's mode to output the pixel data.
 pub fn set<T>(
@@ -452,3 +419,4 @@ where
 
     Ok(())
 }
+*/

@@ -1,47 +1,78 @@
 //! # Connector
 //!
-//! A connector is a physical video connector found on your device, such as an
-//! HDMI port.
+//! Respresents the physical output, such as a DisplayPort or VGA connector.
+//!
+//! A Connector is the physical connection between the display controller and
+//! a display. These objects keep track of connection information and state,
+//! including the modes that the current display supports.
 
-use ffi;
-use control::{self, ResourceHandle, ResourceInfo};
-use result::*;
+use ffi::{self, Wrapper, mode::RawHandle};
+use control::{ResourceHandle, ResourceInfo, Device};
+use control::encoder;
+use result::Result;
 
-/// A [`ResourceHandle`] for a connector.
-///
-/// Like all control resources, every connector has a unique `Handle` associated
-/// with it. This `Handle` can be used to acquire information about the
-/// connector (see [`connector::Info`]) or change the connector's state.
-///
-/// These can be retrieved by using [`ResourceHandles::connectors`].
-///
-/// [`ResourceHandle`]: ../ResourceHandle.t.html
-/// [`connector::Info`]: Info.t.html
-/// [`ResourceHandles::connectors`]: ../ResourceHandles.t.html#method.connectors
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub struct Handle(control::RawHandle);
-impl ResourceHandle for Handle {}
+#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+/// A [ResourceHandle](../ResourceHandle.t.html) representing a connector.
+pub struct Handle(RawHandle);
 
-/// A [`ResourceInfo`] for a connector.
-///
-/// [`ResourceInfo`]: ../ResourceInfo.t.html
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Info {
-    handle: Handle,
-    // TODO: properties
-    modes: ffi::Buffer<control::Mode>,
-    encoder: control::encoder::Handle,
-    encoders: ffi::Buffer<control::encoder::Handle>,
-    con_type: Type,
-    con_state: State,
-    // TODO: Subpixel
-    // TODO: Subconnector
-    size: (u32, u32),
+impl ResourceHandle for Handle {
+    const DEBUG_NAME: &'static str = "connector::Handle";
 }
 
-/// The physical type of connector.
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+/// A [ResourceInfo](../ResourceInfo.t.html) object about a connector.
+pub struct Info(ffi::mode::GetConnector);
+
+impl ResourceInfo for Info {
+    type Handle = Handle;
+
+    fn load_from_device<T: Device>(device: &T, id: Handle) -> Result<Self> {
+        let mut t = ffi::mode::GetConnector::default();
+        t.raw_mut_ref().connector_id = id.into();
+        t.ioctl(device.as_raw_fd())?;
+        Ok(Info(t))
+    }
+
+    fn handle(&self) -> Handle {
+        Handle::from(self.0.raw_ref().connector_id)
+    }
+}
+
+impl Info {
+    /// Returns the physical type of connector associated.
+    pub fn connector_type(&self) -> Type {
+        Type::from(self.0.raw_ref().connector_type)
+    }
+
+    /// Returns whether a connector is currently connected or not.
+    pub fn connection_state(&self) -> State {
+        State::from(self.0.raw_ref().connection)
+    }
+
+    /// Returns the handle associated with the currently attached encoder.
+    pub fn current_encoder(&self) -> Option<encoder::Handle> {
+       encoder::Handle::from_checked(self.0.raw_ref().encoder_id)
+    }
+
+    /// Returns the set of compatible encoders.
+    pub fn encoders(&self) -> &[encoder::Handle] {
+        slice_from_wrapper!(self.0, enc_buf, count_encoders)
+    }
+
+    /// TODO: Document
+    pub fn properties(&self) -> &[u32] {
+        slice_from_wrapper!(self.0, prop_buf, count_props)
+    }
+
+    /// TODO: Document
+    pub fn prop_values(&self) -> &[u64] {
+        slice_from_wrapper!(self.0, prop_val_buf, count_props)
+    }
+}
+
 #[allow(missing_docs)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+/// The type of connector.
 pub enum Type {
     Unknown,
     VGA,
@@ -63,101 +94,15 @@ pub enum Type {
     DPI,
 }
 
-/// The connection state of a connector.
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+/// The state of the connector.
 pub enum State {
     Connected,
     Disconnected,
     Unknown,
 }
 
-impl Info {
-    /// Returns the [`Type`] of connector.
-    ///
-    /// [`Type`]: Type.t.html
-    pub fn connector_type(&self) -> Type {
-        self.con_type
-    }
-
-    /// Returns the [`State`] of connector.
-    ///
-    /// [`State`]: State.t.html
-    pub fn connection_state(&self) -> State {
-        self.con_state
-    }
-
-    /// Returns a list containing each supported [`Mode`].
-    ///
-    /// [`Mode`]: ../Mode.t.html
-    pub fn modes<'a>(&'a self) -> &'a [control::Mode] {
-        &self.modes
-    }
-
-    /// Returns the currently active encoder
-    pub fn current_encoder(&self) -> Option<control::encoder::Handle> {
-        if self.encoder == control::encoder::Handle::from(0) {
-            None
-        } else {
-            Some(self.encoder)
-        }
-    }
-
-    /// Returns a list containing each supported [`encoder::Handle`].
-    pub fn encoders<'a>(&'a self) -> &'a [control::encoder::Handle] {
-        &self.encoders
-    }
-}
-
-impl control::property::LoadProperties for Handle {
-    const TYPE: u32 = ffi::DRM_MODE_OBJECT_CONNECTOR;
-}
-
-impl ResourceInfo for Info {
-    type Handle = Handle;
-
-    fn load_from_device<T>(device: &T, handle: Self::Handle) -> Result<Self>
-    where
-        T: control::Device,
-    {
-        let connector = {
-            // TODO: Change to immutable once we no longer need to modify
-            // raw.count_props
-            let mut raw: ffi::drm_mode_get_connector = Default::default();
-            raw.connector_id = handle.into();
-            unsafe {
-                try!(ffi::ioctl_mode_getconnector(device.as_raw_fd(), &mut raw));
-            }
-
-            // TODO: Start returning the list of properties too.
-            raw.count_props = 0;
-
-            let con = Self {
-                handle: handle,
-                modes: ffi_buf!(raw.modes_ptr, raw.count_modes),
-                encoder: control::encoder::Handle::from(raw.encoder_id),
-                encoders: ffi_buf!(raw.encoders_ptr, raw.count_encoders),
-                con_type: Type::from(raw.connector_type),
-                con_state: State::from(raw.connection),
-                size: (raw.mm_width, raw.mm_height),
-            };
-
-            unsafe {
-                try!(ffi::ioctl_mode_getconnector(device.as_raw_fd(), &mut raw));
-            }
-
-            con
-        };
-
-        Ok(connector)
-    }
-
-    fn handle(&self) -> Self::Handle {
-        self.handle
-    }
-}
-
-#[allow(non_snake_case)]
 impl From<u32> for Type {
     fn from(n: u32) -> Self {
         match n {
@@ -195,3 +140,12 @@ impl From<u32> for State {
         }
     }
 }
+
+/// Connector related commands that can be executed by a
+/// [control::Device](../Device.t.html).
+pub trait Commands: super::Device {
+}
+
+/* TODO:
+impl<T: super::Device> Commands for T {
+}*/
