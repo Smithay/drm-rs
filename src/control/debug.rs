@@ -7,7 +7,6 @@
 
 use std::fmt;
 
-use control::ResourceHandle;
 use control::ResourceInfo;
 use control::RawHandle;
 use control;

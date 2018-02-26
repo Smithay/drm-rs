@@ -197,19 +197,12 @@ impl_wrapper!(WaitVBlank, drm_wait_vblank, ioctl::wait_vblank);
 pub(crate) struct ModesetCtl(drm_modeset_ctl);
 impl_wrapper!(ModesetCtl, drm_modeset_ctl, ioctl::modeset_ctl);
 
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct PrimeHandleToFD(drm_prime_handle);
-impl_wrapper!(PrimeHandleToFD, drm_prime_handle, ioctl::prime_handle_to_fd);
-
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct PrimeFDToHandle(drm_prime_handle);
-impl_wrapper!(PrimeFDToHandle, drm_prime_handle, ioctl::prime_fd_to_handle);
-
 pub(crate) mod mode {
     use nix::libc::{c_int, c_uint, uint32_t, uint64_t};
     use nix::Error;
     use super::*;
 
+    // Underlying type of a mode resource handle.
     pub(crate) type RawHandle = u32;
 
     #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -485,4 +478,35 @@ pub(crate) mod mode {
             }
         }
     }
+}
+
+pub(crate) mod gem {
+    use nix::libc::c_int;
+    use nix::Error;
+    use super::*;
+
+    // Underlying type for a GEM handle.
+    pub(crate) type RawHandle = u32;
+
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    pub(crate) struct Open(drm_gem_open);
+    impl_wrapper!(Open, drm_gem_open, ioctl::gem::open);
+
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    pub(crate) struct Close(drm_gem_close);
+    impl_wrapper!(Close, drm_gem_close, ioctl::gem::close);
+
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    pub(crate) struct Flink(drm_gem_flink);
+    impl_wrapper!(Flink, drm_gem_flink, ioctl::gem::flink);
+
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    pub(crate) struct PrimeHandleToFD(drm_prime_handle);
+    impl_wrapper!(PrimeHandleToFD, drm_prime_handle,
+                  ioctl::gem::prime_handle_to_fd);
+
+    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+    pub(crate) struct PrimeFDToHandle(drm_prime_handle);
+    impl_wrapper!(PrimeFDToHandle, drm_prime_handle,
+                  ioctl::gem::prime_fd_to_handle);
 }

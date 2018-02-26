@@ -80,6 +80,7 @@ pub trait Device: super::Device {
 /// Objects that derive this trait are handles to device resources, and are
 /// used for nearly all modesetting operations.
 pub trait ResourceHandle: From<RawHandle> + Into<RawHandle> {
+    /// The information type that this handle can load.
     type Info: ResourceInfo;
 
     /// Attempts to retrieve information about a resource.
@@ -97,8 +98,9 @@ pub trait ResourceHandle: From<RawHandle> + Into<RawHandle> {
 /// Objects that derive this trait can be retrieved using a
 /// [ResourceHandle](ResourceHandle.t.html) on a [Device](Device.t.html)
 pub trait ResourceInfo: Sized {
-    #[allow(missing_docs)]
+    /// The type of handle the information corresponds to.
     type Handle: ResourceHandle;
+
     /// Returns the handle used to acquire this object.
     fn handle(&self) -> Self::Handle;
 }
