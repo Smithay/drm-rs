@@ -50,10 +50,19 @@ pub trait Commands: super::Device {
 }
 
 impl<T: super::Device> Commands for T {
-    fn create<B>(&self, _buffer: &B) -> Result<Handle>
+    fn create<B>(&self, buffer: &B) -> Result<Handle>
         where B: Deref<Target=buffer::Buffer> {
 
-        unimplemented!();
+        let mut t = ffi::mode::AddFB::default();
+        t.raw_mut_ref().width = buffer.size().0;
+        t.raw_mut_ref().height = buffer.size().1;
+        t.raw_mut_ref().pitch = buffer.pitch();
+        t.raw_mut_ref().bpp = buffer.format().bpp();
+        t.raw_mut_ref().depth = buffer.format().depth();
+        t.raw_mut_ref().handle = buffer.handle().into();
+        t.ioctl(self.as_raw_fd())?;
+
+        Ok(Handle(t.raw_ref().fb_id))
     }
 
     fn destroy(&self, handle: Handle) -> Result<()> {
