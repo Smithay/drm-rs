@@ -24,19 +24,19 @@ use control::framebuffer;
 /// write it all out on a single line. If you prefer it the other way, then
 /// issue a bug report.
 macro_rules! impl_newtype_debug {
-    ($my_type:ty) => {
+    ($my_type:ty, $name:expr) => {
         impl fmt::Debug for $my_type {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                write!(f, "{}({})", Self::DEBUG_NAME, RawHandle::from(*self))
+                write!(f, "{}({})", $name, RawHandle::from(*self))
             }
         }
     }
 }
 
-impl_newtype_debug!(connector::Handle);
-impl_newtype_debug!(encoder::Handle);
-impl_newtype_debug!(crtc::Handle);
-impl_newtype_debug!(framebuffer::Handle);
+impl_newtype_debug!(connector::Handle, "connector::Handle");
+impl_newtype_debug!(encoder::Handle, "encoder::Handle");
+impl_newtype_debug!(crtc::Handle, "crtc::Handle");
+impl_newtype_debug!(framebuffer::Handle, "framebuffer::Handle");
 
 /// Here's just a simple point type that can be used to debug tuples of
 /// integral primitives. Same as `impl_newtype_debug`, this is done to

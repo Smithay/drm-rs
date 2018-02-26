@@ -26,7 +26,14 @@ use std::ops::Deref;
 pub struct Handle(RawHandle);
 
 impl ResourceHandle for Handle {
-    const DEBUG_NAME: &'static str = "crtc::Handle";
+    type Info = Info;
+
+    fn get_info<T: Device>(device: &T, handle: Self) -> Result<Info> {
+        let mut t = ffi::mode::GetCrtc::default();
+        t.raw_mut_ref().crtc_id = handle.into();
+        t.ioctl(device.as_raw_fd())?;
+        Ok(Info(t))
+    }
 }
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
@@ -35,13 +42,6 @@ pub struct Info(ffi::mode::GetCrtc);
 
 impl ResourceInfo for Info {
     type Handle = Handle;
-
-    fn load_from_device<T: Device>(device: &T, id: Handle) -> Result<Self> {
-        let mut t = ffi::mode::GetCrtc::default();
-        t.raw_mut_ref().crtc_id = id.into();
-        t.ioctl(device.as_raw_fd())?;
-        Ok(Info(t))
-    }
 
     fn handle(&self) -> Handle {
         Handle::from(self.0.raw_ref().crtc_id)

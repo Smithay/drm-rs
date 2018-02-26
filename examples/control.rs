@@ -4,11 +4,6 @@ extern crate drm;
 pub mod util;
 use util::*;
 
-use drm::control::connector;
-use drm::control::encoder;
-use drm::control::crtc;
-use drm::control::framebuffer;
-
 pub fn main() {
     let card = Card::open_global();
 
@@ -16,19 +11,19 @@ pub fn main() {
     println!("{:#?}", res);
 
     for &i in res.connectors() {
-        println!("{:#?}", card.info::<connector::Info>(i).unwrap());
+        println!("{:#?}", card.info(i).unwrap());
     }
 
     for &i in res.encoders() {
-        println!("{:#?}", card.info::<encoder::Info>(i).unwrap());
+        println!("{:#?}", card.info(i).unwrap());
     }
 
     for &i in res.crtcs() {
-        println!("{:#?}", card.info::<crtc::Info>(i).unwrap());
+        println!("{:#?}", card.info(i).unwrap());
     }
 
     for &i in res.framebuffers() {
-        println!("{:#?}", card.info::<framebuffer::Info>(i).unwrap());
+        println!("{:#?}", card.info(i).unwrap());
     }
 
     let res = card.plane_handles().unwrap();
