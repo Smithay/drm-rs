@@ -70,17 +70,20 @@ pub trait Device: super::Device {
     }
 
     /// Returns detailed information of an object given its handle.
-    fn info<T: ResourceInfo>(&self, handle: T::Handle) -> Result<T>
+    fn info<T: ResourceHandle>(&self, handle: T) -> Result<T::Info>
     where Self: Sized {
-        T::load_from_device(self, handle)
+
+        T::get_info(self, handle)
     }
 }
 
 /// Objects that derive this trait are handles to device resources, and are
 /// used for nearly all modesetting operations.
 pub trait ResourceHandle: From<RawHandle> + Into<RawHandle> {
-    #[doc(hidden)]
-    const DEBUG_NAME: &'static str;
+    type Info: ResourceInfo;
+
+    /// Attempts to retrieve information about a resource.
+    fn get_info<T: Device>(device: &T, handle: Self) -> Result<Self::Info>;
 
     /// Returns None if the input is zero.
     fn from_checked(n: RawHandle) -> Option<Self> {
@@ -96,8 +99,6 @@ pub trait ResourceHandle: From<RawHandle> + Into<RawHandle> {
 pub trait ResourceInfo: Sized {
     #[allow(missing_docs)]
     type Handle: ResourceHandle;
-    /// Attempts to retrieve information about a resource.
-    fn load_from_device<T: Device>(&T, Self::Handle) -> Result<Self>;
     /// Returns the handle used to acquire this object.
     fn handle(&self) -> Self::Handle;
 }
