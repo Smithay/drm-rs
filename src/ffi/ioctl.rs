@@ -98,14 +98,6 @@ ioctl!(readwrite wait_vblank with DRM_IOCTL_BASE, 0x3a; drm_wait_vblank);
 /// # Nodes: Primary
 ioctl!(write_ptr modeset_ctl with DRM_IOCTL_BASE, 0x08; drm_modeset_ctl);
 
-/// Converts a buffer handle into a dma-buf file descriptor.
-ioctl!(readwrite prime_handle_to_fd
-       with DRM_IOCTL_BASE, 0x2d; drm_prime_handle);
-
-/// Converts a dma-buf file descriptor into a buffer handle.
-ioctl!(readwrite prime_fd_to_handle
-       with DRM_IOCTL_BASE, 0x2e; drm_prime_handle);
-
 pub(crate) mod mode {
     use nix::libc::c_uint;
     use drm_sys::*;
@@ -211,5 +203,12 @@ pub(crate) mod gem {
     ioctl!(readwrite open with DRM_IOCTL_BASE, 0x0b; drm_gem_open);
     ioctl!(write_ptr close with DRM_IOCTL_BASE, 0x09; drm_gem_close);
     ioctl!(readwrite flink with DRM_IOCTL_BASE, 0x0a; drm_gem_flink);
-}
 
+    /// Converts a buffer handle into a dma-buf file descriptor.
+    ioctl!(readwrite prime_handle_to_fd
+           with DRM_IOCTL_BASE, 0x2d; drm_prime_handle);
+
+    /// Converts a dma-buf file descriptor into a buffer handle.
+    ioctl!(readwrite prime_fd_to_handle
+           with DRM_IOCTL_BASE, 0x2e; drm_prime_handle);
+}
