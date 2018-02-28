@@ -37,7 +37,7 @@ pub mod connector;
 pub mod encoder;
 pub mod crtc;
 pub mod framebuffer;
-//pub mod plane;
+pub mod plane;
 //pub mod property;
 //pub mod dumbbuffer;
 

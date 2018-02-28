@@ -80,7 +80,7 @@ pub trait Commands: super::Device {
            mode: Option<()>) -> Result<()>;
 
     /// Updates a cursor image.
-    fn set_cursor<B>(&self, handle: Handle, buffer: &B, size: (u32, u32),
+    fn set_cursor<B>(&self, handle: Handle, buffer: Option<&B>, size: (u32, u32),
                      hot: Option<(i32, i32)>) -> Result<()>
         where B: Deref<Target=buffer::Buffer>;
 
@@ -130,7 +130,7 @@ impl<T: super::Device> Commands for T {
         Ok(())
     }
 
-    fn set_cursor<B>(&self, handle: Handle, _buffer: &B, size: (u32, u32),
+    fn set_cursor<B>(&self, handle: Handle, buffer: Option<&B>, size: (u32, u32),
                      hot: Option<(i32, i32)>) -> Result<()>
         where B: Deref<Target=buffer::Buffer> {
 
@@ -141,9 +141,13 @@ impl<T: super::Device> Commands for T {
                 t.raw_mut_ref().flags = ffi::DRM_MODE_CURSOR_BO;
                 t.raw_mut_ref().crtc_id = handle.into();
                 t.raw_mut_ref().width = size.0;
-                // TODO: Get buffer working first
-                unimplemented!();
-                //t.raw_mut_ref().handle = buffer.???;
+
+                // If no buffer was given, we should clear it.
+                match buffer {
+                    Some(b) => t.raw_mut_ref().handle = b.handle().into(),
+                    None => t.raw_mut_ref().handle = 0
+                }
+
                 t.ioctl(self.as_raw_fd())?;
             },
             Some(h) => {
@@ -154,9 +158,13 @@ impl<T: super::Device> Commands for T {
                 t.raw_mut_ref().height = size.1;
                 t.raw_mut_ref().hot_x = h.0;
                 t.raw_mut_ref().hot_y = h.1;
-                // TODO: Get buffer working first
-                unimplemented!();
-                //t.raw_mut_ref().handle = buffer.???;
+
+                // If no buffer was given, we should clear it.
+                match buffer {
+                    Some(b) => t.raw_mut_ref().handle = b.handle().into(),
+                    None => t.raw_mut_ref().handle = 0
+                }
+
                 t.ioctl(self.as_raw_fd())?;
             }
         }
