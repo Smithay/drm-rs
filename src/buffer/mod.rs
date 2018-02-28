@@ -27,7 +27,7 @@
 use ffi::{self, Wrapper, gem::RawHandle};
 use result::Result;
 
-pub mod fourcc;
+pub mod format;
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// A handle to a GEM buffer.
@@ -92,7 +92,7 @@ pub trait Buffer {
     /// The width and height of the buffer.
     fn size(&self) -> (u32, u32);
     /// The format of the buffer.
-    fn format(&self) -> fourcc::PixelFormat;
+    fn format(&self) -> format::PixelFormat;
     /// The pitch of the buffer.
     fn pitch(&self) -> u32;
     /// The GEM handle of the buffer.
