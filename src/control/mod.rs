@@ -139,7 +139,7 @@ pub struct PlaneResourceHandles(ffi::mode::PlaneRes);
 
 impl PlaneResourceHandles {
     /// Returns the set of [plane::Handles](plane/Handle.t.html)
-    pub fn planes(&self) -> &[u32] {
+    pub fn planes(&self) -> &[plane::Handle] {
         slice_from_wrapper!(self.0, plane_buf, count_planes)
     }
 }

@@ -15,6 +15,7 @@ use control::connector;
 use control::encoder;
 use control::crtc;
 use control::framebuffer;
+use control::plane;
 
 /// This can automatically implement `Debug` for any RawHandle.
 ///
@@ -36,6 +37,7 @@ impl_newtype_debug!(connector::Handle, "connector::Handle");
 impl_newtype_debug!(encoder::Handle, "encoder::Handle");
 impl_newtype_debug!(crtc::Handle, "crtc::Handle");
 impl_newtype_debug!(framebuffer::Handle, "framebuffer::Handle");
+impl_newtype_debug!(plane::Handle, "plane::Handle");
 
 /// Here's just a simple point type that can be used to debug tuples of
 /// integral primitives. Same as `impl_newtype_debug`, this is done to
@@ -74,9 +76,9 @@ impl fmt::Debug for connector::Info {
             .field("type", &self.connector_type())
             .field("state", &self.connection_state())
             .field("encoder", &self.current_encoder())
-            .field("possible_encoders", &self.encoders())
-            .field("properties", &self.properties())
-            .field("property_values", &self.prop_values())
+            .field("possible_encoders", &self.possible_encoders())
+            .field("property_handles", &self.property_handles())
+            .field("property_values", &self.property_values())
             .finish()
     }
 }
@@ -98,7 +100,7 @@ impl fmt::Debug for crtc::Info {
         f.debug_struct("crtc::Info")
             .field("handle", &self.handle())
             .field("position", &pos)
-            .field("framebuffer", &self.fb())
+            .field("framebuffer", &self.current_framebuffer())
             .field("gamma_size", &self.gamma_size())
             .finish()
     }
@@ -108,6 +110,19 @@ impl fmt::Debug for framebuffer::Info {
     fn fmt<'a>(&'a self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("framebuffer::Info")
             .field("handle", &self.handle())
+            .finish()
+    }
+}
+
+impl fmt::Debug for plane::Info {
+    fn fmt<'a>(&'a self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("plane::Info")
+            .field("handle", &self.handle())
+            .field("crtc", &self.current_crtc())
+            .field("framebuffer", &self.current_framebuffer())
+            .field("possible_crtcs", &self.possible_crtcs())
+            .field("gamma_size", &self.gamma_size())
+            .field("formats", &self.formats())
             .finish()
     }
 }

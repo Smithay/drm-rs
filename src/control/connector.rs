@@ -55,17 +55,17 @@ impl Info {
     }
 
     /// Returns the set of compatible encoders.
-    pub fn encoders(&self) -> &[encoder::Handle] {
+    pub fn possible_encoders(&self) -> &[encoder::Handle] {
         slice_from_wrapper!(self.0, enc_buf, count_encoders)
     }
 
     /// TODO: Document
-    pub fn properties(&self) -> &[u32] {
+    pub fn property_handles(&self) -> &[u32] {
         slice_from_wrapper!(self.0, prop_buf, count_props)
     }
 
     /// TODO: Document
-    pub fn prop_values(&self) -> &[u64] {
+    pub fn property_values(&self) -> &[u64] {
         slice_from_wrapper!(self.0, prop_val_buf, count_props)
     }
 }
