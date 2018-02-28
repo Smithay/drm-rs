@@ -78,69 +78,6 @@ impl<T: super::Device> Commands for T {
 }
 
 /*
-/// Creates a framebuffer from a [`Buffer`], returning
-/// [`framebuffer::Info`].
-///
-/// [`framebuffer::Info`]: framebuffer.Handle.html
-pub fn create<T, U>(device: &T, buffer: &U) -> Result<Info>
-where
-    T: control::Device,
-    U: super::super::buffer::Buffer,
-{
-    let framebuffer = {
-        let mut raw: ffi::drm_mode_fb_cmd2 = Default::default();
-        let (w, h) = buffer.size();
-        raw.width = w;
-        raw.height = h;
-        raw.pixel_format = buffer.format().as_raw();
-        raw.flags = 0; //TODO
-        raw.handles[0] = buffer.handle().into();
-        raw.pitches[0] = buffer.pitch();
-        raw.offsets[0] = 0; //TODO
-        raw.modifier[0]; //TODO
-
-        match unsafe { ffi::ioctl_mode_addfb2(device.as_raw_fd(), &mut raw) } {
-            Ok(_) => try!(Info::load_from_device(device, Handle::from(raw.fb_id))),
-            Err(_) => {
-                //ioctl addfd2 unsupported
-                let mut raw_old: ffi::drm_mode_fb_cmd = Default::default();
-                raw_old.width = w;
-                raw_old.height = h;
-                raw_old.pitch = buffer.pitch();
-                let depth = try!(
-                    buffer
-                        .format()
-                        .depth()
-                        .ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat))
-                );
-                let bpp = try!(
-                    buffer
-                        .format()
-                        .bpp()
-                        .ok_or(Error::from_kind(ErrorKind::UnsupportedPixelFormat))
-                );
-                raw_old.bpp = bpp as u32;
-                raw_old.depth = depth as u32;
-                raw_old.handle = buffer.handle().into();
-
-                unsafe {
-                    try!(ffi::ioctl_mode_addfb(device.as_raw_fd(), &mut raw_old));
-                }
-
-                Info {
-                    handle: Handle::from(raw_old.fb_id),
-                    size: (raw_old.width, raw_old.height),
-                    pitch: raw_old.pitch,
-                    depth: raw_old.depth as u8,
-                    bpp: raw_old.bpp as u8,
-                }
-            }
-        }
-    };
-
-    Ok(framebuffer)
-}
-
 /// Rect inside the area of a framebuffer
 pub type ClipRect = ffi::drm_clip_rect;
 

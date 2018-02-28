@@ -87,7 +87,7 @@ impl<T: super::Device> Commands for T {
     }
 }
 
-/// Common functionality of all buffers.
+/// Common functionality of all regular buffers.
 pub trait Buffer {
     /// The width and height of the buffer.
     fn size(&self) -> (u32, u32);
@@ -95,7 +95,14 @@ pub trait Buffer {
     fn format(&self) -> format::PixelFormat;
     /// The pitch of the buffer.
     fn pitch(&self) -> u32;
-    /// The GEM handle of the buffer.
+    /// The handle to the buffer.
     fn handle(&self) -> Handle;
+}
+
+/// Planar buffers are buffers where each channel/plane is in its own buffer.
+///
+/// Each plane has their own handle, pitch, and offsets.
+pub trait PlanarBuffer {
+    // TODO
 }
 
