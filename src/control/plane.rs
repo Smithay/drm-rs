@@ -1,73 +1,82 @@
 //! # Plane
 //!
-//! A plane is an object you can attach framebuffers to for use in displays.
+//! Attachment point for a Framebuffer.
+//!
+//! A Plane is a resource that can have a framebuffer attached to it, either for
+//! hardware compositing or displaying directly to a screen. There are three
+//! types of planes available for use:
+//!
+//! * Primary - A CRTC's built-in plane. When attaching a framebuffer to a CRTC,
+//! it is actually being attached to this kind of plane.
+//!
+//! * Overlay - Can be overlayed on top of a primary plane, utilizing extremely
+//! fast hardware compositing.
+//!
+//! * Cursor - Similar to an overlay plane, these are typically used to display
+//! cursor type objects.
 
-use control::{self, crtc, framebuffer, ResourceHandle, ResourceInfo};
-use result::*;
-use ffi;
-use {iRect, uRect};
+use ffi::{self, Wrapper, mode::RawHandle};
+use control::{ResourceHandle, ResourceInfo, Device};
+use control::crtc;
+use control::framebuffer;
+use result::Result;
 
-/// A [`ResourceHandle`] for a plane.
-///
-/// Like all control resources, every planehas a unique `Handle` associated with
-/// it. This `Handle` can be used to acquire information about the plane
-/// (see [`plane::Info`]) or change the plane's state.
-///
-/// These can be retrieved by using [`PlaneResourceHandles::planes`].
-///
-/// [`ResourceHandle`]: ResourceHandle.t.html
-/// [`plane::Info`]: Info.t.html
-/// [`PlaneResourceHandles::planes`]: PlaneResourceHandles.t.html#method.planes
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub struct Handle(control::RawHandle);
-impl ResourceHandle for Handle {}
+#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+/// A [ResourceHandle](../ResourceHandle.t.html) representing a plane.
+pub struct Handle(RawHandle);
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// The `ResourceInfo` on a plane.
-pub struct Info {
-    handle: Handle,
-    crtc: control::crtc::Handle,
-    fb: control::framebuffer::Handle,
-    // TODO: count_formats,
-    // TODO: possible_crtcs
-    gamma_length: u32,
-    // TODO: formats
+impl ResourceHandle for Handle {
+    type Info = Info;
+
+    fn get_info<T: Device>(device: &T, handle: Self) -> Result<Info> {
+        let mut t = ffi::mode::GetPlane::default();
+        t.raw_mut_ref().plane_id = handle.into();
+        t.ioctl(device.as_raw_fd())?;
+        Ok(Info(t))
+    }
 }
 
-impl control::property::LoadProperties for Handle {
-    const TYPE: u32 = ffi::DRM_MODE_OBJECT_PLANE;
-}
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+/// A [ResourceInfo](../ResourceInfo.t.html) object about a plane.
+pub struct Info(ffi::mode::GetPlane);
 
 impl ResourceInfo for Info {
     type Handle = Handle;
 
-    fn load_from_device<T>(device: &T, handle: Self::Handle) -> Result<Self>
-    where
-        T: control::Device,
-    {
-        let plane = {
-            let mut raw: ffi::drm_mode_get_plane = Default::default();
-            raw.plane_id = handle.into();
-            unsafe {
-                try!(ffi::ioctl_mode_getplane(device.as_raw_fd(), &mut raw));
-            }
-
-            Self {
-                handle: handle,
-                crtc: control::crtc::Handle::from(raw.crtc_id),
-                fb: control::framebuffer::Handle::from(raw.fb_id),
-                gamma_length: raw.gamma_size,
-            }
-        };
-
-        Ok(plane)
-    }
-
-    fn handle(&self) -> Self::Handle {
-        self.handle
+    fn handle(&self) -> Handle {
+        Handle::from(self.0.raw_ref().plane_id)
     }
 }
 
+impl Info {
+    /// Returns the current CRTC this plane is attached to.
+    pub fn current_crtc(&self) -> Option<crtc::Handle> {
+        crtc::Handle::from_checked(self.0.raw_ref().crtc_id)
+    }
+
+    /// Returns the current framebuffer attached to this plane.
+    pub fn current_framebuffer(&self) -> Option<framebuffer::Handle> {
+        framebuffer::Handle::from_checked(self.0.raw_ref().fb_id)
+    }
+
+    /// Returns a filter that can be used to determine which CRTC resources
+    /// are compatible with this plane.
+    pub fn possible_crtcs(&self) -> u32 {
+        self.0.raw_ref().possible_crtcs
+    }
+
+    /// Returns the size of the gamma buffers.
+    pub fn gamma_size(&self) -> u32 {
+        self.0.raw_ref().gamma_size
+    }
+
+    /// Returns a list of supported formats.
+    pub fn formats(&self) -> &[u32] {
+        slice_from_wrapper!(self.0, format_buf, count_format_types)
+    }
+}
+
+/*
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum PresentFlag {
@@ -109,3 +118,4 @@ where
 
     Ok(())
 }
+*/
