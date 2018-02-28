@@ -28,4 +28,8 @@ pub fn main() {
 
     let res = card.plane_handles().unwrap();
     println!("{:#?}", res);
+
+    for &i in res.planes() {
+        println!("{:#?}", card.info(i).unwrap());
+    }
 }

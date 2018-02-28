@@ -60,7 +60,7 @@ impl Info {
     }
 
     /// Returns the handle associated with the currently attached framebuffer.
-    pub fn fb(&self) -> Option<framebuffer::Handle> {
+    pub fn current_framebuffer(&self) -> Option<framebuffer::Handle> {
         framebuffer::Handle::from_checked(self.0.raw_ref().fb_id)
     }
 
