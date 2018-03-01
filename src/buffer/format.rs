@@ -128,13 +128,129 @@ impl PixelFormat {
         }
     }
 
-    /// Depth value of the format
-    pub fn depth(&self) -> u32 {
-        unimplemented!()
+    /// The depth in bits per pixel.
+    pub fn depth(&self) -> u8 {
+        match *self {
+            // TODO
+            PixelFormat::C8 => unimplemented!(),
+            PixelFormat::R8 => unimplemented!(),
+            PixelFormat::GR88 => unimplemented!(),
+
+            PixelFormat::RGB332 => 8,
+            PixelFormat::BGR233 => 8,
+
+            PixelFormat::XRGB4444 => 12,
+            PixelFormat::XBGR4444 => 12,
+            PixelFormat::RGBX4444 => 12,
+            PixelFormat::BGRX4444 => 12,
+
+            PixelFormat::ARGB4444 => 16,
+            PixelFormat::ABGR4444 => 16,
+            PixelFormat::RGBA4444 => 16,
+            PixelFormat::BGRA4444 => 16,
+
+            PixelFormat::XRGB1555 => 15,
+            PixelFormat::XBGR1555 => 15,
+            PixelFormat::RGBX5551 => 15,
+            PixelFormat::BGRX5551 => 15,
+
+            PixelFormat::ARGB1555 => 16,
+            PixelFormat::ABGR1555 => 16,
+            PixelFormat::RGBA5551 => 16,
+            PixelFormat::BGRA5551 => 16,
+
+            PixelFormat::RGB565 => 16,
+            PixelFormat::BGR565 => 16,
+
+            PixelFormat::XRGB8888 => 24,
+            PixelFormat::XBGR8888 => 24,
+            PixelFormat::RGBX8888 => 24,
+            PixelFormat::BGRX8888 => 24,
+
+            PixelFormat::ARGB8888 => 32,
+            PixelFormat::ABGR8888 => 32,
+            PixelFormat::RGBA8888 => 32,
+            PixelFormat::BGRA8888 => 32,
+
+            PixelFormat::XRGB2101010 => 30,
+            PixelFormat::XBGR2101010 => 30,
+            PixelFormat::RGBX1010102 => 30,
+            PixelFormat::BGRX1010102 => 30,
+
+            PixelFormat::ARGB2101010 => 32,
+            PixelFormat::ABGR2101010 => 32,
+            PixelFormat::RGBA1010102 => 32,
+            PixelFormat::BGRA1010102 => 32,
+
+            // TODO
+            PixelFormat::YUYV => unimplemented!(),
+            PixelFormat::YVYU => unimplemented!(),
+            PixelFormat::UYVY => unimplemented!(),
+            PixelFormat::VYUY => unimplemented!(),
+
+            PixelFormat::AYUV => unimplemented!(),
+        }
     }
 
     /// Bytes per pixel of the used format
-    pub fn bpp(&self) -> u32 {
-        unimplemented!()
+    pub fn bpp(&self) -> u8 {
+        match *self {
+            PixelFormat::C8 => 8,
+            PixelFormat::R8 => 8,
+            PixelFormat::GR88 => 16,
+
+            PixelFormat::RGB332 => 8,
+            PixelFormat::BGR233 => 8,
+
+            PixelFormat::XRGB4444 => 16,
+            PixelFormat::XBGR4444 => 16,
+            PixelFormat::RGBX4444 => 16,
+            PixelFormat::BGRX4444 => 16,
+
+            PixelFormat::ARGB4444 => 16,
+            PixelFormat::ABGR4444 => 16,
+            PixelFormat::RGBA4444 => 16,
+            PixelFormat::BGRA4444 => 16,
+
+            PixelFormat::XRGB1555 => 16,
+            PixelFormat::XBGR1555 => 16,
+            PixelFormat::RGBX5551 => 16,
+            PixelFormat::BGRX5551 => 16,
+
+            PixelFormat::ARGB1555 => 16,
+            PixelFormat::ABGR1555 => 16,
+            PixelFormat::RGBA5551 => 16,
+            PixelFormat::BGRA5551 => 16,
+
+            PixelFormat::RGB565 => 16,
+            PixelFormat::BGR565 => 16,
+
+            PixelFormat::XRGB8888 => 24,
+            PixelFormat::XBGR8888 => 24,
+            PixelFormat::RGBX8888 => 24,
+            PixelFormat::BGRX8888 => 24,
+
+            PixelFormat::ARGB8888 => 32,
+            PixelFormat::ABGR8888 => 32,
+            PixelFormat::RGBA8888 => 32,
+            PixelFormat::BGRA8888 => 32,
+
+            PixelFormat::XRGB2101010 => 32,
+            PixelFormat::XBGR2101010 => 32,
+            PixelFormat::RGBX1010102 => 32,
+            PixelFormat::BGRX1010102 => 32,
+
+            PixelFormat::ARGB2101010 => 32,
+            PixelFormat::ABGR2101010 => 32,
+            PixelFormat::RGBA1010102 => 32,
+            PixelFormat::BGRA1010102 => 32,
+
+            PixelFormat::YUYV => 16,
+            PixelFormat::YVYU => 16,
+            PixelFormat::UYVY => 16,
+            PixelFormat::VYUY => 16,
+
+            PixelFormat::AYUV => 32,
+        }
     }
 }
