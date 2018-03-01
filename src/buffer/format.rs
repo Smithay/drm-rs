@@ -129,7 +129,7 @@ impl PixelFormat {
     }
 
     /// The depth in bits per pixel.
-    pub fn depth(&self) -> u8 {
+    pub fn depth(&self) -> u32 {
         match *self {
             // TODO
             PixelFormat::C8 => unimplemented!(),
@@ -193,7 +193,7 @@ impl PixelFormat {
     }
 
     /// Bytes per pixel of the used format
-    pub fn bpp(&self) -> u8 {
+    pub fn bpp(&self) -> u32 {
         match *self {
             PixelFormat::C8 => 8,
             PixelFormat::R8 => 8,
