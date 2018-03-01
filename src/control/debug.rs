@@ -16,6 +16,7 @@ use control::encoder;
 use control::crtc;
 use control::framebuffer;
 use control::plane;
+use control::property;
 
 /// This can automatically implement `Debug` for any RawHandle.
 ///
@@ -38,6 +39,7 @@ impl_newtype_debug!(encoder::Handle, "encoder::Handle");
 impl_newtype_debug!(crtc::Handle, "crtc::Handle");
 impl_newtype_debug!(framebuffer::Handle, "framebuffer::Handle");
 impl_newtype_debug!(plane::Handle, "plane::Handle");
+impl_newtype_debug!(property::Handle, "property::Handle");
 
 /// Here's just a simple point type that can be used to debug tuples of
 /// integral primitives. Same as `impl_newtype_debug`, this is done to
@@ -123,6 +125,15 @@ impl fmt::Debug for plane::Info {
             .field("possible_crtcs", &self.possible_crtcs())
             .field("gamma_size", &self.gamma_size())
             .field("formats", &self.formats())
+            .finish()
+    }
+}
+
+impl fmt::Debug for property::Info {
+    fn fmt<'a>(&'a self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("property::Info")
+            .field("handle", &self.handle())
+            .field("name", &self.name())
             .finish()
     }
 }
