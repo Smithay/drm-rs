@@ -38,7 +38,7 @@ pub mod encoder;
 pub mod crtc;
 pub mod framebuffer;
 pub mod plane;
-//pub mod property;
+pub mod property;
 //pub mod dumbbuffer;
 
 /// This trait should be implemented by any object that acts as a DRM device and

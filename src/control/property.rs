@@ -1,60 +1,62 @@
 //! # Property
 //!
-//! A property is information and values about a control resource.
+//! A property of a modesetting resource.
+//!
+//! All modesetting resources have a set of properties that have values that
+//! can be modified. These properties are modesetting resources themselves, and
+//! may even have their own set of properties.
+//!
+//! Properties may have mutable values attached to them. These can be changed by
+//! either changing the state of a resource (thereby affecting the property),
+//! directly changing the property value itself, or by batching property changes
+//! together and executing them all atomically.
 
-use control::{self, ResourceHandle, ResourceInfo};
-use result::*;
-use ffi;
+use ffi::{self, Wrapper, mode::RawHandle};
+use control::{ResourceHandle, ResourceInfo, Device};
+use result::Result;
 
 use std::ffi::CStr;
 
 /// The underlying value type of a property.
 pub type RawValue = u64;
 
-/// A `ResourceHandle` to a property.
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub struct Handle(control::RawHandle);
-impl ResourceHandle for Handle {}
+#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+/// A [ResourceHandle](../ResourceHandle.t.html) representing a connector.
+pub struct Handle(RawHandle);
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-/// The `ResourceInfo` on a property.
-pub struct Info {
-    handle: Handle,
-    name: control::RawName,
-    mutable: bool,
-    pending: bool,
-    value_type: PropertyInfoType,
+impl ResourceHandle for Handle {
+    type Info = Info;
+
+    fn get_info<T: Device>(device: &T, handle: Self) -> Result<Info> {
+        let mut t = ffi::mode::GetProperty::default();
+        t.raw_mut_ref().prop_id = handle.into();
+        t.ioctl(device.as_raw_fd())?;
+        Ok(Info(t))
+    }
 }
+
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+/// A [ResourceInfo](../ResourceInfo.t.html) object about a connector.
+pub struct Info(ffi::mode::GetProperty);
 
 impl ResourceInfo for Info {
     type Handle = Handle;
 
-    fn load_from_device<T>(device: &T, handle: Self::Handle) -> Result<Self>
-    where
-        T: control::Device,
-    {
-        let mut raw: ffi::drm_mode_get_property = Default::default();
-        raw.prop_id = handle.into();
-        unsafe {
-            try!(ffi::ioctl_mode_getproperty(device.as_raw_fd(), &mut raw));
-        }
-
-        let info = Info {
-            handle: handle,
-            name: control::RawName(raw.name),
-            mutable: raw.flags & (ffi::DRM_MODE_PROP_IMMUTABLE) == 0,
-            pending: raw.flags & (ffi::DRM_MODE_PROP_PENDING) == 1,
-            value_type: try!(PropertyInfoType::from_ffi_and_device(device, raw)),
-        };
-
-        Ok(info)
-    }
-
-    fn handle(&self) -> Self::Handle {
-        self.handle
+    fn handle(&self) -> Handle {
+        Handle::from(self.0.raw_ref().prop_id)
     }
 }
 
+
+impl Info {
+    pub fn name(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(&self.0.raw_ref().name as *const _)
+        }
+    }
+}
+
+/*
 impl Info {
     /// Takes an `UnassociatedValue` and gives a specific `Value` based on this
     /// property.
@@ -351,3 +353,4 @@ impl ::std::fmt::Debug for EnumName {
         write!(f, "{:?}", cstr)
     }
 }
+*/

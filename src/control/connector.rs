@@ -9,6 +9,7 @@
 use ffi::{self, Wrapper, mode::RawHandle};
 use control::{ResourceHandle, ResourceInfo, Device};
 use control::encoder;
+use control::property;
 use result::Result;
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
@@ -60,7 +61,7 @@ impl Info {
     }
 
     /// TODO: Document
-    pub fn property_handles(&self) -> &[u32] {
+    pub fn property_handles(&self) -> &[property::Handle] {
         slice_from_wrapper!(self.0, prop_buf, count_props)
     }
 
