@@ -24,7 +24,7 @@
 //! like a regular one. This allows better control and security, and is the
 //! recommended method of sharing buffers.
 
-use ffi::{self, Wrapper, gem::RawHandle};
+use ffi::{self, gem::RawHandle};
 use result::Result;
 
 pub mod format;
@@ -66,24 +66,24 @@ pub trait Commands: super::Device {
 impl<T: super::Device> Commands for T {
     fn open(&self, name: Name) -> Result<Handle> {
         let mut t = ffi::gem::Open::default();
-        t.raw_mut_ref().name = name.into();
-        t.ioctl(self.as_raw_fd())?;
-        Ok(Handle(t.raw_ref().handle))
+        t.as_mut().name = name.into();
+        t.cmd(self.as_raw_fd())?;
+        Ok(Handle::from(t.as_ref().handle))
     }
 
     fn close(&self, handle: Handle) -> Result<()> {
         let mut t = ffi::gem::Close::default();
-        t.raw_mut_ref().handle = handle.into();
-        t.ioctl(self.as_raw_fd())?;
+        t.as_mut().handle = handle.into();
+        t.cmd(self.as_raw_fd())?;
         Ok(())
     }
 
     // TODO: Raw struct also has '__u64 size;'
     fn flink(&self, handle: Handle) -> Result<Name> {
         let mut t = ffi::gem::Flink::default();
-        t.raw_mut_ref().handle = handle.into();
-        t.ioctl(self.as_raw_fd())?;
-        Ok(Name(t.raw_ref().name))
+        t.as_mut().handle = handle.into();
+        t.cmd(self.as_raw_fd())?;
+        Ok(Name::from(t.as_ref().name))
     }
 }
 

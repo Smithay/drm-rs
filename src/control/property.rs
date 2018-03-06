@@ -11,11 +11,12 @@
 //! directly changing the property value itself, or by batching property changes
 //! together and executing them all atomically.
 
-use ffi::{self, Wrapper, mode::RawHandle};
-use control::{ResourceHandle, ResourceInfo, Device};
-use result::Result;
+//use ffi::{self, Wrapper, mode::RawHandle};
+use ffi::mode::RawHandle;
+//use control::{ResourceHandle, ResourceInfo, Device};
+//use result::Result;
 
-use std::ffi::CStr;
+//use std::ffi::CStr;
 
 /// The underlying value type of a property.
 pub type RawValue = u64;
@@ -23,7 +24,7 @@ pub type RawValue = u64;
 #[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// A [ResourceHandle](../ResourceHandle.t.html) representing a connector.
 pub struct Handle(RawHandle);
-
+/*
 impl ResourceHandle for Handle {
     type Info = Info;
 
@@ -56,7 +57,6 @@ impl Info {
     }
 }
 
-/*
 impl Info {
     /// Takes an `UnassociatedValue` and gives a specific `Value` based on this
     /// property.

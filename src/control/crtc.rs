@@ -12,7 +12,7 @@
 //! but they can also use pixel data from other planes to perform hardware
 //! compositing.
 
-use ffi::{self, Wrapper, mode::RawHandle};
+use ffi::{self, mode::RawHandle};
 use control::{ResourceHandle, ResourceInfo, Device};
 use control::framebuffer;
 use control::connector;
@@ -30,8 +30,8 @@ impl ResourceHandle for Handle {
 
     fn get_info<T: Device>(device: &T, handle: Self) -> Result<Info> {
         let mut t = ffi::mode::GetCrtc::default();
-        t.raw_mut_ref().crtc_id = handle.into();
-        t.ioctl(device.as_raw_fd())?;
+        t.as_mut().crtc_id = handle.into();
+        t.cmd(device.as_raw_fd())?;
         Ok(Info(t))
     }
 }
@@ -44,14 +44,14 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn handle(&self) -> Handle {
-        Handle::from(self.0.raw_ref().crtc_id)
+        Handle::from(self.0.as_ref().crtc_id)
     }
 }
 
 impl Info {
     /// Returns the origin this CRTC starts to scan from.
     pub fn position(&self) -> (u32, u32) {
-        (self.0.raw_ref().x, self.0.raw_ref().y)
+        (self.0.as_ref().x, self.0.as_ref().y)
     }
 
     /// Returns the current mode this CRTC is outputting at.
@@ -61,12 +61,12 @@ impl Info {
 
     /// Returns the handle associated with the currently attached framebuffer.
     pub fn current_framebuffer(&self) -> Option<framebuffer::Handle> {
-        framebuffer::Handle::from_checked(self.0.raw_ref().fb_id)
+        framebuffer::Handle::from_checked(self.0.as_ref().fb_id)
     }
 
     /// Returns the size of the gamma buffers.
     pub fn gamma_size(&self) -> u32 {
-        self.0.raw_ref().gamma_size
+        self.0.as_ref().gamma_size
     }
 }
 
@@ -107,26 +107,26 @@ impl<T: super::Device> Commands for T {
            mode: Option<()>) -> Result<()> {
 
         let mut t = ffi::mode::SetCrtc::default();
-        t.raw_mut_ref().crtc_id = handle.into();
-        t.raw_mut_ref().set_connectors_ptr = connectors.as_ptr() as u64;
-        t.raw_mut_ref().count_connectors = connectors.len() as u32;
-        t.raw_mut_ref().fb_id = fb.into();
-        t.raw_mut_ref().x = position.0;
-        t.raw_mut_ref().y = position.1;
+        t.as_mut().crtc_id = handle.into();
+        t.as_mut().set_connectors_ptr = connectors.as_ptr() as u64;
+        t.as_mut().count_connectors = connectors.len() as u32;
+        t.as_mut().fb_id = fb.into();
+        t.as_mut().x = position.0;
+        t.as_mut().y = position.1;
 
         match mode {
             Some(_m) => {
                 // TODO: Get Mode type working first
                 unimplemented!();
-                //t.raw_mut_ref().mode = m;
-                //t.raw_mut_ref().mode_valid = 1;
+                //t.as_mut().mode = m;
+                //t.as_mut().mode_valid = 1;
             },
             None => {
-                t.raw_mut_ref().mode_valid = 0;
+                t.as_mut().mode_valid = 0;
             }
         }
 
-        t.ioctl(self.as_raw_fd())?;
+        t.cmd(self.as_raw_fd())?;
         Ok(())
     }
 
@@ -138,34 +138,34 @@ impl<T: super::Device> Commands for T {
         match hot {
             None => {
                 let mut t = ffi::mode::Cursor::default();
-                t.raw_mut_ref().flags = ffi::DRM_MODE_CURSOR_BO;
-                t.raw_mut_ref().crtc_id = handle.into();
-                t.raw_mut_ref().width = size.0;
+                t.as_mut().flags = ffi::DRM_MODE_CURSOR_BO;
+                t.as_mut().crtc_id = handle.into();
+                t.as_mut().width = size.0;
 
                 // If no buffer was given, we should clear it.
                 match buffer {
-                    Some(b) => t.raw_mut_ref().handle = b.handle().into(),
-                    None => t.raw_mut_ref().handle = 0
+                    Some(b) => t.as_mut().handle = b.handle().into(),
+                    None => t.as_mut().handle = 0
                 }
 
-                t.ioctl(self.as_raw_fd())?;
+                t.cmd(self.as_raw_fd())?;
             },
             Some(h) => {
                 let mut t = ffi::mode::Cursor2::default();
-                t.raw_mut_ref().flags = ffi::DRM_MODE_CURSOR_BO;
-                t.raw_mut_ref().crtc_id = handle.into();
-                t.raw_mut_ref().width = size.0;
-                t.raw_mut_ref().height = size.1;
-                t.raw_mut_ref().hot_x = h.0;
-                t.raw_mut_ref().hot_y = h.1;
+                t.as_mut().flags = ffi::DRM_MODE_CURSOR_BO;
+                t.as_mut().crtc_id = handle.into();
+                t.as_mut().width = size.0;
+                t.as_mut().height = size.1;
+                t.as_mut().hot_x = h.0;
+                t.as_mut().hot_y = h.1;
 
                 // If no buffer was given, we should clear it.
                 match buffer {
-                    Some(b) => t.raw_mut_ref().handle = b.handle().into(),
-                    None => t.raw_mut_ref().handle = 0
+                    Some(b) => t.as_mut().handle = b.handle().into(),
+                    None => t.as_mut().handle = 0
                 }
 
-                t.ioctl(self.as_raw_fd())?;
+                t.cmd(self.as_raw_fd())?;
             }
         }
 
@@ -174,19 +174,19 @@ impl<T: super::Device> Commands for T {
 
     fn move_cursor(&self, handle: Handle, position: (i32, i32)) -> Result<()> {
         let mut t = ffi::mode::Cursor::default();
-        t.raw_mut_ref().flags = ffi::DRM_MODE_CURSOR_MOVE;
-        t.raw_mut_ref().crtc_id = handle.into();
-        t.raw_mut_ref().x = position.0;
-        t.raw_mut_ref().y = position.1;
-        t.ioctl(self.as_raw_fd())?;
+        t.as_mut().flags = ffi::DRM_MODE_CURSOR_MOVE;
+        t.as_mut().crtc_id = handle.into();
+        t.as_mut().x = position.0;
+        t.as_mut().y = position.1;
+        t.cmd(self.as_raw_fd())?;
         Ok(())
     }
 
     fn clear_cursor(&self, handle: Handle) -> Result<()> {
         let mut t = ffi::mode::Cursor::default();
-        t.raw_mut_ref().flags = ffi::DRM_MODE_CURSOR_BO;
-        t.raw_mut_ref().crtc_id = handle.into();
-        t.ioctl(self.as_raw_fd())?;
+        t.as_mut().flags = ffi::DRM_MODE_CURSOR_BO;
+        t.as_mut().crtc_id = handle.into();
+        t.cmd(self.as_raw_fd())?;
         Ok(())
     }
 
@@ -197,10 +197,10 @@ impl<T: super::Device> Commands for T {
             Some(_) => unimplemented!(),
             None => {
                 let mut t = ffi::mode::CrtcPageFlip::default();
-                t.raw_mut_ref().crtc_id = handle.into();
-                t.raw_mut_ref().fb_id = fb.into();
-                t.raw_mut_ref().flags = flags as u32;
-                t.ioctl(self.as_raw_fd())?;
+                t.as_mut().crtc_id = handle.into();
+                t.as_mut().fb_id = fb.into();
+                t.as_mut().flags = flags as u32;
+                t.cmd(self.as_raw_fd())?;
             }
         }
 

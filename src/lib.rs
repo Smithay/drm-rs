@@ -46,8 +46,6 @@ pub mod result;
 pub mod control;
 pub mod buffer;
 
-use ffi::Wrapper;
-
 use std::os::unix::io::AsRawFd;
 use result::Result;
 
@@ -125,10 +123,8 @@ pub trait Device: AsRawFd {
     /// Generates an [AuthToken](AuthToken.t.html) for this process.
     fn generate_auth_token(&self) -> Result<AuthToken> {
         let mut t = ffi::GetToken::default();
-        t.ioctl(self.as_raw_fd())?;
-
-        let token = AuthToken(t.raw_ref().magic);
-        Ok(token)
+        t.cmd(self.as_raw_fd())?;
+        Ok(AuthToken::from(t.as_ref().magic))
     }
 
     /// Authenticates an [AuthToken](AuthToken.t.html) from another process.
@@ -141,8 +137,8 @@ pub trait Device: AsRawFd {
     /// yet know about render nodes.
     fn authenticate_auth_token(&self, token: AuthToken) -> Result<()> {
         let mut t = ffi::AuthToken::default();
-        t.raw_mut_ref().magic = token.into();
-        t.ioctl(self.as_raw_fd())?;
+        t.as_mut().magic = token.into();
+        t.cmd(self.as_raw_fd())?;
         Ok(())
     }
 
@@ -151,9 +147,9 @@ pub trait Device: AsRawFd {
     fn toggle_capability(&self, cap: ClientCapability, enable: bool)
                          -> Result<()> {
         let mut t = ffi::SetCap::default();
-        t.raw_mut_ref().capability = cap as u64;
-        t.raw_mut_ref().value = enable as u64;
-        t.ioctl(self.as_raw_fd())?;
+        t.as_mut().capability = cap as _;
+        t.as_mut().value = enable as _;
+        t.cmd(self.as_raw_fd())?;
 
         Ok(())
     }

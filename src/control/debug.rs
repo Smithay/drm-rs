@@ -129,11 +129,11 @@ impl fmt::Debug for plane::Info {
     }
 }
 
-impl fmt::Debug for property::Info {
+/*impl fmt::Debug for property::Info {
     fn fmt<'a>(&'a self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("property::Info")
             .field("handle", &self.handle())
             .field("name", &self.name())
             .finish()
     }
-}
+}*/

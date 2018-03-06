@@ -14,9 +14,11 @@ pub fn main() {
         let info = card.info(i).unwrap();
         println!("{:#?}", card.info(i).unwrap());
 
+        /*
         for &j in info.property_handles() {
             println!("{:#?}", card.info(j).unwrap());
         }
+        */
     }
 
     for &i in res.encoders() {

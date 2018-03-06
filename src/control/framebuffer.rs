@@ -2,7 +2,7 @@
 //!
 //! Process specific GPU buffers that can be attached to a plane.
 
-use ffi::{self, Wrapper, mode::RawHandle};
+use ffi::{self, mode::RawHandle};
 use control::{ResourceHandle, ResourceInfo, Device};
 use buffer;
 use result::Result;
@@ -18,8 +18,8 @@ impl ResourceHandle for Handle {
 
     fn get_info<T: Device>(device: &T, handle: Self) -> Result<Info> {
         let mut t = ffi::mode::GetFB::default();
-        t.raw_mut_ref().fb_id = handle.into();
-        t.ioctl(device.as_raw_fd())?;
+        t.as_mut().fb_id = handle.into();
+        t.cmd(device.as_raw_fd())?;
         Ok(Info(t))
     }
 }
@@ -32,7 +32,7 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn handle(&self) -> Handle {
-        Handle::from(self.0.raw_ref().fb_id)
+        Handle::from(self.0.as_ref().fb_id)
     }
 }
 
@@ -54,21 +54,21 @@ impl<T: super::Device> Commands for T {
         where B: Deref<Target=buffer::Buffer> {
 
         let mut t = ffi::mode::AddFB::default();
-        t.raw_mut_ref().width = buffer.size().0;
-        t.raw_mut_ref().height = buffer.size().1;
-        t.raw_mut_ref().pitch = buffer.pitch();
-        t.raw_mut_ref().bpp = buffer.format().bpp();
-        t.raw_mut_ref().depth = buffer.format().depth();
-        t.raw_mut_ref().handle = buffer.handle().into();
-        t.ioctl(self.as_raw_fd())?;
+        t.as_mut().width = buffer.size().0;
+        t.as_mut().height = buffer.size().1;
+        t.as_mut().pitch = buffer.pitch();
+        t.as_mut().bpp = buffer.format().bpp();
+        t.as_mut().depth = buffer.format().depth();
+        t.as_mut().handle = buffer.handle().into();
+        t.cmd(self.as_raw_fd())?;
 
-        Ok(Handle(t.raw_ref().fb_id))
+        Ok(Handle(t.as_ref().fb_id))
     }
 
     fn destroy(&self, handle: Handle) -> Result<()> {
         let mut t = ffi::mode::RmFB::default();
-        *t.raw_mut_ref() = handle.into();
-        t.ioctl(self.as_raw_fd())?;
+        *t.as_mut() = handle.into();
+        t.cmd(self.as_raw_fd())?;
         Ok(())
     }
 
