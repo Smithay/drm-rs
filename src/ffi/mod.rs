@@ -9,73 +9,115 @@ use nix::libc::{c_int, c_char};
 use nix::Error;
 pub use drm_sys::*;
 
+use std::cmp;
+
 pub mod ioctl;
 
-/// Wrappers for the raw DRM structures.
-pub(crate) trait Wrapper {
-    type Raw;
-    type Err;
-    fn raw_mut_ref(&mut self) -> &mut Self::Raw;
-    fn raw_ref(&self) -> &Self::Raw;
-    fn ioctl(&mut self, fd: c_int) -> Result<(), Self::Err>;
-}
-
-macro_rules! impl_wrapper {
-    ($type:ty, $raw:ty, $ioctl:expr) => {
-        impl Wrapper for $type {
-            type Raw = $raw;
-            type Err = Error;
-
-            fn raw_mut_ref(&mut self) -> &mut Self::Raw {
-                &mut self.0
-            }
-
-            fn raw_ref(&self) -> &Self::Raw {
-                &self.0
-            }
-
-            fn ioctl(&mut self, fd: c_int) -> Result<(), Self::Err> {
-                unsafe { $ioctl(fd, &mut self.0)? };
-                Ok(())
+macro_rules! impl_refs {
+    ($type:ty, $rty:ty, $field:tt) => {
+        impl AsRef<$rty> for $type {
+            fn as_ref(&self) -> &$rty {
+                &self.$field
             }
         }
-    };
-    (full $type:ty, $raw:ty, $ioctl:expr) => {
-        impl Wrapper for $type {
-            type Raw = $raw;
-            type Err = Error;
 
-            fn raw_mut_ref(&mut self) -> &mut Self::Raw {
-                &mut self.raw
-            }
-
-            fn raw_ref(&self) -> &Self::Raw {
-                &self.raw
-            }
-
-            fn ioctl(&mut self, fd: c_int) -> Result<(), Self::Err> {
-                use ffi::PrepareBuffers;
-                self.prepare_buffers();
-                unsafe { $ioctl(fd, &mut self.raw)? };
-                self.coerce_buf_sizes();
-                Ok(())
-            }
-        }
-    };
-}
-
-macro_rules! slice_from_wrapper {
-    ($wrapper:expr, $buf:ident, $len:ident) => {
-        {
-            use std::slice;
-
-            let ptr = $wrapper.$buf.as_ptr() as *const _;
-            let len = $wrapper.raw_ref().$len as usize;
-            unsafe {
-                slice::from_raw_parts(ptr, len)
+        impl AsMut<$rty> for $type {
+            fn as_mut(&mut self) -> &mut $rty {
+                &mut self.$field
             }
         }
     }
+}
+
+/// Creates a wrapper around a type.
+///
+/// - Implements AsRef<$raw> and AsMut<$raw> using.
+///
+/// - Created function $type::cmd as a wrapper around $cmd
+///
+/// - If there are buffers listed, prepares them in $type::cmd automatically,
+/// and then creates getter functions for them.
+macro_rules! wrapper {
+    (
+        struct $type:ident ( $rty:ty );
+
+        fn $cmd:expr;
+    ) => {
+        #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+        pub(crate) struct $type ($rty);
+
+        impl_refs!($type, $rty, 0);
+
+        impl $type {
+            /// Command to execute.
+            pub fn cmd(&mut self, fd: c_int) -> Result<(), Error>
+            {
+                // Run the command.
+                unsafe {
+                    $cmd(fd, self.as_mut())?
+                };
+                Ok(())
+            }
+        }
+    };
+    (
+        struct $type:ident {
+            $rn:tt : $rty:ty,
+            $(
+                $buf:tt : [$bty:ty; $max:expr] = [raw.$ptr:tt; raw.$sz:tt]
+            ),*
+        }
+
+        fn $cmd:expr;
+    ) => {
+        #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+        pub(crate) struct $type {
+            $rn : $rty,
+            $(
+                $buf: [$bty; $max],
+            )*
+        }
+
+        impl_refs!($type, $rty, $rn);
+
+        impl $type {
+            /// Command to execute.
+            pub fn cmd(&mut self, fd: c_int) -> Result<(), Error>
+            {
+                // Prepare buffers if there are any.
+                $(
+                    self.as_mut().$ptr = (&mut self.$buf).as_mut_ptr() as _;
+                    self.as_mut().$sz  = $max;
+                )*
+
+                // Run the command.
+                    unsafe {
+                        $cmd(fd, self.as_mut())?
+                    };
+
+                // Coerce the buffer sizes if they went over the limit.
+                $(
+                    self.as_mut().$sz = cmp::min(self.as_ref().$sz, $max);
+                )*
+
+                    Ok(())
+            }
+
+            $(
+                pub fn $buf(&self) -> &[$bty] {
+                    {
+                        use std::slice;
+
+                        let ptr = self.$buf.as_ptr() as *const _;
+                        let len = self.as_ref().$sz as usize;
+                        unsafe {
+                            slice::from_raw_parts(ptr, len)
+                        }
+                    }
+                }
+            )*
+        }
+    };
 }
 
 /// Many DRM structures have fields that act as pointers to buffers. In libdrm,
@@ -95,320 +137,197 @@ macro_rules! slice_from_wrapper {
 /// and consider filing a bug report.
 pub(crate) type Buffer<T> = [T; 32];
 
-/// For wrappers that need the buffers mentioned above, we implement this trait
-/// to set up the inner DRM structure's fields to point to them properly.
-pub(crate) trait PrepareBuffers {
-    fn prepare_buffers(&mut self);
-    fn coerce_buf_sizes(&mut self);
-}
-
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-pub(crate) struct BusID {
-    raw: drm_unique,
-    pub unique_buf: Buffer<c_char>
-}
-
-impl_wrapper!(full BusID, drm_unique, ioctl::get_bus_id);
-
-impl PrepareBuffers for BusID {
-    fn prepare_buffers(&mut self) {
-        self.raw.unique = (&mut self.unique_buf).as_mut_ptr();
-        self.raw.unique_len = self.unique_buf.len() as u64;
+wrapper! {
+    struct BusID {
+        raw: drm_unique,
+        unique: [c_char; 32] = [raw.unique; raw.unique_len]
     }
 
-    fn coerce_buf_sizes(&mut self) {
-        if self.raw.unique_len > self.unique_buf.len() as u64 {
-            self.raw.unique_len = self.unique_buf.len() as u64;
-        }
-    }
+    fn ioctl::get_bus_id;
 }
 
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct Client(drm_client);
-impl_wrapper!(Client, drm_client, ioctl::get_client);
-
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct Stats(drm_stats);
-impl_wrapper!(Stats, drm_stats, ioctl::get_stats);
-
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct GetCap(drm_get_cap);
-impl_wrapper!(GetCap, drm_get_cap, ioctl::get_cap);
-
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct SetCap(drm_set_client_cap);
-impl_wrapper!(SetCap, drm_set_client_cap, ioctl::set_cap);
-
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct SetVersion(drm_set_version);
-impl_wrapper!(SetVersion, drm_set_version, ioctl::set_version);
-
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct GetVersion {
-    raw: drm_version,
-    pub name_buf: Buffer<c_char>,
-    pub date_buf: Buffer<c_char>,
-    pub desc_buf: Buffer<c_char>,
+wrapper! {
+    struct Client(drm_client);
+    fn ioctl::get_client;
 }
 
-impl_wrapper!(full GetVersion, drm_version, ioctl::get_version);
-
-impl PrepareBuffers for GetVersion {
-    fn prepare_buffers(&mut self) {
-        self.raw.name = (&mut self.name_buf).as_mut_ptr();
-        self.raw.date = (&mut self.date_buf).as_mut_ptr();
-        self.raw.desc = (&mut self.desc_buf).as_mut_ptr();
-
-        self.raw.name_len = self.name_buf.len() as u64;
-        self.raw.date_len = self.date_buf.len() as u64;
-        self.raw.desc_len = self.desc_buf.len() as u64;
-    }
-
-    fn coerce_buf_sizes(&mut self) {
-        if self.raw.name_len > self.name_buf.len() as u64 {
-            self.raw.name_len = self.name_buf.len() as u64;
-        }
-        if self.raw.date_len > self.date_buf.len() as u64 {
-            self.raw.date_len = self.date_buf.len() as u64;
-        }
-        if self.raw.desc_len > self.desc_buf.len() as u64 {
-            self.raw.desc_len = self.desc_buf.len() as u64;
-        }
-    }
+wrapper! {
+    struct Stats(drm_stats);
+    fn ioctl::get_stats;
 }
 
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct GetToken(drm_auth);
-impl_wrapper!(GetToken, drm_auth, ioctl::get_token);
+wrapper! {
+    struct GetCap(drm_get_cap);
+    fn ioctl::get_cap;
+}
 
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct AuthToken(drm_auth);
-impl_wrapper!(AuthToken, drm_auth, ioctl::auth_token);
+wrapper! {
+    struct SetCap(drm_set_client_cap);
+    fn ioctl::set_cap;
+}
 
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct IRQControl(drm_control);
-impl_wrapper!(IRQControl, drm_control, ioctl::irq_control);
+wrapper! {
+    struct SetVersion(drm_set_version);
+    fn ioctl::set_version;
+}
 
-#[derive(Default, Copy, Clone, From, Into)]
-pub(crate) struct WaitVBlank(drm_wait_vblank);
-impl_wrapper!(WaitVBlank, drm_wait_vblank, ioctl::wait_vblank);
+wrapper! {
+    struct GetVersion {
+        raw: drm_version,
+        name: [c_char; 32] = [raw.name; raw.name_len],
+        date: [c_char; 32] = [raw.date; raw.date_len],
+        desc: [c_char; 32] = [raw.desc; raw.desc_len]
+    }
 
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-pub(crate) struct ModesetCtl(drm_modeset_ctl);
-impl_wrapper!(ModesetCtl, drm_modeset_ctl, ioctl::modeset_ctl);
+    fn ioctl::get_version;
+}
+
+wrapper! {
+    struct GetToken(drm_auth);
+    fn ioctl::get_token;
+}
+
+wrapper! {
+    struct AuthToken(drm_auth);
+    fn ioctl::auth_token;
+}
+
+wrapper! {
+    struct IRQControl(drm_control);
+    fn ioctl::irq_control;
+}
+
+wrapper! {
+    struct WaitVBlank(drm_wait_vblank);
+    fn ioctl::wait_vblank;
+}
+
+wrapper! {
+    struct ModesetCtl(drm_modeset_ctl);
+    fn ioctl::modeset_ctl;
+}
 
 pub(crate) mod mode {
     use nix::libc::{c_int, c_uint, uint32_t, uint64_t};
     use nix::Error;
     use super::*;
 
-    // Underlying type of a mode resource handle.
-    pub(crate) type RawHandle = u32;
+    pub(crate) type RawHandle = uint32_t;
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct CardRes {
-        raw: drm_mode_card_res,
-        pub conn_buf: Buffer<uint32_t>,
-        pub enc_buf: Buffer<uint32_t>,
-        pub crtc_buf: Buffer<uint32_t>,
-        pub fb_buf: Buffer<uint32_t>
-    }
-
-    impl_wrapper!(full CardRes, drm_mode_card_res, ioctl::mode::get_resources);
-
-    impl PrepareBuffers for CardRes {
-        fn prepare_buffers(&mut self) {
-            self.raw.connector_id_ptr = (&mut self.conn_buf).as_mut_ptr() as u64;
-            self.raw.encoder_id_ptr = (&mut self.enc_buf).as_mut_ptr() as u64;
-            self.raw.crtc_id_ptr = (&mut self.crtc_buf).as_mut_ptr() as u64;
-            self.raw.fb_id_ptr = (&mut self.fb_buf).as_mut_ptr() as u64;
-
-            self.raw.count_connectors = self.conn_buf.len() as u32;
-            self.raw.count_encoders = self.enc_buf.len() as u32;
-            self.raw.count_crtcs = self.crtc_buf.len() as u32;
-            self.raw.count_fbs = self.fb_buf.len() as u32;
+    wrapper! {
+        struct CardRes {
+            raw: drm_mode_card_res,
+            connectors: [RawHandle; 32] = [raw.connector_id_ptr; raw.count_connectors],
+            encoders: [RawHandle; 32] = [raw.encoder_id_ptr; raw.count_encoders],
+            crtcs: [RawHandle; 32] = [raw.crtc_id_ptr; raw.count_crtcs],
+            framebuffers: [RawHandle; 32] = [raw.fb_id_ptr; raw.count_fbs]
         }
 
-        fn coerce_buf_sizes(&mut self) {
-            if self.raw.count_connectors > self.conn_buf.len() as u32 {
-                self.raw.count_connectors = self.conn_buf.len() as u32;
-            }
-            if self.raw.count_encoders > self.enc_buf.len() as u32 {
-                self.raw.count_encoders = self.enc_buf.len() as u32;
-            }
-            if self.raw.count_crtcs > self.crtc_buf.len() as u32 {
-                self.raw.count_crtcs = self.crtc_buf.len() as u32;
-            }
-            if self.raw.count_fbs > self.fb_buf.len() as u32 {
-                self.raw.count_fbs = self.fb_buf.len() as u32;
-            }
-        }
+        fn ioctl::mode::get_resources;
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct PlaneRes {
-        raw: drm_mode_get_plane_res,
-        pub plane_buf: Buffer<uint32_t>
-    }
-
-    impl_wrapper!(full PlaneRes, drm_mode_get_plane_res,
-                  ioctl::mode::get_plane_resources);
-
-    impl PrepareBuffers for PlaneRes {
-        fn prepare_buffers(&mut self) {
-            self.raw.plane_id_ptr = (&mut self.plane_buf).as_mut_ptr() as u64;
-            self.raw.count_planes = self.plane_buf.len() as u32;
+    wrapper! {
+        struct PlaneRes {
+            raw: drm_mode_get_plane_res,
+            planes: [RawHandle; 32] = [raw.plane_id_ptr; raw.count_planes]
         }
 
-        fn coerce_buf_sizes(&mut self) {
-            if self.raw.count_planes > self.plane_buf.len() as u32 {
-                self.raw.count_planes = self.plane_buf.len() as u32;
-            }
-        }
+        fn ioctl::mode::get_plane_resources;
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct GetConnector {
-        raw: drm_mode_get_connector,
-        pub enc_buf: Buffer<uint32_t>,
-        pub prop_buf: Buffer<uint32_t>,
-        pub prop_val_buf: Buffer<uint64_t>,
-        pub mode_buf: Buffer<drm_mode_modeinfo>
-    }
-
-    impl_wrapper!(full GetConnector, drm_mode_get_connector, ioctl::mode::get_connector);
-
-    impl PrepareBuffers for GetConnector {
-        fn prepare_buffers(&mut self) {
-            self.raw.encoders_ptr = (&mut self.enc_buf).as_mut_ptr() as u64;
-            self.raw.props_ptr = (&mut self.prop_buf).as_mut_ptr() as u64;
-            self.raw.prop_values_ptr = (&mut self.prop_val_buf).as_mut_ptr() as u64;
-            self.raw.modes_ptr = (&mut self.mode_buf).as_mut_ptr() as u64;
-
-            self.raw.count_encoders = self.enc_buf.len() as u32;
-            self.raw.count_props = self.prop_buf.len() as u32;
-            self.raw.count_modes = self.mode_buf.len() as u32;
+    wrapper! {
+        struct GetConnector {
+            raw: drm_mode_get_connector,
+            encoders: [RawHandle; 32] = [raw.encoders_ptr; raw.count_encoders],
+            properties: [RawHandle; 32] = [raw.props_ptr; raw.count_props],
+            prop_values: [uint64_t; 32] = [raw.prop_values_ptr; raw.count_props],
+            modes: [drm_mode_modeinfo; 32] = [raw.modes_ptr; raw.count_modes]
         }
 
-        fn coerce_buf_sizes(&mut self) {
-            if self.raw.count_encoders > self.enc_buf.len() as u32 {
-                self.raw.count_encoders = self.enc_buf.len() as u32;
-            }
-            if self.raw.count_props > self.prop_buf.len() as u32 {
-                self.raw.count_props = self.prop_buf.len() as u32;
-            }
-            if self.raw.count_modes > self.mode_buf.len() as u32 {
-                self.raw.count_modes = self.mode_buf.len() as u32;
-            }
-        }
+        fn ioctl::mode::get_connector;
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct GetEncoder(drm_mode_get_encoder);
-    impl_wrapper!(GetEncoder, drm_mode_get_encoder, ioctl::mode::get_encoder);
-
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct GetCrtc {
-        raw: drm_mode_crtc,
-        pub conn_buf: Buffer<uint32_t>
+    wrapper! {
+        struct GetEncoder(drm_mode_get_encoder);
+        fn ioctl::mode::get_encoder;
     }
 
-    impl_wrapper!(full GetCrtc, drm_mode_crtc, ioctl::mode::get_crtc);
-
-    impl PrepareBuffers for GetCrtc {
-        fn prepare_buffers(&mut self) {
-            self.raw.set_connectors_ptr = (&mut self.conn_buf).as_mut_ptr() as u64;
-            self.raw.count_connectors = self.conn_buf.len() as u32;
+    wrapper! {
+        struct GetCrtc {
+            raw: drm_mode_crtc,
+            connectors: [RawHandle; 32] = [raw.set_connectors_ptr; raw.count_connectors]
         }
 
-        fn coerce_buf_sizes(&mut self) {
-            if self.raw.count_connectors > self.conn_buf.len() as u32 {
-                self.raw.count_connectors = self.conn_buf.len() as u32;
-            }
-        }
+        fn ioctl::mode::get_crtc;
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct SetCrtc {
-        raw: drm_mode_crtc,
-        pub conn_buf: Buffer<uint32_t>
-    }
-
-    impl_wrapper!(full SetCrtc, drm_mode_crtc, ioctl::mode::set_crtc);
-
-    impl PrepareBuffers for SetCrtc {
-        fn prepare_buffers(&mut self) {
-            self.raw.set_connectors_ptr = (&mut self.conn_buf).as_mut_ptr() as u64;
-            self.raw.count_connectors = self.conn_buf.len() as u32;
+    wrapper! {
+        struct SetCrtc {
+            raw: drm_mode_crtc,
+            connectors: [RawHandle; 32] = [raw.set_connectors_ptr; raw.count_connectors]
         }
 
-        fn coerce_buf_sizes(&mut self) {
-            if self.raw.count_connectors > self.conn_buf.len() as u32 {
-                self.raw.count_connectors = self.conn_buf.len() as u32;
-            }
-        }
+        fn ioctl::mode::get_crtc;
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct GetFB(drm_mode_fb_cmd);
-    impl_wrapper!(GetFB, drm_mode_fb_cmd, ioctl::mode::get_fb);
-
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct AddFB(drm_mode_fb_cmd);
-    impl_wrapper!(AddFB, drm_mode_fb_cmd, ioctl::mode::add_fb);
-
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct AddFB2(drm_mode_fb_cmd2);
-    impl_wrapper!(AddFB2, drm_mode_fb_cmd2, ioctl::mode::add_fb2);
-
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct RmFB(c_uint);
-    impl_wrapper!(RmFB, c_uint, ioctl::mode::rm_fb);
-
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct GetPlane {
-        raw: drm_mode_get_plane,
-        pub format_buf: Buffer<uint32_t>
+    wrapper! {
+        struct GetFB(drm_mode_fb_cmd);
+        fn ioctl::mode::get_fb;
     }
 
-    impl_wrapper!(full GetPlane, drm_mode_get_plane, ioctl::mode::get_plane);
-
-    impl PrepareBuffers for GetPlane {
-        fn prepare_buffers(&mut self) {
-            self.raw.format_type_ptr = (&mut self.format_buf).as_mut_ptr() as u64;
-            self.raw.count_format_types = self.format_buf.len() as u32;
-        }
-
-        fn coerce_buf_sizes(&mut self) {
-            if self.raw.count_format_types > self.format_buf.len() as u32 {
-                self.raw.count_format_types = self.format_buf.len() as u32 ;
-            }
-        }
+    wrapper! {
+        struct AddFB(drm_mode_fb_cmd);
+        fn ioctl::mode::add_fb;
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct SetPlane(drm_mode_set_plane);
-    impl_wrapper!(SetPlane, drm_mode_set_plane, ioctl::mode::set_plane);
+    wrapper! {
+        struct AddFB2(drm_mode_fb_cmd2);
+        fn ioctl::mode::add_fb2;
+    }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct CreateDumb(drm_mode_create_dumb);
-    impl_wrapper!(CreateDumb, drm_mode_create_dumb, ioctl::mode::create_dumb);
+    wrapper! {
+        struct RmFB(c_uint);
+        fn ioctl::mode::rm_fb;
+    }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct MapDumb(drm_mode_map_dumb);
-    impl_wrapper!(MapDumb, drm_mode_map_dumb, ioctl::mode::map_dumb);
+    wrapper! {
+        struct GetPlane {
+            raw: drm_mode_get_plane,
+            formats: [uint32_t; 32] = [raw.format_type_ptr; raw.count_format_types]
+        }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct DestroyDumb(drm_mode_destroy_dumb);
-    impl_wrapper!(DestroyDumb, drm_mode_destroy_dumb, ioctl::mode::destroy_dumb);
+        fn ioctl::mode::get_plane;
+    }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct Cursor(drm_mode_cursor);
-    impl_wrapper!(Cursor, drm_mode_cursor, ioctl::mode::cursor);
+    wrapper! {
+        struct SetPlane(drm_mode_set_plane);
+        fn ioctl::mode::set_plane;
+    }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct Cursor2(drm_mode_cursor2);
-    impl_wrapper!(Cursor2, drm_mode_cursor2, ioctl::mode::cursor2);
+    wrapper! {
+        struct CreateDumb(drm_mode_create_dumb);
+        fn ioctl::mode::create_dumb;
+    }
+
+    wrapper! {
+        struct MapDumb(drm_mode_map_dumb);
+        fn ioctl::mode::map_dumb;
+    }
+
+    wrapper! {
+        struct DestroyDumb(drm_mode_destroy_dumb);
+        fn ioctl::mode::destroy_dumb;
+    }
+
+    wrapper! {
+        struct Cursor(drm_mode_cursor);
+        fn ioctl::mode::cursor;
+    }
+
+    wrapper! {
+        struct Cursor2(drm_mode_cursor2);
+        fn ioctl::mode::cursor2;
+    }
 
     // TODO: Requires some extra work for setting up buffers
     #[derive(Debug, Default, Copy, Clone, Hash)]
@@ -416,10 +335,10 @@ pub(crate) mod mode {
         raw: drm_mode_get_property,
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct ConnectorSetProperty(drm_mode_connector_set_property);
-    impl_wrapper!(ConnectorSetProperty, drm_mode_connector_set_property,
-                  ioctl::mode::connector_set_property);
+    wrapper! {
+        struct ConnectorSetProperty(drm_mode_connector_set_property);
+        fn ioctl::mode::connector_set_property;
+    }
 
     // TODO: Requires some extra work for setting up buffers
     #[derive(Debug, Default, Copy, Clone, Hash)]
@@ -429,54 +348,41 @@ pub(crate) mod mode {
         pub vals_buf: Buffer<uint64_t>
     }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct ObjSetProperty(drm_mode_obj_set_property);
-    impl_wrapper!(ObjSetProperty, drm_mode_obj_set_property,
-                  ioctl::mode::obj_set_property);
-
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct CreateBlob(drm_mode_create_blob);
-    impl_wrapper!(CreateBlob, drm_mode_create_blob, ioctl::mode::create_blob);
-
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct DestroyBlob(drm_mode_destroy_blob);
-    impl_wrapper!(DestroyBlob, drm_mode_destroy_blob, ioctl::mode::destroy_blob);
-
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct CrtcPageFlip(drm_mode_crtc_page_flip);
-    impl_wrapper!(CrtcPageFlip, drm_mode_crtc_page_flip,
-                  ioctl::mode::crtc_page_flip);
-
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-    pub(crate) struct FBDirtyCmd(drm_mode_fb_dirty_cmd);
-    impl_wrapper!(FBDirtyCmd, drm_mode_fb_dirty_cmd, ioctl::mode::dirty_fb);
-
-    #[derive(Debug, Default, Copy, Clone, Hash)]
-    pub(crate) struct Atomic {
-        raw: drm_mode_atomic,
-        pub objs_buf: Buffer<uint32_t>,
-        pub count_props_buf: Buffer<uint32_t>,
-        pub props_buf: Buffer<uint32_t>,
-        pub vals_buf: Buffer<uint64_t>
+    wrapper! {
+        struct ObjSetProperty(drm_mode_obj_set_property);
+        fn ioctl::mode::obj_set_property;
     }
 
-    impl_wrapper!(full Atomic, drm_mode_atomic, ioctl::mode::atomic);
+    wrapper! {
+        struct CreateBlob(drm_mode_create_blob);
+        fn ioctl::mode::create_blob;
+    }
 
-    impl PrepareBuffers for Atomic {
-        fn prepare_buffers(&mut self) {
-            self.raw.objs_ptr = (&mut self.objs_buf).as_mut_ptr() as u64;
-            self.raw.count_props_ptr = (&mut self.count_props_buf).as_mut_ptr() as u64;
-            self.raw.props_ptr = (&mut self.props_buf).as_mut_ptr() as u64;
-            self.raw.prop_values_ptr = (&mut self.vals_buf).as_mut_ptr() as u64;
+    wrapper! {
+        struct DestroyBlob(drm_mode_destroy_blob);
+        fn ioctl::mode::destroy_blob;
+    }
 
-            self.raw.count_objs = self.objs_buf.len() as u32;
+    wrapper! {
+        struct CrtcPageFlip(drm_mode_crtc_page_flip);
+        fn ioctl::mode::crtc_page_flip;
+    }
+
+    wrapper! {
+        struct FBDirtyCmd(drm_mode_fb_dirty_cmd);
+        fn ioctl::mode::dirty_fb;
+    }
+
+    wrapper! {
+        struct Atomic {
+            raw: drm_mode_atomic,
+            objects: [uint32_t; 32] = [raw.objs_ptr; raw.count_objs],
+            count_properties: [uint32_t; 32] = [raw.count_props_ptr; raw.count_objs],
+            properties: [uint32_t; 32] = [raw.props_ptr; raw.count_objs],
+            prop_values: [uint64_t; 32] = [raw.prop_values_ptr; raw.count_objs]
         }
 
-        fn coerce_buf_sizes(&mut self) {
-            if self.raw.count_objs > self.objs_buf.len() as u32 {
-                self.raw.count_objs = self.objs_buf.len() as u32;
-            }
-        }
+        fn ioctl::mode::atomic;
     }
 }
 
@@ -488,25 +394,28 @@ pub(crate) mod gem {
     // Underlying type for a GEM handle.
     pub(crate) type RawHandle = u32;
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-    pub(crate) struct Open(drm_gem_open);
-    impl_wrapper!(Open, drm_gem_open, ioctl::gem::open);
+    wrapper! {
+        struct Open(drm_gem_open);
+        fn ioctl::gem::open;
+    }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-    pub(crate) struct Close(drm_gem_close);
-    impl_wrapper!(Close, drm_gem_close, ioctl::gem::close);
+    wrapper! {
+        struct Close(drm_gem_close);
+        fn ioctl::gem::close;
+    }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-    pub(crate) struct Flink(drm_gem_flink);
-    impl_wrapper!(Flink, drm_gem_flink, ioctl::gem::flink);
+    wrapper! {
+        struct Flink(drm_gem_flink);
+        fn ioctl::gem::flink;
+    }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-    pub(crate) struct PrimeHandleToFD(drm_prime_handle);
-    impl_wrapper!(PrimeHandleToFD, drm_prime_handle,
-                  ioctl::gem::prime_handle_to_fd);
+    wrapper! {
+        struct PrimeHandleToFD(drm_prime_handle);
+        fn ioctl::gem::prime_handle_to_fd;
+    }
 
-    #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-    pub(crate) struct PrimeFDToHandle(drm_prime_handle);
-    impl_wrapper!(PrimeFDToHandle, drm_prime_handle,
-                  ioctl::gem::prime_fd_to_handle);
+    wrapper! {
+        struct PrimeFDToHandle(drm_prime_handle);
+        fn ioctl::gem::prime_fd_to_handle;
+    }
 }

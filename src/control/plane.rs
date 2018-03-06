@@ -15,7 +15,7 @@
 //! * Cursor - Similar to an overlay plane, these are typically used to display
 //! cursor type objects.
 
-use ffi::{self, Wrapper, mode::RawHandle};
+use ffi::{self, mode::RawHandle};
 use control::{ResourceHandle, ResourceInfo, Device};
 use control::crtc;
 use control::framebuffer;
@@ -30,8 +30,8 @@ impl ResourceHandle for Handle {
 
     fn get_info<T: Device>(device: &T, handle: Self) -> Result<Info> {
         let mut t = ffi::mode::GetPlane::default();
-        t.raw_mut_ref().plane_id = handle.into();
-        t.ioctl(device.as_raw_fd())?;
+        t.as_mut().plane_id = handle.into();
+        t.cmd(device.as_raw_fd())?;
         Ok(Info(t))
     }
 }
@@ -44,35 +44,35 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn handle(&self) -> Handle {
-        Handle::from(self.0.raw_ref().plane_id)
+        Handle::from(self.0.as_ref().plane_id)
     }
 }
 
 impl Info {
     /// Returns the current CRTC this plane is attached to.
     pub fn current_crtc(&self) -> Option<crtc::Handle> {
-        crtc::Handle::from_checked(self.0.raw_ref().crtc_id)
+        crtc::Handle::from_checked(self.0.as_ref().crtc_id)
     }
 
     /// Returns the current framebuffer attached to this plane.
     pub fn current_framebuffer(&self) -> Option<framebuffer::Handle> {
-        framebuffer::Handle::from_checked(self.0.raw_ref().fb_id)
+        framebuffer::Handle::from_checked(self.0.as_ref().fb_id)
     }
 
     /// Returns a filter that can be used to determine which CRTC resources
     /// are compatible with this plane.
     pub fn possible_crtcs(&self) -> u32 {
-        self.0.raw_ref().possible_crtcs
+        self.0.as_ref().possible_crtcs
     }
 
     /// Returns the size of the gamma buffers.
     pub fn gamma_size(&self) -> u32 {
-        self.0.raw_ref().gamma_size
+        self.0.as_ref().gamma_size
     }
 
     /// Returns a list of supported formats.
     pub fn formats(&self) -> &[u32] {
-        slice_from_wrapper!(self.0, format_buf, count_format_types)
+        self.formats()
     }
 }
 

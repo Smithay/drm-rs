@@ -6,11 +6,13 @@
 //! a display. These objects keep track of connection information and state,
 //! including the modes that the current display supports.
 
-use ffi::{self, Wrapper, mode::RawHandle};
+use ffi::{self, mode::RawHandle};
 use control::{ResourceHandle, ResourceInfo, Device};
 use control::encoder;
 use control::property;
 use result::Result;
+
+use std::mem;
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// A [ResourceHandle](../ResourceHandle.t.html) representing a connector.
@@ -21,8 +23,8 @@ impl ResourceHandle for Handle {
 
     fn get_info<T: Device>(device: &T, handle: Self) -> Result<Info> {
         let mut t = ffi::mode::GetConnector::default();
-        t.raw_mut_ref().connector_id = handle.into();
-        t.ioctl(device.as_raw_fd())?;
+        t.as_mut().connector_id = handle.into();
+        t.cmd(device.as_raw_fd())?;
         Ok(Info(t))
     }
 }
@@ -35,39 +37,39 @@ impl ResourceInfo for Info {
     type Handle = Handle;
 
     fn handle(&self) -> Handle {
-        Handle::from(self.0.raw_ref().connector_id)
+        Handle::from(self.0.as_ref().connector_id)
     }
 }
 
 impl Info {
     /// Returns the physical type of connector associated.
     pub fn connector_type(&self) -> Type {
-        Type::from(self.0.raw_ref().connector_type)
+        Type::from(self.0.as_ref().connector_type)
     }
 
     /// Returns whether a connector is currently connected or not.
     pub fn connection_state(&self) -> State {
-        State::from(self.0.raw_ref().connection)
+        State::from(self.0.as_ref().connection)
     }
 
     /// Returns the handle associated with the currently attached encoder.
     pub fn current_encoder(&self) -> Option<encoder::Handle> {
-       encoder::Handle::from_checked(self.0.raw_ref().encoder_id)
+        encoder::Handle::from_checked(self.0.as_ref().encoder_id)
     }
 
     /// Returns the set of compatible encoders.
     pub fn possible_encoders(&self) -> &[encoder::Handle] {
-        slice_from_wrapper!(self.0, enc_buf, count_encoders)
+        mem::transmute(self.0.encoders())
     }
 
     /// TODO: Document
     pub fn property_handles(&self) -> &[property::Handle] {
-        slice_from_wrapper!(self.0, prop_buf, count_props)
+        mem::transmute(self.0.properties())
     }
 
     /// TODO: Document
     pub fn property_values(&self) -> &[u64] {
-        slice_from_wrapper!(self.0, prop_val_buf, count_props)
+        mem::transmute(self.0.prop_values())
     }
 }
 

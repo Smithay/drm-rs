@@ -28,7 +28,7 @@
 //! To begin using modesetting functionality, the [Device trait](Device.t.html)
 //! must be implemented on top of the [basic Device trait](../Device.t.html).
 
-use ffi::{self, Wrapper, mode::RawHandle};
+use ffi::{self, mode::RawHandle};
 use result::Result;
 
 mod debug;
@@ -40,6 +40,8 @@ pub mod framebuffer;
 pub mod plane;
 pub mod property;
 //pub mod dumbbuffer;
+
+use std::mem;
 
 /// This trait should be implemented by any object that acts as a DRM device and
 /// provides modesetting functionality.
@@ -58,14 +60,14 @@ pub trait Device: super::Device {
     /// Gets the set of resource handles that this device currently controls.
     fn resource_handles(&self) -> Result<ResourceHandles> {
         let mut t = ffi::mode::CardRes::default();
-        t.ioctl(self.as_raw_fd())?;
+        t.cmd(self.as_raw_fd())?;
         Ok(ResourceHandles(t))
     }
 
     /// Gets the set of plane handles that this device currently controls.
     fn plane_handles(&self) -> Result<PlaneResourceHandles> {
         let mut t = ffi::mode::PlaneRes::default();
-        t.ioctl(self.as_raw_fd())?;
+        t.cmd(self.as_raw_fd())?;
         Ok(PlaneResourceHandles(t))
     }
 
@@ -113,22 +115,30 @@ pub struct ResourceHandles(ffi::mode::CardRes);
 impl ResourceHandles {
     /// Returns the set of [connector::Handles](connector/Handle.t.html)
     pub fn connectors(&self) -> &[connector::Handle] {
-        slice_from_wrapper!(self.0, conn_buf, count_connectors)
+        unsafe {
+            mem::transmute(self.0.connectors())
+        }
     }
 
     /// Returns the set of [encoder::Handles](encoder/Handle.t.html)
     pub fn encoders(&self) -> &[encoder::Handle] {
-        slice_from_wrapper!(self.0, enc_buf, count_encoders)
+        unsafe {
+            mem::transmute(self.0.encoders())
+        }
     }
 
     /// Returns the set of [crtc::Handles](crtc/Handle.t.html)
     pub fn crtcs(&self) -> &[crtc::Handle] {
-        slice_from_wrapper!(self.0, crtc_buf, count_crtcs)
+        unsafe {
+            mem::transmute(self.0.crtcs())
+        }
     }
 
     /// Returns the set of [framebuffer::Handles](framebuffer/Handle.t.html)
     pub fn framebuffers(&self) -> &[framebuffer::Handle] {
-        slice_from_wrapper!(self.0, fb_buf, count_fbs)
+        unsafe {
+            mem::transmute(self.0.framebuffers())
+        }
     }
 }
 
@@ -140,7 +150,9 @@ pub struct PlaneResourceHandles(ffi::mode::PlaneRes);
 impl PlaneResourceHandles {
     /// Returns the set of [plane::Handles](plane/Handle.t.html)
     pub fn planes(&self) -> &[plane::Handle] {
-        slice_from_wrapper!(self.0, plane_buf, count_planes)
+        unsafe {
+            mem::transmute(self.0.planes())
+        }
     }
 }
 
