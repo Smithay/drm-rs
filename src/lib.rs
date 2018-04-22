@@ -36,6 +36,8 @@ extern crate nix;
 #[macro_use]
 extern crate derive_more;
 
+extern crate generic_array;
+
 #[macro_use]
 extern crate error_chain;
 

@@ -11,6 +11,7 @@ drm-sys = { path = "drm-sys" }
 nix = "*"
 derive_more = "*"
 failure = "*"
+generic-array = "*"
 
 [dependencies.error-chain]
 version = "*"
