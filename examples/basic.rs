@@ -18,8 +18,7 @@ pub fn main() {
     println!("\t{:?}", res);
 
     println!("Requesting UniversalPlanes functionality:");
-    let res = card.toggle_capability(ClientCapability::UniversalPlanes,
-                                     true);
+    let res = card.toggle_capability(ClientCapability::UniversalPlanes, true);
     println!("\t{:?}", res);
 
     println!("Requesting Atomic functionality:");

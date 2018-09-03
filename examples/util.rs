@@ -1,11 +1,11 @@
-pub use drm::Device;
 pub use drm::control::Device as ControlDevice;
+pub use drm::Device;
 
 use std::fs::File;
 use std::fs::OpenOptions;
 
-pub use std::os::unix::io::RawFd;
 pub use std::os::unix::io::AsRawFd;
+pub use std::os::unix::io::RawFd;
 
 #[derive(Debug)]
 /// A simple wrapper for a device node.

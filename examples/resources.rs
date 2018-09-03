@@ -1,17 +1,17 @@
 extern crate drm;
 
-use drm::Device as BasicDevice;
 use drm::control::Device as ControlDevice;
+use drm::Device as BasicDevice;
 
-use drm::control::ResourceInfo;
 use drm::control::ResourceHandle;
+use drm::control::ResourceInfo;
 use drm::control::{connector, crtc, dumbbuffer, encoder, framebuffer, plane};
 
 use std::fs::File;
 use std::fs::OpenOptions;
 
-use std::os::unix::io::RawFd;
 use std::os::unix::io::AsRawFd;
+use std::os::unix::io::RawFd;
 
 #[derive(Debug)]
 pub struct Card(File);

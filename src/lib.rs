@@ -31,25 +31,19 @@
 extern crate drm_sys;
 
 #[macro_use]
-extern crate nix;
-
+extern crate failure;
 #[macro_use]
-extern crate derive_more;
-
+extern crate nix;
 extern crate generic_array;
 
 #[macro_use]
-extern crate error_chain;
+pub mod ffi;
 
-#[macro_use]
-pub(crate) mod ffi;
-pub mod result;
+//pub mod control;
+//pub mod buffer;
 
-pub mod control;
-pub mod buffer;
-
+/*
 use std::os::unix::io::AsRawFd;
-use result::Result;
 
 /// This trait should be implemented by any object that acts as a DRM device. It
 /// is a prerequisite for using any DRM functionality.
@@ -111,14 +105,12 @@ pub trait Device: AsRawFd {
     /// This function is only available to processes with CAP_SYS_ADMIN
     /// privileges (usually as root)
     fn acquire_master_lock(&self) -> Result<()> {
-        unsafe { ffi::ioctl::acquire_master(self.as_raw_fd())?; }
-        Ok(())
+        ffi::basic::acquire_master(self.as_raw_fd())
     }
 
     /// Releases the DRM Master lock for another process to use.
     fn release_master_lock(&self) -> Result<()> {
-        unsafe { ffi::ioctl::release_master(self.as_raw_fd())?; }
-        Ok(())
+        ffi::basic::release_master(self.as_raw_fd())
     }
 
     #[deprecated(note="Consider opening a render node instead.")]
@@ -248,3 +240,4 @@ pub type iRect = (iPoint, Dimensions);
 #[allow(non_camel_case_types)]
 /// Rectangle with an unsigned upper left corner
 pub type uRect = (uPoint, Dimensions);
+*/

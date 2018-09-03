@@ -1,19 +1,19 @@
 extern crate drm;
 
-use drm::Device as BasicDevice;
 use drm::control::Device as ControlDevice;
+use drm::Device as BasicDevice;
 
 use drm::buffer::PixelFormat;
 
-use drm::control::ResourceInfo;
 use drm::control::ResourceHandle;
+use drm::control::ResourceInfo;
 use drm::control::{connector, crtc, dumbbuffer, framebuffer};
 
 use std::fs::File;
 use std::fs::OpenOptions;
 
-use std::os::unix::io::RawFd;
 use std::os::unix::io::AsRawFd;
+use std::os::unix::io::RawFd;
 
 #[derive(Debug)]
 pub struct Card(File);
@@ -48,7 +48,8 @@ pub fn main() {
     let card = Card::open_global();
 
     // Load the information.
-    let res = card.resource_handles()
+    let res = card
+        .resource_handles()
         .expect("Could not load normal resource ids.");
     let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
     let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
@@ -61,7 +62,8 @@ pub fn main() {
         .expect("No connected connectors");
 
     // Get the first (usually best) mode
-    let &mode = con.modes()
+    let &mode = con
+        .modes()
         .iter()
         .next()
         .expect("No modes found on connector");

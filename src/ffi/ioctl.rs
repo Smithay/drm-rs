@@ -77,12 +77,12 @@ ioctl!(none acquire_master with DRM_IOCTL_BASE, 0x1e);
 /// # Nodes: Primary
 ioctl!(none release_master with DRM_IOCTL_BASE, 0x1f);
 
-/// IRQ Control
+/// Gets the IRQ number
 ///
-/// # Locks DRM mutex: Yes
-/// # Permissions: Root, Master, Auth
+/// # Locks DRM mutex: No
+/// # Permissions: None
 /// # Nodes: Primary
-ioctl!(write_ptr irq_control with DRM_IOCTL_BASE, 0x14; drm_control);
+ioctl!(readwrite get_irq_from_bus_id with DRM_IOCTL_BASE, 0x03; drm_irq_busid);
 
 /// Enable the vblank interrupt and sleep until the requested sequence occurs
 ///
@@ -91,16 +91,9 @@ ioctl!(write_ptr irq_control with DRM_IOCTL_BASE, 0x14; drm_control);
 /// # Nodes: Primary
 ioctl!(readwrite wait_vblank with DRM_IOCTL_BASE, 0x3a; drm_wait_vblank);
 
-/// Handle vblank counter changes across mode switches
-///
-/// # Locks DRM mutex: Yes
-/// # Permissions: None
-/// # Nodes: Primary
-ioctl!(write_ptr modeset_ctl with DRM_IOCTL_BASE, 0x08; drm_modeset_ctl);
-
 pub(crate) mod mode {
-    use nix::libc::c_uint;
     use drm_sys::*;
+    use nix::libc::c_uint;
 
     /// Modesetting resources
     ioctl!(readwrite get_resources
@@ -179,19 +172,15 @@ pub(crate) mod mode {
     ioctl!(readwrite create_blob
            with DRM_IOCTL_BASE, 0xBD; drm_mode_create_blob);
 
-
     ioctl!(readwrite destroy_blob
            with DRM_IOCTL_BASE, 0xBE; drm_mode_destroy_blob);
-
 
     /// Atomic modesetting related functions
     ioctl!(readwrite crtc_page_flip
            with DRM_IOCTL_BASE, 0xB0; drm_mode_crtc_page_flip);
 
-
     ioctl!(readwrite dirty_fb
            with DRM_IOCTL_BASE, 0xB1; drm_mode_fb_dirty_cmd);
-
 
     ioctl!(readwrite atomic with DRM_IOCTL_BASE, 0xBC; drm_mode_atomic);
 }
@@ -202,7 +191,6 @@ pub(crate) mod gem {
     /// GEM related functions
     ioctl!(readwrite open with DRM_IOCTL_BASE, 0x0b; drm_gem_open);
     ioctl!(write_ptr close with DRM_IOCTL_BASE, 0x09; drm_gem_close);
-    ioctl!(readwrite flink with DRM_IOCTL_BASE, 0x0a; drm_gem_flink);
 
     /// Converts a buffer handle into a dma-buf file descriptor.
     ioctl!(readwrite prime_handle_to_fd
