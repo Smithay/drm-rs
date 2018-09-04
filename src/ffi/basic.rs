@@ -5,7 +5,7 @@ use nix::libc::*;
 use nix::Error;
 use std::os::unix::io::RawFd;
 
-use std::cmp;
+use super::minimize_slice;
 
 pub mod auth {
     use drm_sys::*;
@@ -78,8 +78,7 @@ pub fn get_bus_id(fd: RawFd, buf: &mut &[u8]) -> Result<(), Error> {
         ioctl::get_bus_id(fd, &mut busid)?;
     }
 
-    let min = cmp::min(busid.unique_len as _, buf.len());
-    *buf = &buf[..min];
+    minimize_slice(buf, busid.unique_len as _);
 
     Ok(())
 }
@@ -208,12 +207,9 @@ pub fn get_version(
         ioctl::get_version(fd, &mut version)?;
     }
 
-    let min = cmp::min(version.name_len as _, name_buf.len());
-    *name_buf = &name_buf[..min];
-    let min = cmp::min(version.date_len as _, date_buf.len());
-    *date_buf = &date_buf[..min];
-    let min = cmp::min(version.desc_len as _, desc_buf.len());
-    *desc_buf = &desc_buf[..min];
+    minimize_slice(name_buf, version.name_len as _);
+    minimize_slice(date_buf, version.date_len as _);
+    minimize_slice(desc_buf, version.desc_len as _);
 
     Ok(())
 }
