@@ -10,6 +10,8 @@ pub mod gem;
 pub mod ioctl;
 pub mod mode;
 
+pub use drm_sys::*;
+
 /// Will coerce a buffer to be smaller if necessary.
 pub(crate) fn minimize_slice<T>(slice: &mut &[T], size: usize) {
     use std::cmp;

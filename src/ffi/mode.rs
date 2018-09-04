@@ -418,7 +418,12 @@ pub fn set_plane(
 }
 
 /// Get property
-pub fn get_property(fd: RawFd, id: u32, values: &mut &[u64], enums: &mut &[u64]) -> Result<drm_mode_get_property, Error> {
+pub fn get_property(
+    fd: RawFd,
+    id: u32,
+    values: &mut &[u64],
+    enums: &mut &[u64],
+) -> Result<drm_mode_get_property, Error> {
     let mut prop = drm_mode_get_property {
         values_ptr: values.as_ptr() as _,
         enum_blob_ptr: enums.as_ptr() as _,
@@ -439,11 +444,16 @@ pub fn get_property(fd: RawFd, id: u32, values: &mut &[u64], enums: &mut &[u64])
 }
 
 /// Set property
-pub fn set_connector_property(fd: RawFd, conn_id: u32, prop_id: u32, value: u64) -> Result<(), Error> {
+pub fn set_connector_property(
+    fd: RawFd,
+    conn_id: u32,
+    prop_id: u32,
+    value: u64,
+) -> Result<(), Error> {
     let mut prop = drm_mode_connector_set_property {
         value: value,
         prop_id: prop_id,
-        connector_id: conn_id
+        connector_id: conn_id,
     };
 
     unsafe {
@@ -458,7 +468,7 @@ pub fn get_property_blob(fd: RawFd, id: u32, data: &mut &[u64]) -> Result<(), Er
     let mut blob = drm_mode_get_blob {
         blob_id: id,
         length: data.len() as _,
-        data: data.as_ptr() as _
+        data: data.as_ptr() as _,
     };
 
     unsafe {
@@ -487,9 +497,7 @@ pub fn create_property_blob(fd: RawFd, data: &mut [u64]) -> Result<u32, Error> {
 
 /// Destroy a property blob
 pub fn destroy_property_blob(fd: RawFd, id: u32) -> Result<(), Error> {
-    let mut blob = drm_mode_destroy_blob {
-        blob_id: id
-    };
+    let mut blob = drm_mode_destroy_blob { blob_id: id };
 
     unsafe {
         ioctl::mode::destroy_blob(fd, &mut blob)?;
@@ -499,13 +507,19 @@ pub fn destroy_property_blob(fd: RawFd, id: u32) -> Result<(), Error> {
 }
 
 /// Get properties from an object
-pub fn get_properties(fd: RawFd, id: u32, obj_type: u32, props: &mut &[u64], values: &mut &[u64]) -> Result<(), Error> {
+pub fn get_properties(
+    fd: RawFd,
+    id: u32,
+    obj_type: u32,
+    props: &mut &[u64],
+    values: &mut &[u64],
+) -> Result<(), Error> {
     let mut props = drm_mode_obj_get_properties {
         props_ptr: props.as_ptr() as _,
         prop_values_ptr: values.as_ptr() as _,
         count_props: props.len() as _,
         obj_id: id,
-        obj_type: obj_type
+        obj_type: obj_type,
     };
 
     unsafe {
@@ -516,12 +530,18 @@ pub fn get_properties(fd: RawFd, id: u32, obj_type: u32, props: &mut &[u64], val
 }
 
 /// Set the properties of an object
-pub fn set_property(fd: RawFd, prop_id: u32, obj_id: u32, obj_type: u32, value: u64) -> Result<(), Error> {
+pub fn set_property(
+    fd: RawFd,
+    prop_id: u32,
+    obj_id: u32,
+    obj_type: u32,
+    value: u64,
+) -> Result<(), Error> {
     let mut prop = drm_mode_obj_set_property {
         value: value,
         prop_id: prop_id,
         obj_id: obj_id,
-        obj_type: obj_type
+        obj_type: obj_type,
     };
 
     unsafe {
@@ -532,13 +552,19 @@ pub fn set_property(fd: RawFd, prop_id: u32, obj_id: u32, obj_type: u32, value: 
 }
 
 /// Schedule a page flip
-pub fn page_flip(fd: RawFd, crtc_id: u32, fb_id: u32, flags: u32, sequence: u32) -> Result<(), Error> {
+pub fn page_flip(
+    fd: RawFd,
+    crtc_id: u32,
+    fb_id: u32,
+    flags: u32,
+    sequence: u32,
+) -> Result<(), Error> {
     let mut flip = drm_mode_crtc_page_flip {
         crtc_id: crtc_id,
         fb_id: fb_id,
         flags: flags,
         reserved: sequence,
-        user_data: crtc_id as _
+        user_data: crtc_id as _,
     };
 
     unsafe {
@@ -549,7 +575,14 @@ pub fn page_flip(fd: RawFd, crtc_id: u32, fb_id: u32, flags: u32, sequence: u32)
 }
 
 // Atomically set properties
-pub fn atomic_commit(fd: RawFd, flags: u32, objs: &mut [u32], prop_counts: &mut [u32], props: &mut [u32], values: &mut [u64]) -> Result<(), Error> {
+pub fn atomic_commit(
+    fd: RawFd,
+    flags: u32,
+    objs: &mut [u32],
+    prop_counts: &mut [u32],
+    props: &mut [u32],
+    values: &mut [u64],
+) -> Result<(), Error> {
     let mut atomic = drm_mode_atomic {
         flags: flags,
         count_objs: objs.len() as _,
@@ -575,7 +608,13 @@ pub mod dumbbuffer {
     use std::os::unix::io::RawFd;
 
     /// Create a dumb buffer
-    pub fn create(fd: RawFd, w: u32, h: u32, bpp: u32, flags: u32) -> Result<drm_mode_create_dumb, Error> {
+    pub fn create(
+        fd: RawFd,
+        w: u32,
+        h: u32,
+        bpp: u32,
+        flags: u32,
+    ) -> Result<drm_mode_create_dumb, Error> {
         let mut db = drm_mode_create_dumb {
             height: h,
             width: w,
@@ -593,9 +632,7 @@ pub mod dumbbuffer {
 
     /// Destroy a dumb buffer
     pub fn destroy(fd: RawFd, handle: u32) -> Result<(), Error> {
-        let mut db = drm_mode_destroy_dumb {
-            handle: handle
-        };
+        let mut db = drm_mode_destroy_dumb { handle: handle };
 
         unsafe {
             ioctl::mode::destroy_dumb(fd, &mut db)?;
@@ -609,7 +646,7 @@ pub mod dumbbuffer {
         let mut map = drm_mode_map_dumb {
             handle: handle,
             pad: pad,
-            offset: offset
+            offset: offset,
         };
 
         unsafe {

@@ -34,15 +34,14 @@ extern crate drm_sys;
 extern crate failure;
 #[macro_use]
 extern crate nix;
-extern crate generic_array;
 
-#[macro_use]
 pub mod ffi;
 
 //pub mod control;
 //pub mod buffer;
 
-/*
+use nix::Error;
+
 use std::os::unix::io::AsRawFd;
 
 /// This trait should be implemented by any object that acts as a DRM device. It
@@ -104,21 +103,20 @@ pub trait Device: AsRawFd {
     ///
     /// This function is only available to processes with CAP_SYS_ADMIN
     /// privileges (usually as root)
-    fn acquire_master_lock(&self) -> Result<()> {
-        ffi::basic::acquire_master(self.as_raw_fd())
+    fn acquire_master_lock(&self) -> Result<(), Error> {
+        ffi::basic::auth::acquire_master(self.as_raw_fd())
     }
 
     /// Releases the DRM Master lock for another process to use.
-    fn release_master_lock(&self) -> Result<()> {
-        ffi::basic::release_master(self.as_raw_fd())
+    fn release_master_lock(&self) -> Result<(), Error> {
+        ffi::basic::auth::release_master(self.as_raw_fd())
     }
 
-    #[deprecated(note="Consider opening a render node instead.")]
+    #[deprecated(note = "Consider opening a render node instead.")]
     /// Generates an [AuthToken](AuthToken.t.html) for this process.
-    fn generate_auth_token(&self) -> Result<AuthToken> {
-        let mut t = ffi::GetToken::default();
-        t.cmd(self.as_raw_fd())?;
-        Ok(AuthToken::from(t.as_ref().magic))
+    fn generate_auth_token(&self) -> Result<AuthToken, Error> {
+        let token = ffi::basic::auth::get_magic_token(self.as_raw_fd())?;
+        Ok(AuthToken(token.magic))
     }
 
     /// Authenticates an [AuthToken](AuthToken.t.html) from another process.
@@ -129,72 +127,61 @@ pub trait Device: AsRawFd {
     /// authentication tokens. However, this particular function is not marked
     /// deprecated due to the need to authenticate older processes that do not
     /// yet know about render nodes.
-    fn authenticate_auth_token(&self, token: AuthToken) -> Result<()> {
-        let mut t = ffi::AuthToken::default();
-        t.as_mut().magic = token.into();
-        t.cmd(self.as_raw_fd())?;
-        Ok(())
+    fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), Error> {
+        unimplemented!();
     }
 
     /// Requests the driver to expose or hide certain capabilities. See
     /// [ClientCapability](ClientCapability.t.html) for more information.
-    fn toggle_capability(&self, cap: ClientCapability, enable: bool)
-                         -> Result<()> {
-        let mut t = ffi::SetCap::default();
-        t.as_mut().capability = cap as _;
-        t.as_mut().value = enable as _;
-        t.cmd(self.as_raw_fd())?;
-
-        Ok(())
+    ///
+    /// Possible errors:
+    ///   - EINVAL: Either the capability doesn't exist, or not a boolean
+    fn set_capability(&self, cap: ClientCapability, enable: bool) -> Result<(), Error> {
+        unimplemented!();
     }
 
+    /// Possible errors:
+    ///   - EFAULT: Kernel could not copy the bus id into userspace.
     #[allow(missing_docs)]
     fn get_bus_id(&self) {
         unimplemented!();
     }
 
+    /// Possible errors:
+    ///   - EINVAL: The client->idx was not zero
     #[allow(missing_docs)]
     fn get_client(&self) {
         unimplemented!();
     }
 
+    /// No possible errors. Just memsets
     #[allow(missing_docs)]
     fn get_stats(&self) {
         unimplemented!();
     }
 
+    /// Possible errors:
+    ///   - EINVAL: Invalid capability requested
     #[allow(missing_docs)]
     fn get_capability(&self) {
         unimplemented!();
     }
 
-    #[allow(missing_docs)]
-    fn set_version(&self) {
-        unimplemented!();
-    }
-
+    /// Possible errors:
+    ///   - EFAULT: Kernel could not copy fields into userspace
     #[allow(missing_docs)]
     fn get_version(&self) {
         unimplemented!();
     }
 
-    #[allow(missing_docs)]
-    fn set_irq_handler(&self) {
-        unimplemented!();
-    }
-
+    /// TODO: Need to investigate and find possible errors
     #[allow(missing_docs)]
     fn wait_vblank(&self) {
         unimplemented!();
     }
-
-    #[allow(missing_docs)]
-    fn modeset_control(&self) {
-        unimplemented!();
-    }
 }
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// An authentication token, unique to the file descriptor of the device.
 ///
 /// This token can be sent to another process that owns the DRM Master lock to
@@ -240,4 +227,3 @@ pub type iRect = (iPoint, Dimensions);
 #[allow(non_camel_case_types)]
 /// Rectangle with an unsigned upper left corner
 pub type uRect = (uPoint, Dimensions);
-*/

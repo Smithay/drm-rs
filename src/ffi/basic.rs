@@ -53,17 +53,6 @@ pub mod auth {
     }
 }
 
-/// Gets the length of this device's Bus ID.
-pub fn get_bus_id_length(fd: RawFd) -> Result<usize, Error> {
-    let mut busid = drm_unique::default();
-
-    unsafe {
-        ioctl::get_bus_id(fd, &mut busid)?;
-    }
-
-    Ok(busid.unique_len as usize)
-}
-
 /// Load this device's Bus ID into a buffer.
 ///
 /// If the buffer is too small, this will load the maximum bytes in the buffer.
@@ -144,43 +133,6 @@ pub fn set_capability(fd: RawFd, cty: u64, val: bool) -> Result<drm_set_client_c
     }
 
     Ok(cap)
-}
-
-/// Manually set a driver version to restrict/enable capabilities.
-pub fn set_version(
-    fd: RawFd,
-    di_maj: c_int,
-    di_min: c_int,
-    dd_maj: c_int,
-    dd_min: c_int,
-) -> Result<drm_set_version, Error> {
-    let mut version = drm_set_version {
-        drm_di_major: di_maj,
-        drm_di_minor: di_min,
-        drm_dd_major: dd_maj,
-        drm_dd_minor: dd_min,
-    };
-
-    unsafe {
-        ioctl::set_version(fd, &mut version)?;
-    }
-
-    Ok(version)
-}
-
-/// Gets the lengths of this device driver's name, date, and description.
-pub fn get_driver_version_lengths(fd: RawFd) -> Result<(usize, usize, usize), Error> {
-    let mut version = drm_version::default();
-
-    unsafe {
-        ioctl::get_version(fd, &mut version)?;
-    }
-
-    Ok((
-        version.name_len as usize,
-        version.date_len as usize,
-        version.desc_len as usize,
-    ))
 }
 
 /// Gets the driver version for this device.
