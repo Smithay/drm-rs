@@ -2,26 +2,60 @@
 //! Error types
 //!
 
-use std::io;
-use nix;
+use nix::errno::Errno;
+use nix::Error as NixError;
 
-error_chain! {
-    foreign_links {
-        Unix(nix::Error) #[doc = "Unix error"];
-        Io(io::Error) #[doc = "I/O error"];
+/// Errors from system calls will always be in the form  NixError::Sys(errno).
+///
+/// This helper function unwraps a NixError into an Errno in places we know
+/// other types of errors can not occur.
+pub(crate) fn unwrap_errno(err: NixError) -> Errno {
+    match err {
+        NixError::Sys(errno) => errno,
+        _ => unreachable!()
     }
+}
 
-    errors {
-        #[doc = "Size of the given gamma ramp does not match the device"]
-        InvalidGammaSize(set: usize, size: u32) {
-            description("Invalid Gamma Ramp Size")
-            display("Invalid Gamma Ramp Size: '{}', expected: '{}'", set, size)
-        }
+/// A general system error that can be returned by any DRM command.
+///
+/// Receiving this error likely indicates a bug in either the program, this
+/// crate, or the underlying operating system.
+#[derive(Debug, Fail)]
+pub enum SystemError {
+    /// A command was attempted using an invalid file descriptor.
+    #[fail(display = "invalid file descriptor")]
+    InvalidFileDescriptor,
+    /// Provided memory area is inaccessible.
+    ///
+    /// Receiving this error indicates a bug in this crate.
+    #[fail(display = "invalid memory access")]
+    MemoryFault,
+    /// One or more arguments used are invalid.
+    ///
+    /// Receiving this error indicates a bug in this crate.
+    #[fail(display = "invalid argument")]
+    InvalidArgument,
+    /// A command was attempted using a non-DRM device.
+    #[fail(display = "invalid file type")]
+    InvalidFileType,
+    /// Unknown system error.
+    #[fail(display = "unknown system error: {}", errno)]
+    Unknown {
+        /// Unknown nix::Errno returned by the system call.
+        errno: Errno
+    }
+}
 
-        #[doc = "Pixel format is not supported by the operation/device"]
-        UnsupportedPixelFormat {
-            description("PixelFormat is unsupported by operation")
-            display("The provided PixelFormat is not supported by the operation")
+impl From<Errno> for SystemError {
+    fn from(errno: Errno) -> SystemError {
+        match errno {
+            Errno::EBADF => SystemError::InvalidFileDescriptor,
+            Errno::EFAULT => SystemError::MemoryFault,
+            Errno::EINVAL => SystemError::InvalidArgument,
+            Errno::ENOTTY => SystemError::InvalidFileDescriptor,
+            _ => SystemError::Unknown {
+                errno: errno
+            }
         }
     }
 }

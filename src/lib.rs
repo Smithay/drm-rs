@@ -30,17 +30,18 @@
 
 extern crate drm_sys;
 
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate nix;
+#[macro_use] extern crate failure;
+#[macro_use] extern crate nix;
 
 pub mod ffi;
+pub mod result;
 
 //pub mod control;
 //pub mod buffer;
 
-use nix::Error;
+use failure::Error;
+
+use result::SystemError;
 
 use std::os::unix::io::AsRawFd;
 
@@ -103,19 +104,25 @@ pub trait Device: AsRawFd {
     ///
     /// This function is only available to processes with CAP_SYS_ADMIN
     /// privileges (usually as root)
-    fn acquire_master_lock(&self) -> Result<(), Error> {
-        ffi::basic::auth::acquire_master(self.as_raw_fd())
+    fn acquire_master_lock(&self) -> Result<(), SystemError> {
+        ffi::basic::auth::acquire_master(self.as_raw_fd()).map_err(
+            | e | SystemError::from(result::unwrap_errno(e))
+        )
     }
 
     /// Releases the DRM Master lock for another process to use.
-    fn release_master_lock(&self) -> Result<(), Error> {
-        ffi::basic::auth::release_master(self.as_raw_fd())
+    fn release_master_lock(&self) -> Result<(), SystemError> {
+        ffi::basic::auth::release_master(self.as_raw_fd()).map_err(
+            | e | SystemError::from(result::unwrap_errno(e))
+        )
     }
 
     #[deprecated(note = "Consider opening a render node instead.")]
     /// Generates an [AuthToken](AuthToken.t.html) for this process.
-    fn generate_auth_token(&self) -> Result<AuthToken, Error> {
-        let token = ffi::basic::auth::get_magic_token(self.as_raw_fd())?;
+    fn generate_auth_token(&self) -> Result<AuthToken, SystemError> {
+        let token = ffi::basic::auth::get_magic_token(self.as_raw_fd()).map_err(
+            | e | SystemError::from(result::unwrap_errno(e))
+        )?;
         Ok(AuthToken(token.magic))
     }
 
@@ -127,7 +134,7 @@ pub trait Device: AsRawFd {
     /// authentication tokens. However, this particular function is not marked
     /// deprecated due to the need to authenticate older processes that do not
     /// yet know about render nodes.
-    fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), Error> {
+    fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), SystemError> {
         unimplemented!();
     }
 
@@ -136,7 +143,7 @@ pub trait Device: AsRawFd {
     ///
     /// Possible errors:
     ///   - EINVAL: Either the capability doesn't exist, or not a boolean
-    fn set_capability(&self, cap: ClientCapability, enable: bool) -> Result<(), Error> {
+    fn set_capability(&self, cap: ClientCapability, enable: bool) -> Result<(), SystemError> {
         unimplemented!();
     }
 
