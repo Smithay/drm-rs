@@ -127,13 +127,6 @@ pub trait Device: AsRawFd {
     }
 
     /// Authenticates an [AuthToken](AuthToken.t.html) from another process.
-    ///
-    /// # Deprecation Notes
-    ///
-    /// A process should consider opening a render node instead of using
-    /// authentication tokens. However, this particular function is not marked
-    /// deprecated due to the need to authenticate older processes that do not
-    /// yet know about render nodes.
     fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), SystemError> {
         unimplemented!();
     }
