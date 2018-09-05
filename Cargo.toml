@@ -9,9 +9,4 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 [dependencies]
 drm-sys = { path = "drm-sys" }
 nix = "0.10"
-derive_more = "*"
 failure = "*"
-
-[dependencies.error-chain]
-version = "*"
-default-features = false
