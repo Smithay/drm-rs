@@ -4,15 +4,15 @@ use ffi::ioctl;
 use nix::Error;
 use std::os::unix::io::RawFd;
 
-use super::minimize_slice;
+use super::ShrinkableSlice;
 
 /// Enumerate most card resources.
 pub fn get_resources(
     fd: RawFd,
-    fbs: &mut &[u32],
-    crtcs: &mut &[u32],
-    connectors: &mut &[u32],
-    encoders: &mut &[u32],
+    fbs: &mut &mut [u32],
+    crtcs: &mut &mut [u32],
+    connectors: &mut &mut [u32],
+    encoders: &mut &mut [u32],
 ) -> Result<drm_mode_card_res, Error> {
     let mut res = drm_mode_card_res {
         fb_id_ptr: fbs.as_ptr() as _,
@@ -30,10 +30,10 @@ pub fn get_resources(
         ioctl::mode::get_resources(fd, &mut res)?;
     }
 
-    minimize_slice(fbs, res.count_fbs as _);
-    minimize_slice(crtcs, res.count_crtcs as _);
-    minimize_slice(connectors, res.count_connectors as _);
-    minimize_slice(encoders, res.count_encoders as _);
+    fbs.shrink(res.count_fbs as _);
+    crtcs.shrink(res.count_crtcs as _);
+    connectors.shrink(res.count_connectors as _);
+    encoders.shrink(res.count_encoders as _);
 
     Ok(res)
 }
@@ -41,7 +41,7 @@ pub fn get_resources(
 /// Enumerate plane resources.
 pub fn get_plane_resources(
     fd: RawFd,
-    planes: &mut &[u32],
+    planes: &mut &mut [u32],
 ) -> Result<drm_mode_get_plane_res, Error> {
     let mut res = drm_mode_get_plane_res {
         plane_id_ptr: planes.as_ptr() as _,
@@ -52,7 +52,7 @@ pub fn get_plane_resources(
         ioctl::mode::get_plane_resources(fd, &mut res)?;
     }
 
-    minimize_slice(planes, res.count_planes as _);
+    planes.shrink(res.count_planes as _);
 
     Ok(res)
 }
@@ -318,10 +318,10 @@ pub fn move_cursor(fd: RawFd, id: u32, x: i32, y: i32) -> Result<(), Error> {
 pub fn get_connector(
     fd: RawFd,
     id: u32,
-    props: &mut &[u32],
-    prop_values: &mut &[u64],
-    modes: &mut &[drm_mode_modeinfo],
-    encoders: &mut &[u32],
+    props: &mut &mut [u32],
+    prop_values: &mut &mut [u64],
+    modes: &mut &mut [drm_mode_modeinfo],
+    encoders: &mut &mut [u32],
 ) -> Result<drm_mode_get_connector, Error> {
     let mut info = drm_mode_get_connector {
         connector_id: id,
@@ -339,10 +339,10 @@ pub fn get_connector(
         ioctl::mode::get_connector(fd, &mut info)?;
     }
 
-    minimize_slice(props, info.count_props as _);
-    minimize_slice(prop_values, info.count_props as _);
-    minimize_slice(modes, info.count_modes as _);
-    minimize_slice(encoders, info.count_encoders as _);
+    props.shrink(info.count_props as _);
+    prop_values.shrink(info.count_props as _);
+    modes.shrink(info.count_modes as _);
+    encoders.shrink(info.count_encoders as _);
 
     Ok(info)
 }
@@ -362,7 +362,7 @@ pub fn get_encoder(fd: RawFd, id: u32) -> Result<drm_mode_get_encoder, Error> {
 }
 
 /// Get info about a plane.
-pub fn get_plane(fd: RawFd, id: u32, formats: &mut &[u32]) -> Result<drm_mode_get_plane, Error> {
+pub fn get_plane(fd: RawFd, id: u32, formats: &mut &mut [u32]) -> Result<drm_mode_get_plane, Error> {
     let mut info = drm_mode_get_plane {
         plane_id: id,
         format_type_ptr: formats.as_ptr() as _,
@@ -374,7 +374,7 @@ pub fn get_plane(fd: RawFd, id: u32, formats: &mut &[u32]) -> Result<drm_mode_ge
         ioctl::mode::get_plane(fd, &mut info)?;
     }
 
-    minimize_slice(formats, info.count_format_types as _);
+    formats.shrink(info.count_format_types as _);
 
     Ok(info)
 }
@@ -421,8 +421,8 @@ pub fn set_plane(
 pub fn get_property(
     fd: RawFd,
     id: u32,
-    values: &mut &[u64],
-    enums: &mut &[u64],
+    values: &mut &mut [u64],
+    enums: &mut &mut [u64],
 ) -> Result<drm_mode_get_property, Error> {
     let mut prop = drm_mode_get_property {
         values_ptr: values.as_ptr() as _,
@@ -437,8 +437,8 @@ pub fn get_property(
         ioctl::mode::get_property(fd, &mut prop)?;
     }
 
-    minimize_slice(values, prop.count_values as _);
-    minimize_slice(enums, prop.count_enum_blobs as _);
+    values.shrink(prop.count_values as _);
+    enums.shrink(prop.count_enum_blobs as _);
 
     Ok(prop)
 }
@@ -464,7 +464,7 @@ pub fn set_connector_property(
 }
 
 /// Get the value of a property blob
-pub fn get_property_blob(fd: RawFd, id: u32, data: &mut &[u64]) -> Result<(), Error> {
+pub fn get_property_blob(fd: RawFd, id: u32, data: &mut &mut [u64]) -> Result<(), Error> {
     let mut blob = drm_mode_get_blob {
         blob_id: id,
         length: data.len() as _,
@@ -475,7 +475,7 @@ pub fn get_property_blob(fd: RawFd, id: u32, data: &mut &[u64]) -> Result<(), Er
         ioctl::mode::get_blob(fd, &mut blob)?;
     }
 
-    minimize_slice(data, blob.length as _);
+    data.shrink(blob.length as _);
 
     Ok(())
 }

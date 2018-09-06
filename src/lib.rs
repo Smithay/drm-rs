@@ -45,6 +45,9 @@ use result::SystemError;
 
 use std::os::unix::io::AsRawFd;
 
+use std::ffi::OsStr;
+use std::os::unix::ffi::OsStrExt;
+
 /// This trait should be implemented by any object that acts as a DRM device. It
 /// is a prerequisite for using any DRM functionality.
 ///
@@ -117,8 +120,8 @@ pub trait Device: AsRawFd {
         )
     }
 
-    #[deprecated(note = "Consider opening a render node instead.")]
     /// Generates an [AuthToken](AuthToken.t.html) for this process.
+    #[deprecated(note = "Consider opening a render node instead.")]
     fn generate_auth_token(&self) -> Result<AuthToken, SystemError> {
         let token = ffi::basic::auth::get_magic_token(self.as_raw_fd()).map_err(
             | e | SystemError::from(result::unwrap_errno(e))
@@ -128,60 +131,86 @@ pub trait Device: AsRawFd {
 
     /// Authenticates an [AuthToken](AuthToken.t.html) from another process.
     fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), SystemError> {
-        unimplemented!();
+        ffi::basic::auth::auth_magic_token(self.as_raw_fd(), token.0).map_err(
+            | e | SystemError::from(result::unwrap_errno(e))
+        )
     }
 
     /// Requests the driver to expose or hide certain capabilities. See
     /// [ClientCapability](ClientCapability.t.html) for more information.
-    ///
-    /// Possible errors:
-    ///   - EINVAL: Either the capability doesn't exist, or not a boolean
-    fn set_capability(&self, cap: ClientCapability, enable: bool) -> Result<(), SystemError> {
-        unimplemented!();
+    fn set_client_capability(&self, cap: ClientCapability, enable: bool) -> Result<(), SystemError> {
+        ffi::basic::set_capability(self.as_raw_fd(), cap as u64, enable).map_err(
+            | e | SystemError::from(result::unwrap_errno(e))
+        )?;
+        Ok(())
     }
 
-    /// Possible errors:
-    ///   - EFAULT: Kernel could not copy the bus id into userspace.
-    #[allow(missing_docs)]
-    fn get_bus_id(&self) {
-        unimplemented!();
+    /// Gets the [BusID](BusID.t.html) of this device.
+    fn get_bus_id(&self) -> Result<BusID, SystemError> {
+        let mut buffer = [0u8; 32];
+        let len = {
+            let mut slice = &mut buffer[..];
+            ffi::basic::get_bus_id(self.as_raw_fd(), &mut slice).map_err(
+                | e | SystemError::from(result::unwrap_errno(e))
+            )?;
+            slice.len()
+        };
+
+        let bus_id = BusID(FixedOsStr::new(buffer, len));
+
+        Ok(bus_id)
     }
 
-    /// Possible errors:
-    ///   - EINVAL: The client->idx was not zero
-    #[allow(missing_docs)]
-    fn get_client(&self) {
-        unimplemented!();
+    /// Check to see if our [AuthToken](AuthToken.t.html) has been authenticated
+    /// by the DRM Master
+    fn authenticated(&self) -> Result<bool, SystemError> {
+        let client = ffi::basic::get_client(self.as_raw_fd(), 0).map_err(
+            | e | SystemError::from(result::unwrap_errno(e))
+        )?;
+        Ok(client.auth == 1)
     }
 
-    /// No possible errors. Just memsets
-    #[allow(missing_docs)]
-    fn get_stats(&self) {
-        unimplemented!();
-    }
-
-    /// Possible errors:
-    ///   - EINVAL: Invalid capability requested
-    #[allow(missing_docs)]
-    fn get_capability(&self) {
-        unimplemented!();
+    /// Gets the value of a capability.
+    fn get_driver_capability(&self, cap: DriverCapability) -> Result<u64, SystemError> {
+        ffi::basic::get_capability(self.as_raw_fd(), cap as u64).map_err(
+            | e | SystemError::from(result::unwrap_errno(e))
+        )
     }
 
     /// Possible errors:
     ///   - EFAULT: Kernel could not copy fields into userspace
     #[allow(missing_docs)]
-    fn get_version(&self) {
-        unimplemented!();
-    }
+    fn get_driver(&self) -> Result<Driver, SystemError> {
+        let mut name = [0u8; 32];
+        let mut date = [0u8; 32];
+        let mut desc = [0u8; 32];
 
-    /// TODO: Need to investigate and find possible errors
-    #[allow(missing_docs)]
-    fn wait_vblank(&self) {
-        unimplemented!();
+        let (name_len, date_len, desc_len) = {
+            let mut name_slice = &mut name[..];
+            let mut date_slice = &mut date[..];
+            let mut desc_slice = &mut desc[..];
+
+            ffi::basic::get_version(self.as_raw_fd(), &mut name_slice, &mut date_slice, &mut desc_slice).map_err(
+                | e | SystemError::from(result::unwrap_errno(e))
+            )?;
+
+            (name_slice.len(), date_slice.len(), desc_slice.len())
+        };
+
+        let name = FixedOsStr::new(name, name_len);
+        let date = FixedOsStr::new(date, date_len);
+        let desc = FixedOsStr::new(desc, desc_len);
+
+        let driver = Driver {
+            name: name,
+            date: date,
+            desc: desc
+        };
+
+        Ok(driver)
     }
 }
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// An authentication token, unique to the file descriptor of the device.
 ///
 /// This token can be sent to another process that owns the DRM Master lock to
@@ -193,9 +222,9 @@ pub trait Device: AsRawFd {
 /// functionality is best done by opening a render node. However, some other
 /// processes may still use this method of authentication. Therefore, we still
 /// provide functionality for generating and authenticating these tokens.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AuthToken(u32);
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// Capabilities that can be toggled by the driver.
 ///
 /// # Notes
@@ -204,6 +233,7 @@ pub struct AuthToken(u32);
 /// a process can access this functionality, we must ask the driver to
 /// expose it. This can be done using
 /// [toggle_capability](toggle_capability.t.html).
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum ClientCapability {
     /// Stereoscopic 3D Support
     Stereo3D = ffi::DRM_CLIENT_CAP_STEREO_3D as isize,
@@ -213,17 +243,107 @@ pub enum ClientCapability {
     Atomic = ffi::DRM_CLIENT_CAP_ATOMIC as isize,
 }
 
-#[allow(non_camel_case_types)]
+/// Immutable capabilities defined by the driver.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum DriverCapability {
+    /// Do we support VBlanks at CRTC high
+    VBlankHighCrtc = ffi::DRM_CAP_VBLANK_HIGH_CRTC as isize,
+    /// Driver's preferred dumb buffer depth
+    DumbBufferDepthPref = ffi::DRM_CAP_DUMB_PREFERRED_DEPTH as isize,
+    /// Does the driver prefer shadow dumb buffers
+    DumbBufferShadowPref = ffi::DRM_CAP_DUMB_PREFER_SHADOW as isize,
+    /// Are timestamps monotonic
+    MonotonicTimestamp = ffi::DRM_CAP_TIMESTAMP_MONOTONIC as isize,
+    /// Do we support asynchronous page flips.
+    AsyncPageFlip = ffi::DRM_CAP_ASYNC_PAGE_FLIP as isize,
+    /// What is the width of the cursor plane
+    CursorWidth = ffi::DRM_CAP_CURSOR_WIDTH as isize,
+    /// What is the height of the cursor plane
+    CursorHeight = ffi::DRM_CAP_CURSOR_HEIGHT as isize,
+    /// Can we use modifiers when adding frame buffers
+    AddFBModifiers = ffi::DRM_CAP_ADDFB2_MODIFIERS  as isize,
+    /// Target page flip
+    PageFlipTarget = ffi::DRM_CAP_PAGE_FLIP_TARGET as isize,
+    /// Does a VBlank event include the CRTC id
+    CrtcInVBlank = ffi::DRM_CAP_CRTC_IN_VBLANK_EVENT as isize,
+    /// Do we support syncobj
+    SyncObj = ffi::DRM_CAP_SYNCOBJ as isize
+}
+
+/// Bus ID of a device.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct BusID(FixedOsStr);
+
+impl AsRef<OsStr> for BusID {
+    fn as_ref(&self) -> &OsStr {
+        self.0.as_ref()
+    }
+}
+
+/// Driver version of a device.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct Driver {
+    name: FixedOsStr,
+    date: FixedOsStr,
+    desc: FixedOsStr
+}
+
+impl Driver {
+    /// Name of driver
+    pub fn name(&self) -> &OsStr {
+        self.name.as_ref()
+    }
+
+    /// Date driver was published
+    pub fn date(&self) -> &OsStr {
+        self.date.as_ref()
+    }
+
+    /// Driver description
+    pub fn description(&self) -> &OsStr {
+        self.desc.as_ref()
+    }
+}
+
 /// Signed point
-pub type iPoint = (i32, i32);
 #[allow(non_camel_case_types)]
+pub type iPoint = (i32, i32);
+
 /// Unsigned point
+#[allow(non_camel_case_types)]
 pub type uPoint = (u32, u32);
+
 /// Dimensions (width, height)
 pub type Dimensions = (u32, u32);
-#[allow(non_camel_case_types)]
+
 /// Rectangle with a signed upper left corner
-pub type iRect = (iPoint, Dimensions);
 #[allow(non_camel_case_types)]
+pub type iRect = (iPoint, Dimensions);
+
 /// Rectangle with an unsigned upper left corner
+#[allow(non_camel_case_types)]
 pub type uRect = (uPoint, Dimensions);
+
+/// Used internally to hold a buffer for an OsStr
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+struct FixedOsStr {
+    data: [u8; 32],
+    len: usize
+}
+
+impl FixedOsStr {
+    /// Create new FixedOsStr from a buffer and length.
+    fn new(data: [u8; 32], len: usize) -> Self {
+        FixedOsStr {
+            data: data,
+            len: len
+        }
+    }
+}
+
+impl AsRef<OsStr> for FixedOsStr {
+    fn as_ref(&self) -> &OsStr {
+        let slice: &[u8] = &self.data[..self.len];
+        OsStr::from_bytes(slice)
+    }
+}

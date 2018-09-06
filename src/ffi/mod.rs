@@ -12,9 +12,21 @@ pub mod mode;
 
 pub use drm_sys::*;
 
-/// Will coerce a buffer to be smaller if necessary.
-pub(crate) fn minimize_slice<T>(slice: &mut &[T], size: usize) {
-    use std::cmp;
-    let min = cmp::min(size, slice.len());
-    *slice = &slice[..min];
+/// Allow this crate to easily shrink slices
+pub(crate) trait ShrinkableSlice {
+    fn shrink(&mut self, size: usize);
 }
+
+impl<'a, T> ShrinkableSlice for &'a mut [T] {
+    #[inline]
+    fn shrink(&mut self, size: usize) {
+        use std::cmp;
+        use std::mem;
+
+        let shrink_to = cmp::min(size, self.len());
+        let mut new_slice = mem::replace(self, &mut []);
+        new_slice = &mut {new_slice}[..shrink_to];
+        mem::replace(self, new_slice);
+    }
+}
+
