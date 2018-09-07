@@ -28,6 +28,9 @@
 
 #![warn(missing_docs)]
 
+#![feature(str_internals)]
+extern crate core;
+
 extern crate drm_sys;
 
 #[macro_use] extern crate failure;
@@ -47,6 +50,7 @@ use std::os::unix::io::AsRawFd;
 
 use std::ffi::OsStr;
 use std::os::unix::ffi::OsStrExt;
+use std::fmt;
 
 /// This trait should be implemented by any object that acts as a DRM device. It
 /// is a prerequisite for using any DRM functionality.
@@ -243,7 +247,7 @@ pub enum ClientCapability {
     Atomic = ffi::DRM_CLIENT_CAP_ATOMIC as isize,
 }
 
-/// Immutable capabilities defined by the driver.
+/// Immutable capabilities and attributes of this driver.
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum DriverCapability {
     /// Do we support VBlanks at CRTC high
@@ -279,6 +283,7 @@ impl AsRef<OsStr> for BusID {
         self.0.as_ref()
     }
 }
+
 
 /// Driver version of a device.
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -325,7 +330,7 @@ pub type iRect = (iPoint, Dimensions);
 pub type uRect = (uPoint, Dimensions);
 
 /// Used internally to hold a buffer for an OsStr
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
 struct FixedOsStr {
     data: [u8; 32],
     len: usize
@@ -345,5 +350,31 @@ impl AsRef<OsStr> for FixedOsStr {
     fn as_ref(&self) -> &OsStr {
         let slice: &[u8] = &self.data[..self.len];
         OsStr::from_bytes(slice)
+    }
+}
+
+impl AsRef<[u8]> for FixedOsStr {
+    fn as_ref(&self) -> &[u8] {
+        &self.data[..self.len]
+    }
+}
+
+impl fmt::Debug for FixedOsStr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let as_os_str: &OsStr = &self.as_ref();
+        f.debug_struct("FixedOsStr")
+            .field("data", &self.data)
+            .field("len", &self.len)
+            .field("as_ref()", &as_os_str)
+            .finish()
+    }
+}
+
+use core::str::lossy::Utf8Lossy;
+
+impl fmt::Display for FixedOsStr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let lossy_utf8 = Utf8Lossy::from_bytes(self.as_ref());
+        write!(f, "{}", lossy_utf8)
     }
 }

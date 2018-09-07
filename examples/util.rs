@@ -1,4 +1,4 @@
-pub use drm::control::Device as ControlDevice;
+//pub use drm::control::Device as ControlDevice;
 pub use drm::Device;
 
 use std::fs::File;
@@ -6,6 +6,29 @@ use std::fs::OpenOptions;
 
 pub use std::os::unix::io::AsRawFd;
 pub use std::os::unix::io::RawFd;
+
+use drm::ClientCapability as CC;
+pub const CLIENT_CAP_ENUMS: &[CC] = &[
+    CC::Stereo3D,
+    CC::UniversalPlanes,
+    CC::Atomic
+];
+
+use drm::DriverCapability as DC;
+pub const DRIVER_CAP_ENUMS: &[DC] = &[
+    DC::VBlankHighCrtc,
+    DC::DumbBufferDepthPref,
+    DC::DumbBufferShadowPref,
+    DC::MonotonicTimestamp,
+    DC::AsyncPageFlip,
+    DC::CursorWidth,
+    DC::CursorHeight,
+    DC::AddFBModifiers,
+    DC::PageFlipTarget,
+    DC::CrtcInVBlank,
+    DC::SyncObj
+];
+
 
 #[derive(Debug)]
 /// A simple wrapper for a device node.
@@ -21,7 +44,7 @@ impl AsRawFd for Card {
 
 /// With `AsRawFd` implemented, we can now implement `drm::Device`.
 impl Device for Card {}
-impl ControlDevice for Card {}
+//impl ControlDevice for Card {}
 
 /// Simple helper methods for opening a `Card`.
 impl Card {

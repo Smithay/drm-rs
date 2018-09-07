@@ -4,32 +4,38 @@ extern crate drm;
 pub mod util;
 use util::*;
 
-use drm::ClientCapability;
-
 pub fn main() {
     let card = Card::open_global();
 
-    println!("Generating AuthToken:");
-    let res = card.generate_auth_token();
-    println!("\t{:?}", res);
+    println!("Generating AUTH token");
+    let token = card.generate_auth_token().unwrap();
+    println!("\t{:?}", token);
 
-    println!("Requesting Stero3D functionality:");
-    let res = card.toggle_capability(ClientCapability::Stereo3D, true);
-    println!("\t{:?}", res);
+    println!("Aquiring Master Lock");
+    println!("\t{:?}", card.acquire_master_lock());
 
-    println!("Requesting UniversalPlanes functionality:");
-    let res = card.toggle_capability(ClientCapability::UniversalPlanes, true);
-    println!("\t{:?}", res);
+    println!("Authenticating AUTH token");
+    println!("\t{:?}", card.authenticate_auth_token(token));
 
-    println!("Requesting Atomic functionality:");
-    let res = card.toggle_capability(ClientCapability::Atomic, true);
-    println!("\t{:?}", res);
+    println!("Releasing Master Lock");
+    println!("\t{:?}", card.release_master_lock());
 
-    println!("Attempting to acquire DRM Master Lock:");
-    let res = card.acquire_master_lock();
-    println!("\t{:?}", res);
+    println!("Getting Bus ID");
+    println!("\t{:?}", card.get_bus_id().unwrap().as_ref());
 
-    println!("Attempting to release DRM Master Lock:");
-    let res = card.release_master_lock();
-    println!("\t{:?}", res);
+    println!("Getting driver info");
+    let driver = card.get_driver().unwrap();
+    println!("\tName: {:?}", driver.name());
+    println!("\tDate: {:?}", driver.date());
+    println!("\tDesc: {:?}", driver.description());
+
+    println!("Setting client capabilities");
+    for &cap in util::CLIENT_CAP_ENUMS {
+        println!("\t{:?}: {:?}", cap, card.set_client_capability(cap, true));
+    }
+
+    println!("Getting driver capabilities");
+    for &cap in util::DRIVER_CAP_ENUMS {
+        println!("\t{:?}: {:?}", cap, card.get_driver_capability(cap));
+    }
 }

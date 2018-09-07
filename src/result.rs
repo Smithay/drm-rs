@@ -32,12 +32,15 @@ pub enum SystemError {
     MemoryFault,
     /// One or more arguments used are invalid.
     ///
-    /// Receiving this error indicates a bug in this crate.
+    /// This can be due to the system not supporting a feature or value.
     #[fail(display = "invalid argument")]
     InvalidArgument,
     /// A command was attempted using a non-DRM device.
     #[fail(display = "invalid file type")]
     InvalidFileType,
+    /// Permission denied.
+    #[fail(display = "permission denied")]
+    PermissionDenied,
     /// Unknown system error.
     #[fail(display = "unknown system error: {}", errno)]
     Unknown {
@@ -53,6 +56,7 @@ impl From<Errno> for SystemError {
             Errno::EFAULT => SystemError::MemoryFault,
             Errno::EINVAL => SystemError::InvalidArgument,
             Errno::ENOTTY => SystemError::InvalidFileDescriptor,
+            Errno::EACCES => SystemError::PermissionDenied,
             _ => SystemError::Unknown {
                 errno: errno
             }
