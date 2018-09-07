@@ -12,7 +12,7 @@ use nix::Error as NixError;
 pub(crate) fn unwrap_errno(err: NixError) -> Errno {
     match err {
         NixError::Sys(errno) => errno,
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
@@ -45,8 +45,8 @@ pub enum SystemError {
     #[fail(display = "unknown system error: {}", errno)]
     Unknown {
         /// Unknown nix::Errno returned by the system call.
-        errno: Errno
-    }
+        errno: Errno,
+    },
 }
 
 impl From<Errno> for SystemError {
@@ -57,9 +57,7 @@ impl From<Errno> for SystemError {
             Errno::EINVAL => SystemError::InvalidArgument,
             Errno::ENOTTY => SystemError::InvalidFileDescriptor,
             Errno::EACCES => SystemError::PermissionDenied,
-            _ => SystemError::Unknown {
-                errno: errno
-            }
+            _ => SystemError::Unknown { errno: errno },
         }
     }
 }

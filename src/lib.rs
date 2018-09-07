@@ -27,14 +27,15 @@
 //!
 
 #![warn(missing_docs)]
-
 #![feature(str_internals)]
 extern crate core;
 
 extern crate drm_sys;
 
-#[macro_use] extern crate failure;
-#[macro_use] extern crate nix;
+#[macro_use]
+extern crate failure;
+#[macro_use]
+extern crate nix;
 
 pub mod ffi;
 pub mod result;
@@ -49,8 +50,8 @@ use result::SystemError;
 use std::os::unix::io::AsRawFd;
 
 use std::ffi::OsStr;
-use std::os::unix::ffi::OsStrExt;
 use std::fmt;
+use std::os::unix::ffi::OsStrExt;
 
 /// This trait should be implemented by any object that acts as a DRM device. It
 /// is a prerequisite for using any DRM functionality.
@@ -112,40 +113,39 @@ pub trait Device: AsRawFd {
     /// This function is only available to processes with CAP_SYS_ADMIN
     /// privileges (usually as root)
     fn acquire_master_lock(&self) -> Result<(), SystemError> {
-        ffi::basic::auth::acquire_master(self.as_raw_fd()).map_err(
-            | e | SystemError::from(result::unwrap_errno(e))
-        )
+        ffi::basic::auth::acquire_master(self.as_raw_fd())
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))
     }
 
     /// Releases the DRM Master lock for another process to use.
     fn release_master_lock(&self) -> Result<(), SystemError> {
-        ffi::basic::auth::release_master(self.as_raw_fd()).map_err(
-            | e | SystemError::from(result::unwrap_errno(e))
-        )
+        ffi::basic::auth::release_master(self.as_raw_fd())
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))
     }
 
     /// Generates an [AuthToken](AuthToken.t.html) for this process.
     #[deprecated(note = "Consider opening a render node instead.")]
     fn generate_auth_token(&self) -> Result<AuthToken, SystemError> {
-        let token = ffi::basic::auth::get_magic_token(self.as_raw_fd()).map_err(
-            | e | SystemError::from(result::unwrap_errno(e))
-        )?;
+        let token = ffi::basic::auth::get_magic_token(self.as_raw_fd())
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
         Ok(AuthToken(token.magic))
     }
 
     /// Authenticates an [AuthToken](AuthToken.t.html) from another process.
     fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), SystemError> {
-        ffi::basic::auth::auth_magic_token(self.as_raw_fd(), token.0).map_err(
-            | e | SystemError::from(result::unwrap_errno(e))
-        )
+        ffi::basic::auth::auth_magic_token(self.as_raw_fd(), token.0)
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))
     }
 
     /// Requests the driver to expose or hide certain capabilities. See
     /// [ClientCapability](ClientCapability.t.html) for more information.
-    fn set_client_capability(&self, cap: ClientCapability, enable: bool) -> Result<(), SystemError> {
-        ffi::basic::set_capability(self.as_raw_fd(), cap as u64, enable).map_err(
-            | e | SystemError::from(result::unwrap_errno(e))
-        )?;
+    fn set_client_capability(
+        &self,
+        cap: ClientCapability,
+        enable: bool,
+    ) -> Result<(), SystemError> {
+        ffi::basic::set_capability(self.as_raw_fd(), cap as u64, enable)
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
         Ok(())
     }
 
@@ -154,9 +154,8 @@ pub trait Device: AsRawFd {
         let mut buffer = [0u8; 32];
         let len = {
             let mut slice = &mut buffer[..];
-            ffi::basic::get_bus_id(self.as_raw_fd(), &mut slice).map_err(
-                | e | SystemError::from(result::unwrap_errno(e))
-            )?;
+            ffi::basic::get_bus_id(self.as_raw_fd(), &mut slice)
+                .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
             slice.len()
         };
 
@@ -168,17 +167,15 @@ pub trait Device: AsRawFd {
     /// Check to see if our [AuthToken](AuthToken.t.html) has been authenticated
     /// by the DRM Master
     fn authenticated(&self) -> Result<bool, SystemError> {
-        let client = ffi::basic::get_client(self.as_raw_fd(), 0).map_err(
-            | e | SystemError::from(result::unwrap_errno(e))
-        )?;
+        let client = ffi::basic::get_client(self.as_raw_fd(), 0)
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
         Ok(client.auth == 1)
     }
 
     /// Gets the value of a capability.
     fn get_driver_capability(&self, cap: DriverCapability) -> Result<u64, SystemError> {
-        ffi::basic::get_capability(self.as_raw_fd(), cap as u64).map_err(
-            | e | SystemError::from(result::unwrap_errno(e))
-        )
+        ffi::basic::get_capability(self.as_raw_fd(), cap as u64)
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))
     }
 
     /// Possible errors:
@@ -194,9 +191,12 @@ pub trait Device: AsRawFd {
             let mut date_slice = &mut date[..];
             let mut desc_slice = &mut desc[..];
 
-            ffi::basic::get_version(self.as_raw_fd(), &mut name_slice, &mut date_slice, &mut desc_slice).map_err(
-                | e | SystemError::from(result::unwrap_errno(e))
-            )?;
+            ffi::basic::get_version(
+                self.as_raw_fd(),
+                &mut name_slice,
+                &mut date_slice,
+                &mut desc_slice,
+            ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
             (name_slice.len(), date_slice.len(), desc_slice.len())
         };
@@ -208,7 +208,7 @@ pub trait Device: AsRawFd {
         let driver = Driver {
             name: name,
             date: date,
-            desc: desc
+            desc: desc,
         };
 
         Ok(driver)
@@ -265,13 +265,13 @@ pub enum DriverCapability {
     /// What is the height of the cursor plane
     CursorHeight = ffi::DRM_CAP_CURSOR_HEIGHT as isize,
     /// Can we use modifiers when adding frame buffers
-    AddFBModifiers = ffi::DRM_CAP_ADDFB2_MODIFIERS  as isize,
+    AddFBModifiers = ffi::DRM_CAP_ADDFB2_MODIFIERS as isize,
     /// Target page flip
     PageFlipTarget = ffi::DRM_CAP_PAGE_FLIP_TARGET as isize,
     /// Does a VBlank event include the CRTC id
     CrtcInVBlank = ffi::DRM_CAP_CRTC_IN_VBLANK_EVENT as isize,
     /// Do we support syncobj
-    SyncObj = ffi::DRM_CAP_SYNCOBJ as isize
+    SyncObj = ffi::DRM_CAP_SYNCOBJ as isize,
 }
 
 /// Bus ID of a device.
@@ -284,13 +284,12 @@ impl AsRef<OsStr> for BusID {
     }
 }
 
-
 /// Driver version of a device.
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Driver {
     name: FixedOsStr,
     date: FixedOsStr,
-    desc: FixedOsStr
+    desc: FixedOsStr,
 }
 
 impl Driver {
@@ -333,7 +332,7 @@ pub type uRect = (uPoint, Dimensions);
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 struct FixedOsStr {
     data: [u8; 32],
-    len: usize
+    len: usize,
 }
 
 impl FixedOsStr {
@@ -341,7 +340,7 @@ impl FixedOsStr {
     fn new(data: [u8; 32], len: usize) -> Self {
         FixedOsStr {
             data: data,
-            len: len
+            len: len,
         }
     }
 }

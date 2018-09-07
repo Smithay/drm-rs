@@ -362,7 +362,11 @@ pub fn get_encoder(fd: RawFd, id: u32) -> Result<drm_mode_get_encoder, Error> {
 }
 
 /// Get info about a plane.
-pub fn get_plane(fd: RawFd, id: u32, formats: &mut &mut [u32]) -> Result<drm_mode_get_plane, Error> {
+pub fn get_plane(
+    fd: RawFd,
+    id: u32,
+    formats: &mut &mut [u32],
+) -> Result<drm_mode_get_plane, Error> {
     let mut info = drm_mode_get_plane {
         plane_id: id,
         format_type_ptr: formats.as_ptr() as _,

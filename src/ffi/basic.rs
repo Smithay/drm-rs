@@ -27,9 +27,7 @@ pub mod auth {
 
     /// Authorize another process' 'Magic Authentication Token'.
     pub fn auth_magic_token(fd: RawFd, auth: u32) -> Result<(), Error> {
-        let mut token = drm_auth {
-            magic: auth
-        };
+        let mut token = drm_auth { magic: auth };
 
         unsafe {
             ioctl::auth_token(fd, &mut token)?;

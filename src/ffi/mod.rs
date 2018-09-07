@@ -25,8 +25,7 @@ impl<'a, T> ShrinkableSlice for &'a mut [T] {
 
         let shrink_to = cmp::min(size, self.len());
         let mut new_slice = mem::replace(self, &mut []);
-        new_slice = &mut {new_slice}[..shrink_to];
+        new_slice = &mut { new_slice }[..shrink_to];
         mem::replace(self, new_slice);
     }
 }
-

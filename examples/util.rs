@@ -8,11 +8,7 @@ pub use std::os::unix::io::AsRawFd;
 pub use std::os::unix::io::RawFd;
 
 use drm::ClientCapability as CC;
-pub const CLIENT_CAP_ENUMS: &[CC] = &[
-    CC::Stereo3D,
-    CC::UniversalPlanes,
-    CC::Atomic
-];
+pub const CLIENT_CAP_ENUMS: &[CC] = &[CC::Stereo3D, CC::UniversalPlanes, CC::Atomic];
 
 use drm::DriverCapability as DC;
 pub const DRIVER_CAP_ENUMS: &[DC] = &[
@@ -26,9 +22,8 @@ pub const DRIVER_CAP_ENUMS: &[DC] = &[
     DC::AddFBModifiers,
     DC::PageFlipTarget,
     DC::CrtcInVBlank,
-    DC::SyncObj
+    DC::SyncObj,
 ];
-
 
 #[derive(Debug)]
 /// A simple wrapper for a device node.
