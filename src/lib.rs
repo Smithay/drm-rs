@@ -27,31 +27,25 @@
 //!
 
 #![warn(missing_docs)]
-#![feature(str_internals)]
-extern crate core;
+
+#![feature(str_internals)] extern crate core;
 
 extern crate drm_sys;
 
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate nix;
+#[macro_use] extern crate failure;
+#[macro_use] extern crate nix;
 
 pub mod ffi;
 pub mod result;
+pub(crate) mod util;
 
 //pub mod control;
 //pub mod buffer;
 
-use failure::Error;
-
+use util::*;
 use result::SystemError;
 
 use std::os::unix::io::AsRawFd;
-
-use std::ffi::OsStr;
-use std::fmt;
-use std::os::unix::ffi::OsStrExt;
 
 /// This trait should be implemented by any object that acts as a DRM device. It
 /// is a prerequisite for using any DRM functionality.
@@ -159,7 +153,7 @@ pub trait Device: AsRawFd {
             slice.len()
         };
 
-        let bus_id = BusID(FixedOsStr::new(buffer, len));
+        let bus_id = BusID(SmallOsString::new(buffer, len));
 
         Ok(bus_id)
     }
@@ -201,9 +195,9 @@ pub trait Device: AsRawFd {
             (name_slice.len(), date_slice.len(), desc_slice.len())
         };
 
-        let name = FixedOsStr::new(name, name_len);
-        let date = FixedOsStr::new(date, date_len);
-        let desc = FixedOsStr::new(desc, desc_len);
+        let name = SmallOsString::new(name, name_len);
+        let date = SmallOsString::new(date, date_len);
+        let desc = SmallOsString::new(desc, desc_len);
 
         let driver = Driver {
             name: name,
@@ -276,7 +270,7 @@ pub enum DriverCapability {
 
 /// Bus ID of a device.
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct BusID(FixedOsStr);
+pub struct BusID(SmallOsString);
 
 impl AsRef<OsStr> for BusID {
     fn as_ref(&self) -> &OsStr {
@@ -287,9 +281,9 @@ impl AsRef<OsStr> for BusID {
 /// Driver version of a device.
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Driver {
-    name: FixedOsStr,
-    date: FixedOsStr,
-    desc: FixedOsStr,
+    name: SmallOsString,
+    date: SmallOsString,
+    desc: SmallOsString,
 }
 
 impl Driver {
@@ -328,52 +322,3 @@ pub type iRect = (iPoint, Dimensions);
 #[allow(non_camel_case_types)]
 pub type uRect = (uPoint, Dimensions);
 
-/// Used internally to hold a buffer for an OsStr
-#[derive(Copy, Clone, Hash, PartialEq, Eq)]
-struct FixedOsStr {
-    data: [u8; 32],
-    len: usize,
-}
-
-impl FixedOsStr {
-    /// Create new FixedOsStr from a buffer and length.
-    fn new(data: [u8; 32], len: usize) -> Self {
-        FixedOsStr {
-            data: data,
-            len: len,
-        }
-    }
-}
-
-impl AsRef<OsStr> for FixedOsStr {
-    fn as_ref(&self) -> &OsStr {
-        let slice: &[u8] = &self.data[..self.len];
-        OsStr::from_bytes(slice)
-    }
-}
-
-impl AsRef<[u8]> for FixedOsStr {
-    fn as_ref(&self) -> &[u8] {
-        &self.data[..self.len]
-    }
-}
-
-impl fmt::Debug for FixedOsStr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let as_os_str: &OsStr = &self.as_ref();
-        f.debug_struct("FixedOsStr")
-            .field("data", &self.data)
-            .field("len", &self.len)
-            .field("as_ref()", &as_os_str)
-            .finish()
-    }
-}
-
-use core::str::lossy::Utf8Lossy;
-
-impl fmt::Display for FixedOsStr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let lossy_utf8 = Utf8Lossy::from_bytes(self.as_ref());
-        write!(f, "{}", lossy_utf8)
-    }
-}

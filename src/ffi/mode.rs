@@ -4,7 +4,7 @@ use ffi::ioctl;
 use nix::Error;
 use std::os::unix::io::RawFd;
 
-use super::ShrinkableSlice;
+use ::ffi::ShrinkableSlice;
 
 /// Enumerate most card resources.
 pub fn get_resources(

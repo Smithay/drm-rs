@@ -28,20 +28,16 @@
 //! To begin using modesetting functionality, the [Device trait](Device.t.html)
 //! must be implemented on top of the [basic Device trait](../Device.t.html).
 
-use ffi::{self, mode::RawHandle};
-use result::Result;
+use ::ffi;
+use ::result;
+use ::result::SystemError;
+use ::util::*;
 
-mod debug;
-
-pub mod connector;
-pub mod encoder;
-pub mod crtc;
-pub mod framebuffer;
-pub mod plane;
-pub mod property;
-//pub mod dumbbuffer;
-
-use std::mem;
+pub type ConnectorHandle = u32;
+pub type EncoderHandle = u32;
+pub type FramebufferHandle = u32;
+pub type CrtcHandle = u32;
+pub type PlaneHandle = u32;
 
 /// This trait should be implemented by any object that acts as a DRM device and
 /// provides modesetting functionality.
@@ -59,26 +55,30 @@ use std::mem;
 pub trait Device: super::Device {
     /// Gets the set of resource handles that this device currently controls.
     fn resource_handles(&self) -> Result<ResourceHandles> {
-        let mut t = ffi::mode::CardRes::default();
-        t.cmd(self.as_raw_fd())?;
+        // Buffers to hold the handles.
+        let mut fbs = [0u32; 32];
+        let mut crtcs = [0u32; 32];
+        let mut connectors = [0u32; 32];
+        let mut encoders = [0u32; 32];
+
+        let mut fb_slice = &mut fbs[..];
+        let mut crtc_slice = &mut crtcs[..];
+        let mut conn_slice = &mut connectors[..];
+        let mut enc_slice = &mut encoders[..];
+
+        let ffi_card = ffi::mode::get_resources(
+            self.as_raw_fd(),
+            &mut fb_slice,
+            &mut crtc_slice,
+            &mut conn_slice,
+            &mut enc_slice,
+        ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+
         Ok(ResourceHandles(t))
-    }
-
-    /// Gets the set of plane handles that this device currently controls.
-    fn plane_handles(&self) -> Result<PlaneResourceHandles> {
-        let mut t = ffi::mode::PlaneRes::default();
-        t.cmd(self.as_raw_fd())?;
-        Ok(PlaneResourceHandles(t))
-    }
-
-    /// Returns detailed information of an object given its handle.
-    fn info<T: ResourceHandle>(&self, handle: T) -> Result<T::Info>
-    where Self: Sized {
-
-        T::get_info(self, handle)
     }
 }
 
+/*
 /// Objects that derive this trait are handles to device resources, and are
 /// used for nearly all modesetting operations.
 pub trait ResourceHandle: From<RawHandle> + Into<RawHandle> {
@@ -106,12 +106,21 @@ pub trait ResourceInfo: Sized {
     /// Returns the handle used to acquire this object.
     fn handle(&self) -> Self::Handle;
 }
+ */
+
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 /// The set of [ResourceHandles](ResourceHandle.t.html) that a
 /// [Device](Device.t.html) exposes. Excluding Plane resources.
-pub struct ResourceHandles(ffi::mode::CardRes);
+pub struct ResourceHandles {
+    fbs: SmallBuffer<FramebufferHandle>,
+    crtcs: SmallBuffer<CrtcHandle>,
+    connectors: SmallBuffer<ConnectorHandle>,
+    encoders: SmallBuffer<EncoderHandle>,
+    size: (usize, usize)
+}
 
+/*
 impl ResourceHandles {
     /// Returns the set of [connector::Handles](connector/Handle.t.html)
     pub fn connectors(&self) -> &[connector::Handle] {
@@ -156,7 +165,6 @@ impl PlaneResourceHandles {
     }
 }
 
-/*
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum Type {
