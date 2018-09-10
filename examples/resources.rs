@@ -1,73 +1,40 @@
 extern crate drm;
 
-use drm::control::Device as ControlDevice;
-use drm::Device as BasicDevice;
-
-use drm::control::ResourceHandle;
-use drm::control::ResourceInfo;
-use drm::control::{connector, crtc, dumbbuffer, encoder, framebuffer, plane};
-
-use std::fs::File;
-use std::fs::OpenOptions;
-
-use std::os::unix::io::AsRawFd;
-use std::os::unix::io::RawFd;
-
-#[derive(Debug)]
-pub struct Card(File);
-
-impl AsRawFd for Card {
-    fn as_raw_fd(&self) -> RawFd {
-        self.0.as_raw_fd()
-    }
-}
-
-impl BasicDevice for Card {}
-impl ControlDevice for Card {}
-
-impl Card {
-    pub fn open(path: &str) -> Self {
-        let mut options = OpenOptions::new();
-        options.read(true);
-        options.write(true);
-        Card(options.open(path).unwrap())
-    }
-
-    pub fn open_global() -> Self {
-        Self::open("/dev/dri/card0")
-    }
-
-    pub fn open_control() -> Self {
-        Self::open("/dev/dri/controlD64")
-    }
-}
+/// Check the `util` module to see how the `Card` structure is implemented.
+pub mod util;
+use util::*;
 
 pub fn main() {
     let card = Card::open_global();
 
-    let res = card.resource_handles().expect("Can't get resource handles");
-    let pres = card.plane_handles().expect("Could not load plane handles");
+    let resources = card.resource_handles().unwrap();
+    let plane_res = card.plane_handles().unwrap();
 
-    let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
-    let encinfo: Vec<encoder::Info> = load_information(&card, res.encoders());
-    let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
-    let fbinfo: Vec<framebuffer::Info> = load_information(&card, res.framebuffers());
-    let plinfo: Vec<plane::Info> = load_information(&card, pres.planes());
+    // Print out all card resource handles
+    println!("Connectors:\t{:?}", resources.connectors());
+    println!("Encoders:\t{:?}", resources.encoders());
+    println!("CRTCs:\t\t{:?}", resources.crtcs());
+    println!("Framebuffers:\t{:?}", resources.framebuffers());
+    println!("Planes:\t\t{:?}", plane_res.planes());
 
-    println!("{:#?}", coninfo);
-    println!("{:#?}", encinfo);
-    println!("{:#?}", crtcinfo);
-    println!("{:#?}", fbinfo);
-    println!("{:#?}", plinfo);
-}
+    for &handle in resources.connectors() {
+        println!("{:#?}", card.get_connector(handle));
+    }
+/*
+    for &handle in resources.encoders() {
+        println!("{:#?}", card.get_encoder(handle));
+    }
 
-fn load_information<T, U>(card: &Card, handles: &[T]) -> Vec<U>
-where
-    T: ResourceHandle,
-    U: ResourceInfo<Handle = T>,
-{
-    handles
-        .iter()
-        .map(|&h| card.resource_info(h).expect("Could not load resource info"))
-        .collect()
+    for &handle in resources.crtcs() {
+        println!("{:#?}", card.get_crtc(handle));
+    }
+
+    for &handle in resources.framebuffers() {
+        println!("{:#?}", card.get_framebuffer(handle));
+    }
+
+    for &handle in plane_res.planes() {
+        println!("{:#?}", card.get_plane(handle));
+    }
+    */
 }

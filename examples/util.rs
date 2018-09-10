@@ -1,4 +1,4 @@
-//pub use drm::control::Device as ControlDevice;
+pub use drm::control::Device as ControlDevice;
 pub use drm::Device;
 
 use std::fs::File;
@@ -39,7 +39,7 @@ impl AsRawFd for Card {
 
 /// With `AsRawFd` implemented, we can now implement `drm::Device`.
 impl Device for Card {}
-//impl ControlDevice for Card {}
+impl ControlDevice for Card {}
 
 /// Simple helper methods for opening a `Card`.
 impl Card {

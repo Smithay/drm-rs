@@ -27,23 +27,25 @@
 //!
 
 #![warn(missing_docs)]
-
-#![feature(str_internals)] extern crate core;
+#![feature(str_internals)]
+extern crate core;
 
 extern crate drm_sys;
 
-#[macro_use] extern crate failure;
-#[macro_use] extern crate nix;
+#[macro_use]
+extern crate failure;
+#[macro_use]
+extern crate nix;
 
 pub mod ffi;
 pub mod result;
 pub(crate) mod util;
 
-//pub mod control;
+pub mod control;
 //pub mod buffer;
 
-use util::*;
 use result::SystemError;
+use util::*;
 
 use std::os::unix::io::AsRawFd;
 
@@ -321,4 +323,3 @@ pub type iRect = (iPoint, Dimensions);
 /// Rectangle with an unsigned upper left corner
 #[allow(non_camel_case_types)]
 pub type uRect = (uPoint, Dimensions);
-

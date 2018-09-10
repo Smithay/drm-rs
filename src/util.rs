@@ -5,21 +5,20 @@ pub use std::ffi::OsStr;
 
 use std::fmt;
 
-
 /// Many different native DRM API calls will fill buffers with small amounts
 /// of data. This object is used to eliminate the need for allocating buffer
 /// dynamically.
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct SmallBuffer<T: Sized> {
     data: [T; 32],
-    len: usize
+    len: usize,
 }
 
 impl<T: Sized> SmallBuffer<T> {
     pub fn new(data: [T; 32], len: usize) -> Self {
         Self {
             data: data,
-            len: len
+            len: len,
         }
     }
 }
@@ -34,14 +33,14 @@ impl<T: Sized> AsRef<[T]> for SmallBuffer<T> {
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct SmallOsString {
     data: [u8; 32],
-    len: usize
+    len: usize,
 }
 
 impl SmallOsString {
     pub fn new(data: [u8; 32], len: usize) -> Self {
         Self {
             data: data,
-            len: len
+            len: len,
         }
     }
 }

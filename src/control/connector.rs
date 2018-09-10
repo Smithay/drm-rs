@@ -6,70 +6,61 @@
 //! a display. These objects keep track of connection information and state,
 //! including the modes that the current display supports.
 
-use ffi::{self, mode::RawHandle};
-use control::{ResourceHandle, ResourceInfo, Device};
-use control::encoder;
-use control::property;
-use result::Result;
+use ffi;
+use control::Mode;
+use control::encoder::Handle as EncoderHandle;
 
-use std::mem;
+use util::*;
 
-#[derive(Copy, Clone, Hash, PartialEq, Eq, From, Into)]
-/// A [ResourceHandle](../ResourceHandle.t.html) representing a connector.
-pub struct Handle(RawHandle);
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+/// A handle to a specific connector
+pub struct Handle(u32);
 
-impl ResourceHandle for Handle {
-    type Info = Info;
-
-    fn get_info<T: Device>(device: &T, handle: Self) -> Result<Info> {
-        let mut t = ffi::mode::GetConnector::default();
-        t.as_mut().connector_id = handle.into();
-        t.cmd(device.as_raw_fd())?;
-        Ok(Info(t))
+impl From<u32> for Handle {
+    fn from(raw: u32) -> Self {
+        Handle(raw)
     }
 }
 
-#[derive(Copy, Clone, Hash, PartialEq, Eq)]
-/// A [ResourceInfo](../ResourceInfo.t.html) object about a connector.
-pub struct Info(ffi::mode::GetConnector);
-
-impl ResourceInfo for Info {
-    type Handle = Handle;
-
-    fn handle(&self) -> Handle {
-        Handle::from(self.0.as_ref().connector_id)
+impl Into<u32> for Handle {
+    fn into(self) -> u32 {
+        self.0
     }
+}
+
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+/// Information about a specific connector
+pub struct Info {
+    pub(crate) handle: Handle,
+    pub(crate) conn_type: Type,
+    pub(crate) conn_type_id: u32,
+    pub(crate) connection: State,
+    pub(crate) size: (u32, u32),
+    pub(crate) subpixel: (),
+    pub(crate) encoders: SmallBuffer<EncoderHandle>,
+    pub(crate) modes: SmallBuffer<Mode>,
+    pub(crate) curr_enc: Option<EncoderHandle>,
 }
 
 impl Info {
-    /// Returns the physical type of connector associated.
-    pub fn connector_type(&self) -> Type {
-        Type::from(self.0.as_ref().connector_type)
+    /// The connector's handle
+    pub fn handle(&self) -> Handle {
+        self.handle
     }
 
-    /// Returns whether a connector is currently connected or not.
-    pub fn connection_state(&self) -> State {
-        State::from(self.0.as_ref().connection)
+    /// The connector's type
+    pub fn kind(&self) -> Type {
+        self.conn_type
     }
 
-    /// Returns the handle associated with the currently attached encoder.
-    pub fn current_encoder(&self) -> Option<encoder::Handle> {
-        encoder::Handle::from_checked(self.0.as_ref().encoder_id)
+    /// The connector's state
+    pub fn state(&self) -> State {
+        self.connection
     }
 
-    /// Returns the set of compatible encoders.
-    pub fn possible_encoders(&self) -> &[encoder::Handle] {
-        mem::transmute(self.0.encoders())
-    }
-
-    /// TODO: Document
-    pub fn property_handles(&self) -> &[property::Handle] {
-        mem::transmute(self.0.properties())
-    }
-
-    /// TODO: Document
-    pub fn property_values(&self) -> &[u64] {
-        mem::transmute(self.0.prop_values())
+    /// The size of this display in millimeters
+    pub fn size(&self) -> (u32, u32) {
+        self.size
     }
 }
 
