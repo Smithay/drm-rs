@@ -160,6 +160,8 @@ pub trait Device: super::Device {
                 conn_type_id: info.connector_type_id,
                 connection: connector::State::from(info.connection),
                 size: (info.mm_width, info.mm_height),
+                props: SmallBuffer::new(mem::transmute(properties), prop_len),
+                pvals: SmallBuffer::new(mem::transmute(prop_values), pval_len),
                 subpixel: (),
                 encoders: SmallBuffer::new(mem::transmute(encoders), enc_len),
                 modes: SmallBuffer::new(mem::transmute(modes), mode_len),
@@ -175,12 +177,12 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific encoder
     fn get_encoder(&self, handle: encoder::Handle) -> Result<encoder::Info, SystemError> {
-        unimplemented!()
+        Ok(encoder::Info)
     }
 
     /// Returns information about a specific CRTC
     fn get_crtc(&self, handle: crtc::Handle) -> Result<crtc::Info, SystemError> {
-        unimplemented!()
+        Ok(crtc::Info)
     }
 
     /// Returns information about a specific framebuffer
@@ -188,12 +190,12 @@ pub trait Device: super::Device {
         &self,
         handle: framebuffer::Handle,
     ) -> Result<framebuffer::Info, SystemError> {
-        unimplemented!()
+        Ok(framebuffer::Info)
     }
 
     /// Returns information about a specific plane
     fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
-        unimplemented!()
+        Ok(plane::Info)
     }
 }
 

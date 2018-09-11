@@ -18,9 +18,28 @@ pub fn main() {
     println!("Planes:\t\t{:?}", plane_res.planes());
 
     for &handle in resources.connectors() {
-        println!("{:#?}", card.get_connector(handle));
+        let info = card.get_connector(handle).unwrap();
+        println!("Connector: {:?}", handle);
+        println!("\t{:?}-{}", info.kind(), info.kind_id());
+        println!("\t{:?}", info.state());
+        println!("\t{:?}", info.size());
+        println!("\t{:?}", info.current_encoder());
+        println!("\t{:?}", info.encoders());
+
+        for &mode in info.modes() {
+            println!("\tMode:");
+            println!("\t\tClock: {:?}", mode.clock());
+            println!("\t\tSize: {:?}", mode.size());
+            println!("\t\tHSync: {:?}", mode.hsync());
+            println!("\t\tVSync: {:?}", mode.vsync());
+            println!("\t\tHSkew: {:?}", mode.hskew());
+            println!("\t\tVScan: {:?}", mode.vscan());
+            println!("\t\tVRef: {:?}", mode.vrefresh());
+        }
+
+        println!("{:?}", info);
     }
-/*
+    /*
     for &handle in resources.encoders() {
         println!("{:#?}", card.get_encoder(handle));
     }

@@ -339,6 +339,8 @@ pub fn get_connector(
         ioctl::mode::get_connector(fd, &mut info)?;
     }
 
+    println!("{:#?}", info);
+
     props.shrink(info.count_props as _);
     prop_values.shrink(info.count_props as _);
     modes.shrink(info.count_modes as _);
