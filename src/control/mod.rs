@@ -177,7 +177,20 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific encoder
     fn get_encoder(&self, handle: encoder::Handle) -> Result<encoder::Info, SystemError> {
-        Ok(encoder::Info)
+        let info = ffi::mode::get_encoder(self.as_raw_fd(), handle.into()).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+
+        let enc = encoder::Info {
+            handle: handle,
+            enc_type: encoder::Type::from(info.encoder_type),
+            crtc: match info.crtc_id {
+                0 => None,
+                x => Some(crtc::Handle::from(x))
+            },
+            pos_crtcs: info.possible_crtcs,
+            pos_clones: info.possible_clones,
+        };
+
+        Ok(enc)
     }
 
     /// Returns information about a specific CRTC

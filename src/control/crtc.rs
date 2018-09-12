@@ -16,6 +16,18 @@
 /// A handle to a specific CRTC
 pub struct Handle(u32);
 
+impl From<u32> for Handle {
+    fn from(raw: u32) -> Self {
+        Handle(raw)
+    }
+}
+
+impl Into<u32> for Handle {
+    fn into(self) -> u32 {
+        self.0
+    }
+}
+
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// Information about a specific CRTC
 pub struct Info;

@@ -36,12 +36,13 @@ pub fn main() {
             println!("\t\tVScan: {:?}", mode.vscan());
             println!("\t\tVRef: {:?}", mode.vrefresh());
         }
-
-        println!("{:?}", info);
     }
-    /*
+
     for &handle in resources.encoders() {
-        println!("{:#?}", card.get_encoder(handle));
+        let info = card.get_encoder(handle).unwrap();
+        println!("Encoder: {:?}", handle);
+        println!("\t{:?}", info.kind());
+        println!("\t{:?}", info.crtc());
     }
 
     for &handle in resources.crtcs() {
@@ -55,5 +56,4 @@ pub fn main() {
     for &handle in plane_res.planes() {
         println!("{:#?}", card.get_plane(handle));
     }
-    */
 }
