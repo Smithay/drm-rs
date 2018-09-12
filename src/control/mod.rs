@@ -177,14 +177,15 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific encoder
     fn get_encoder(&self, handle: encoder::Handle) -> Result<encoder::Info, SystemError> {
-        let info = ffi::mode::get_encoder(self.as_raw_fd(), handle.into()).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+        let info = ffi::mode::get_encoder(self.as_raw_fd(), handle.into())
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
         let enc = encoder::Info {
             handle: handle,
             enc_type: encoder::Type::from(info.encoder_type),
             crtc: match info.crtc_id {
                 0 => None,
-                x => Some(crtc::Handle::from(x))
+                x => Some(crtc::Handle::from(x)),
             },
             pos_crtcs: info.possible_crtcs,
             pos_clones: info.possible_clones,
@@ -195,7 +196,24 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific CRTC
     fn get_crtc(&self, handle: crtc::Handle) -> Result<crtc::Info, SystemError> {
-        Ok(crtc::Info)
+        let info = ffi::mode::get_crtc(self.as_raw_fd(), handle.into())
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+
+        let crtc = crtc::Info {
+            handle: handle,
+            position: (info.x, info.y),
+            mode: match info.mode_valid {
+                0 => None,
+                _ => Some(Mode::from(info.mode)),
+            },
+            fb: match info.fb_id {
+                0 => None,
+                x => Some(framebuffer::Handle::from(x)),
+            },
+            gamma_length: info.gamma_size,
+        };
+
+        Ok(crtc)
     }
 
     /// Returns information about a specific framebuffer
@@ -203,12 +221,50 @@ pub trait Device: super::Device {
         &self,
         handle: framebuffer::Handle,
     ) -> Result<framebuffer::Info, SystemError> {
-        Ok(framebuffer::Info)
+        let info = ffi::mode::get_framebuffer(self.as_raw_fd(), handle.into())
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+
+        let fb = framebuffer::Info {
+            handle: handle,
+            size: (info.width, info.height),
+            pitch: info.pitch,
+            bpp: info.bpp,
+            depth: info.depth,
+            buffer: info.handle,
+        };
+
+        Ok(fb)
     }
 
     /// Returns information about a specific plane
     fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
-        Ok(plane::Info)
+        let mut formats = [0u32; 32];
+
+        let (fmt_len, info) = {
+            let mut fmt_slice = &mut formats[..];
+            let info = ffi::mode::get_plane(self.as_raw_fd(), handle.into(), &mut fmt_slice)
+                .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+
+            let plane = plane::Info {
+                handle: handle,
+                crtc: match info.crtc_id {
+                    0 => None,
+                    x => Some(crtc::Handle::from(x)),
+                },
+                fb: match info.fb_id {
+                    0 => None,
+                    x => Some(framebuffer::Handle::from(x)),
+                },
+                pos_crtcs: info.possible_crtcs,
+                gamma_size: info.gamma_size,
+            };
+
+            (fmt_slice.len(), plane)
+        };
+
+        println!("{:?}", formats);
+
+        Ok(info)
     }
 }
 
@@ -302,5 +358,17 @@ impl Mode {
     /// Returns the vertical refresh rate of this mode
     pub fn vrefresh(&self) -> u32 {
         self.mode.vrefresh
+    }
+}
+
+impl From<ffi::drm_mode_modeinfo> for Mode {
+    fn from(raw: ffi::drm_mode_modeinfo) -> Mode {
+        Mode { mode: raw }
+    }
+}
+
+impl Into<ffi::drm_mode_modeinfo> for Mode {
+    fn into(self) -> ffi::drm_mode_modeinfo {
+        self.mode
     }
 }

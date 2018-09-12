@@ -106,4 +106,3 @@ impl Into<u32> for Type {
         }
     }
 }
-
