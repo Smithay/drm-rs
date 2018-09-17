@@ -25,17 +25,6 @@ pub fn main() {
         println!("\t{:?}", info.size());
         println!("\t{:?}", info.current_encoder());
         println!("\t{:?}", info.encoders());
-
-        for &mode in info.modes() {
-            println!("\tMode:");
-            println!("\t\tClock: {:?}", mode.clock());
-            println!("\t\tSize: {:?}", mode.size());
-            println!("\t\tHSync: {:?}", mode.hsync());
-            println!("\t\tVSync: {:?}", mode.vsync());
-            println!("\t\tHSkew: {:?}", mode.hskew());
-            println!("\t\tVScan: {:?}", mode.vscan());
-            println!("\t\tVRef: {:?}", mode.vrefresh());
-        }
     }
 
     for &handle in resources.encoders() {

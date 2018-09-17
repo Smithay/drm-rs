@@ -124,47 +124,29 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific connector
     fn get_connector(&self, handle: connector::Handle) -> Result<connector::Info, SystemError> {
-        let mut encoders = [0u32; 32];
-        let mut properties = [0u32; 32];
-        let mut prop_values = [0u64; 32];
-        let mut modes = [ffi::drm_mode_modeinfo::default(); 32];
+        // Maximum number of encoders is 3 due to the kernel
+        let mut encoders = [0u32; 3];
 
-        let (enc_len, prop_len, pval_len, mode_len, info) = {
+        let (enc_len, info) = {
             let mut enc_slice = &mut encoders[..];
-            let mut prop_slice = &mut properties[..];
-            let mut pval_slice = &mut prop_values[..];
-            let mut mode_slice = &mut modes[..];
 
-            let info = ffi::mode::get_connector(
+            let info = ffi::mode::get_connector_without_props_or_modes(
                 self.as_raw_fd(),
                 handle.into(),
-                &mut prop_slice,
-                &mut pval_slice,
-                &mut mode_slice,
                 &mut enc_slice,
             ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
-            (
-                enc_slice.len(),
-                prop_slice.len(),
-                pval_slice.len(),
-                mode_slice.len(),
-                info,
-            )
+            (enc_slice.len(), info)
         };
 
         let conn = unsafe {
             connector::Info {
                 handle: handle,
-                conn_type: connector::Type::from(info.connector_type),
-                conn_type_id: info.connector_type_id,
+                id: (connector::Kind::from(info.connector_type), info.connector_type_id),
                 connection: connector::State::from(info.connection),
                 size: (info.mm_width, info.mm_height),
-                props: SmallBuffer::new(mem::transmute(properties), prop_len),
-                pvals: SmallBuffer::new(mem::transmute(prop_values), pval_len),
                 subpixel: (),
-                encoders: SmallBuffer::new(mem::transmute(encoders), enc_len),
-                modes: SmallBuffer::new(mem::transmute(modes), mode_len),
+                encoders: connector::EncodersBuffer::new(mem::transmute(encoders), enc_len),
                 curr_enc: match info.encoder_id {
                     0 => None,
                     x => Some(encoder::Handle::from(x)),
@@ -177,14 +159,15 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific encoder
     fn get_encoder(&self, handle: encoder::Handle) -> Result<encoder::Info, SystemError> {
-        let info = ffi::mode::get_encoder(self.as_raw_fd(), handle.into()).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+        let info = ffi::mode::get_encoder(self.as_raw_fd(), handle.into())
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
         let enc = encoder::Info {
             handle: handle,
-            enc_type: encoder::Type::from(info.encoder_type),
+            enc_type: encoder::Kind::from(info.encoder_type),
             crtc: match info.crtc_id {
                 0 => None,
-                x => Some(crtc::Handle::from(x))
+                x => Some(crtc::Handle::from(x)),
             },
             pos_crtcs: info.possible_crtcs,
             pos_clones: info.possible_clones,
