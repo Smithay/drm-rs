@@ -12,6 +12,9 @@
 //! but they can also use pixel data from other planes to perform hardware
 //! compositing.
 
+use control::framebuffer::Handle as FramebufferHandle;
+use control::Mode;
+
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// A handle to a specific CRTC
 pub struct Handle(u32);
@@ -30,4 +33,37 @@ impl Into<u32> for Handle {
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// Information about a specific CRTC
-pub struct Info;
+pub struct Info {
+    pub(crate) handle: Handle,
+    pub(crate) position: (u32, u32),
+    pub(crate) mode: Option<Mode>,
+    pub(crate) fb: Option<FramebufferHandle>,
+    pub(crate) gamma_length: u32,
+}
+
+impl Info {
+    /// The CRTC's handle
+    pub fn handle(&self) -> Handle {
+        self.handle
+    }
+
+    /// The CRTC's position
+    pub fn position(&self) -> (u32, u32) {
+        self.position
+    }
+
+    /// The current mode this CRTC is using
+    pub fn mode(&self) -> Option<Mode> {
+        self.mode
+    }
+
+    /// The framebuffer currently attached to this CRTC
+    pub fn framebuffer(&self) -> Option<FramebufferHandle> {
+        self.fb
+    }
+
+    /// The length of the gamma buffer
+    pub fn gamma_length(&self) -> u32 {
+        self.gamma_length
+    }
+}

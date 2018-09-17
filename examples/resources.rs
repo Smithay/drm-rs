@@ -35,7 +35,12 @@ pub fn main() {
     }
 
     for &handle in resources.crtcs() {
-        println!("{:#?}", card.get_crtc(handle));
+        let info = card.get_crtc(handle).unwrap();
+        println!("CRTC: {:?}", handle);
+        println!("\tPosition: {:?}", info.position());
+        println!("\tMode: {:?}", info.mode());
+        println!("\tFramebuffer: {:?}", info.framebuffer());
+        println!("\tGamma Length: {:?}", info.gamma_length());
     }
 
     for &handle in resources.framebuffers() {
