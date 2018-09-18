@@ -57,44 +57,36 @@ pub mod plane;
 pub trait Device: super::Device {
     /// Gets the set of resource handles that this device currently controls
     fn resource_handles(&self) -> Result<ResourceHandles, SystemError> {
-        // Buffers to hold the handles.
-        let mut fbs = [0u32; 32];
-        let mut crtcs = [0u32; 32];
-        let mut connectors = [0u32; 32];
-        let mut encoders = [0u32; 32];
+        let mut fbs: HandleBuffer32<framebuffer::Handle> = Default::default();
+        let mut crtcs: HandleBuffer32<crtc::Handle> = Default::default();
+        let mut connectors: HandleBuffer32<connector::Handle> = Default::default();
+        let mut encoders: HandleBuffer32<encoder::Handle> = Default::default();
 
-        let (ffi_card, fb_len, crtc_len, conn_len, enc_len) = {
-            let mut fb_slice = &mut fbs[..];
-            let mut crtc_slice = &mut crtcs[..];
-            let mut conn_slice = &mut connectors[..];
-            let mut enc_slice = &mut encoders[..];
+        let mut fb_slice = fbs.as_mut_u32_slice();
+        let mut crtc_slice = crtcs.as_mut_u32_slice();
+        let mut conn_slice = connectors.as_mut_u32_slice();
+        let mut enc_slice = encoders.as_mut_u32_slice();
 
-            let ffi_card = ffi::mode::get_resources(
-                self.as_raw_fd(),
-                &mut fb_slice,
-                &mut crtc_slice,
-                &mut conn_slice,
-                &mut enc_slice,
-            ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+        let ffi_card = ffi::mode::get_resources(
+            self.as_raw_fd(),
+            &mut fb_slice,
+            &mut crtc_slice,
+            &mut conn_slice,
+            &mut enc_slice,
+        ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
-            (
-                ffi_card,
-                fb_slice.len(),
-                crtc_slice.len(),
-                conn_slice.len(),
-                enc_slice.len(),
-            )
-        };
+        fbs.len = fb_slice.len();
+        crtcs.len = crtc_slice.len();
+        connectors.len = conn_slice.len();
+        encoders.len = enc_slice.len();
 
-        let res = unsafe {
-            ResourceHandles {
-                fbs: SmallBuffer::new(mem::transmute(fbs), fb_len),
-                crtcs: SmallBuffer::new(mem::transmute(crtcs), crtc_len),
-                connectors: SmallBuffer::new(mem::transmute(connectors), conn_len),
-                encoders: SmallBuffer::new(mem::transmute(encoders), enc_len),
-                width: (ffi_card.min_width, ffi_card.max_width),
-                height: (ffi_card.min_height, ffi_card.max_height),
-            }
+        let res = ResourceHandles {
+            fbs: fbs,
+            crtcs: crtcs,
+            connectors: connectors,
+            encoders: encoders,
+            width: (ffi_card.min_width, ffi_card.max_width),
+            height: (ffi_card.min_height, ffi_card.max_height),
         };
 
         Ok(res)
@@ -102,21 +94,16 @@ pub trait Device: super::Device {
 
     /// Gets the set of plane handles that this device currently has
     fn plane_handles(&self) -> Result<PlaneResourceHandles, SystemError> {
-        let mut planes = [0u32; 32];
+        let mut planes: HandleBuffer32<plane::Handle> = Default::default();
+        let mut plane_slice = planes.as_mut_u32_slice();
 
-        let len = {
-            let mut plane_slice = &mut planes[..];
+        ffi::mode::get_plane_resources(self.as_raw_fd(), &mut plane_slice)
+            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
-            ffi::mode::get_plane_resources(self.as_raw_fd(), &mut plane_slice)
-                .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+        planes.len = plane_slice.len();
 
-            plane_slice.len()
-        };
-
-        let res = unsafe {
-            PlaneResourceHandles {
-                planes: SmallBuffer::new(mem::transmute(planes), len),
-            }
+        let res = PlaneResourceHandles {
+            planes: planes,
         };
 
         Ok(res)
@@ -124,34 +111,28 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific connector
     fn get_connector(&self, handle: connector::Handle) -> Result<connector::Info, SystemError> {
-        // Maximum number of encoders is 3 due to the kernel
-        let mut encoders = [0u32; 3];
+        // Maximum number of encoders is 3 due to kernel restrictions
+        let mut encoders: HandleBuffer3<encoder::Handle> = Default::default();
+        let mut enc_slice = encoders.as_mut_u32_slice();
 
-        let (enc_len, info) = {
-            let mut enc_slice = &mut encoders[..];
+        let info = ffi::mode::get_connector_without_props_or_modes(
+            self.as_raw_fd(),
+            handle.into(),
+            &mut enc_slice,
+        ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
-            let info = ffi::mode::get_connector_without_props_or_modes(
-                self.as_raw_fd(),
-                handle.into(),
-                &mut enc_slice,
-            ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
-
-            (enc_slice.len(), info)
-        };
-
-        let conn = unsafe {
-            connector::Info {
-                handle: handle,
-                id: (connector::Kind::from(info.connector_type), info.connector_type_id),
-                connection: connector::State::from(info.connection),
-                size: (info.mm_width, info.mm_height),
-                subpixel: (),
-                encoders: connector::EncodersBuffer::new(mem::transmute(encoders), enc_len),
-                curr_enc: match info.encoder_id {
-                    0 => None,
-                    x => Some(encoder::Handle::from(x)),
-                },
-            }
+        let conn = connector::Info {
+            handle: handle,
+            kind: connector::Kind::from(info.connector_type),
+            id: info.connector_type_id,
+            connection: connector::State::from(info.connection),
+            size: (info.mm_width, info.mm_height),
+            subpixel: (),
+            encoders: encoders,
+            curr_enc: match info.encoder_id {
+                0 => None,
+                x => Some(encoder::Handle::from(x)),
+            },
         };
 
         Ok(conn)
@@ -254,10 +235,10 @@ pub trait Device: super::Device {
 /// The set of [ResourceHandles](ResourceHandle.t.html) that a
 /// [Device](Device.t.html) exposes. Excluding Plane resources.
 pub struct ResourceHandles {
-    fbs: SmallBuffer<framebuffer::Handle>,
-    crtcs: SmallBuffer<crtc::Handle>,
-    connectors: SmallBuffer<connector::Handle>,
-    encoders: SmallBuffer<encoder::Handle>,
+    fbs: HandleBuffer32<framebuffer::Handle>,
+    crtcs: HandleBuffer32<crtc::Handle>,
+    connectors: HandleBuffer32<connector::Handle>,
+    encoders: HandleBuffer32<encoder::Handle>,
     width: (u32, u32),
     height: (u32, u32),
 }
@@ -265,22 +246,22 @@ pub struct ResourceHandles {
 impl ResourceHandles {
     /// Returns the set of [connector::Handles](connector/Handle.t.html)
     pub fn connectors(&self) -> &[connector::Handle] {
-        self.connectors.as_ref()
+        self.connectors.as_slice()
     }
 
     /// Returns the set of [encoder::Handles](encoder/Handle.t.html)
     pub fn encoders(&self) -> &[encoder::Handle] {
-        self.encoders.as_ref()
+        self.encoders.as_slice()
     }
 
     /// Returns the set of [crtc::Handles](crtc/Handle.t.html)
     pub fn crtcs(&self) -> &[crtc::Handle] {
-        self.crtcs.as_ref()
+        self.crtcs.as_slice()
     }
 
     /// Returns the set of [framebuffer::Handles](framebuffer/Handle.t.html)
     pub fn framebuffers(&self) -> &[framebuffer::Handle] {
-        self.fbs.as_ref()
+        self.fbs.as_slice()
     }
 }
 
@@ -288,13 +269,13 @@ impl ResourceHandles {
 /// The set of [plane::Handles](plane/Handle.t.html) that a
 /// [Device](Device.t.html) exposes.
 pub struct PlaneResourceHandles {
-    planes: SmallBuffer<plane::Handle>,
+    planes: HandleBuffer32<plane::Handle>,
 }
 
 impl PlaneResourceHandles {
     /// Returns the set of [plane::Handles](plane/Handle.t.html)
     pub fn planes(&self) -> &[plane::Handle] {
-        self.planes.as_ref()
+        self.planes.as_slice()
     }
 }
 
@@ -352,5 +333,85 @@ impl From<ffi::drm_mode_modeinfo> for Mode {
 impl Into<ffi::drm_mode_modeinfo> for Mode {
     fn into(self) -> ffi::drm_mode_modeinfo {
         self.mode
+    }
+}
+
+use std::marker::PhantomData;
+
+/// Buffer that can hold up to 32 handles.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub(crate) struct HandleBuffer32<T> where T: From<u32> + Into<u32> {
+    data: [u32; 32],
+    len: usize,
+    _phantom: PhantomData<T>
+}
+
+impl<T> Default for HandleBuffer32<T> where T: From<u32> + Into<u32> {
+    fn default() -> HandleBuffer32<T> {
+        HandleBuffer32 {
+            len: 32,
+            ..Default::default()
+        }
+    }
+}
+
+impl<T> HandleBuffer32<T> where T: From<u32> + Into<u32> {
+    /// Returns the data as an immutable `u32` slice.
+    fn as_u32_slice(&self) -> &[u32] {
+        &self.data[..self.len]
+    }
+
+    /// Returns the data as a mutable `u32` slice.
+    fn as_mut_u32_slice(&mut self) -> &mut [u32] {
+        &mut self.data[..self.len]
+    }
+
+    /// Returns the underlying data as an immutable slice.
+    unsafe fn as_slice(&self) -> &[T] {
+        mem::transmute(self.as_u32_slice())
+    }
+
+    /// Returns the underlying data as a mutable slice.
+    unsafe fn as_mut_slice(&mut self) -> &mut [T] {
+        mem::transmute(self.as_mut_u32_slice())
+    }
+}
+
+/// Buffer that can hold up to 3 handles.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub(crate) struct HandleBuffer3<T> where T: From<u32> + Into<u32> {
+    data: [u32; 3],
+    len: usize,
+    _phantom: PhantomData<T>
+}
+
+impl<T> Default for HandleBuffer3<T> where T: From<u32> + Into<u32> {
+    fn default() -> HandleBuffer3<T> {
+        HandleBuffer3 {
+            len: 3,
+            ..Default::default()
+        }
+    }
+}
+
+impl<T> HandleBuffer3<T> where T: From<u32> + Into<u32> {
+    /// Returns the data as an immutable `u32` slice.
+    fn as_u32_slice(&self) -> &[u32] {
+        &self.data[..self.len]
+    }
+
+    /// Returns the data as a mutable `u32` slice.
+    fn as_mut_u32_slice(&mut self) -> &mut [u32] {
+        &mut self.data[..self.len]
+    }
+
+    /// Returns the underlying data as an immutable slice.
+    unsafe fn as_slice(&self) -> &[T] {
+        mem::transmute(self.as_u32_slice())
+    }
+
+    /// Returns the underlying data as a mutable slice.
+    unsafe fn as_mut_slice(&mut self) -> &mut [T] {
+        mem::transmute(self.as_mut_u32_slice())
     }
 }

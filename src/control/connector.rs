@@ -8,6 +8,7 @@
 
 use control::encoder::Handle as EncoderHandle;
 use control::Mode;
+use control::HandleBuffer3;
 use ffi;
 
 use util::*;
@@ -32,11 +33,12 @@ impl Into<u32> for Handle {
 /// Information about a specific connector
 pub struct Info {
     pub(crate) handle: Handle,
-    pub(crate) conn_type: Id,
+    pub(crate) kind: Kind,
+    pub(crate) id: u32,
     pub(crate) connection: State,
     pub(crate) size: (u32, u32),
     pub(crate) subpixel: (),
-    pub(crate) encoders: EncodersBuffer,
+    pub(crate) encoders: HandleBuffer3<EncoderHandle>,
     pub(crate) curr_enc: Option<EncoderHandle>,
 }
 
@@ -48,12 +50,12 @@ impl Info {
 
     /// The connector's type
     pub fn kind(&self) -> Kind {
-        self.conn_type
+        self.kind
     }
 
-    /// A more identifiable name
+    /// If there are multiple of this `Kind` of connector, this ID will be different
     pub fn kind_id(&self) -> u32 {
-        self.conn_type_id
+        self.id
     }
 
     /// The connector's state
@@ -68,7 +70,7 @@ impl Info {
 
     /// Returns a list of encoders that can be used on this connector
     pub fn encoders(&self) -> &[EncoderHandle] {
-        self.encoders.as_ref()
+        self.encoders.as_slice()
     }
 
     /// Gets the handle of the encoder currently used if it exists
@@ -152,9 +154,6 @@ impl Into<u32> for Kind {
     }
 }
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Id(pub Kind, pub u32);
-
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// The state of the connector.
@@ -185,29 +184,5 @@ impl Into<u32> for State {
             State::Disconnected => 2,
             State::Unknown => 3,
         }
-    }
-}
-
-/// Holds a small buffer of encoder handles for a connector.
-///
-/// The Linux kernel sets DRM_CONNECTOR_MAX_ENCODER to 3, so that is our limit.
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub(crate) struct EncodersBuffer {
-    data: [EncoderHandle; 3],
-    len: usize,
-}
-
-impl EncodersBuffer {
-    pub fn new(data: [EncoderHandle; 3], len: usize) -> Self {
-        Self {
-            data: data,
-            len: len,
-        }
-    }
-}
-
-impl AsRef<[EncoderHandle]> for EncodersBuffer {
-    fn as_ref(&self) -> &[EncoderHandle] {
-        &self.data[..self.len]
     }
 }
