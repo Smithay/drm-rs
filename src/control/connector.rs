@@ -8,7 +8,6 @@
 
 use control::encoder::Handle as EncoderHandle;
 use control::Mode;
-use control::HandleBuffer3;
 use ffi;
 
 use util::*;
@@ -38,7 +37,7 @@ pub struct Info {
     pub(crate) connection: State,
     pub(crate) size: (u32, u32),
     pub(crate) subpixel: (),
-    pub(crate) encoders: HandleBuffer3<EncoderHandle>,
+    pub(crate) encoders: Buffer4x3<EncoderHandle>,
     pub(crate) curr_enc: Option<EncoderHandle>,
 }
 
@@ -70,7 +69,7 @@ impl Info {
 
     /// Returns a list of encoders that can be used on this connector
     pub fn encoders(&self) -> &[EncoderHandle] {
-        self.encoders.as_slice()
+        unsafe { self.encoders.as_slice() }
     }
 
     /// Gets the handle of the encoder currently used if it exists

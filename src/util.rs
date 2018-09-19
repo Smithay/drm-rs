@@ -77,3 +77,93 @@ impl fmt::Display for SmallOsString {
         write!(f, "{}", lossy_utf8)
     }
 }
+
+use std::marker::PhantomData;
+
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub(crate) struct Buffer4x32<T> {
+    data: [u32; 32],
+    len: usize,
+    _phantom: PhantomData<T>,
+}
+
+impl<T> Default for Buffer4x32<T> {
+    fn default() -> Buffer4x32<T> {
+        Buffer4x32 {
+            len: 32 as usize,
+            ..Default::default()
+        }
+    }
+}
+
+impl<T> Buffer4x32<T> {
+    /// Returns the data as an immutable `u32` slice.
+    pub fn as_u32_slice(&self) -> &[u32] {
+        &self.data[..self.len]
+    }
+
+    /// Returns the data as a mutable `u32` slice.
+    pub fn as_mut_u32_slice(&mut self) -> &mut [u32] {
+        &mut self.data[..self.len]
+    }
+
+    /// Returns the underlying data as an immutable slice.
+    pub unsafe fn as_slice(&self) -> &[T] {
+        use std::mem;
+        mem::transmute(self.as_u32_slice())
+    }
+
+    /// Returns the underlying data as a mutable slice.
+    pub unsafe fn as_mut_slice(&mut self) -> &mut [T] {
+        use std::mem;
+        mem::transmute(self.as_mut_u32_slice())
+    }
+
+    pub fn update_len(&mut self, len: usize) {
+        self.len = len;
+    }
+}
+
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub(crate) struct Buffer4x3<T> {
+    data: [u32; 3],
+    len: usize,
+    _phantom: PhantomData<T>,
+}
+
+impl<T> Default for Buffer4x3<T> {
+    fn default() -> Buffer4x3<T> {
+        Buffer4x3 {
+            len: 32 as usize,
+            ..Default::default()
+        }
+    }
+}
+
+impl<T> Buffer4x3<T> {
+    /// Returns the data as an immutable `u32` slice.
+    pub fn as_u32_slice(&self) -> &[u32] {
+        &self.data[..self.len]
+    }
+
+    /// Returns the data as a mutable `u32` slice.
+    pub fn as_mut_u32_slice(&mut self) -> &mut [u32] {
+        &mut self.data[..self.len]
+    }
+
+    /// Returns the underlying data as an immutable slice.
+    pub unsafe fn as_slice(&self) -> &[T] {
+        use std::mem;
+        mem::transmute(self.as_u32_slice())
+    }
+
+    /// Returns the underlying data as a mutable slice.
+    pub unsafe fn as_mut_slice(&mut self) -> &mut [T] {
+        use std::mem;
+        mem::transmute(self.as_mut_u32_slice())
+    }
+
+    pub fn update_len(&mut self, len: usize) {
+        self.len = len;
+    }
+}
