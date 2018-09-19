@@ -60,10 +60,10 @@ pub trait Device: super::Device {
         let mut connectors: Buffer4x32<connector::Handle> = Default::default();
         let mut encoders: Buffer4x32<encoder::Handle> = Default::default();
 
-        let mut fb_len = 0;
-        let mut crtc_len = 0;
-        let mut conn_len = 0;
-        let mut enc_len = 0;
+        let fb_len: usize;
+        let crtc_len: usize;
+        let conn_len: usize;
+        let enc_len: usize;
 
         let ffi_card = {
             let mut fb_slice = fbs.as_mut_u32_slice();
@@ -107,7 +107,7 @@ pub trait Device: super::Device {
     /// Gets the set of plane handles that this device currently has
     fn plane_handles(&self) -> Result<PlaneResourceHandles, SystemError> {
         let mut planes: Buffer4x32<plane::Handle> = Default::default();
-        let mut plane_len = 0;
+        let plane_len: usize;
 
         {
             let mut plane_slice = planes.as_mut_u32_slice();
@@ -128,7 +128,7 @@ pub trait Device: super::Device {
     fn get_connector(&self, handle: connector::Handle) -> Result<connector::Info, SystemError> {
         // Maximum number of encoders is 3 due to kernel restrictions
         let mut encoders: Buffer4x3<encoder::Handle> = Default::default();
-        let mut enc_len = 0;
+        let enc_len: usize;
 
         let conn = {
             let mut enc_slice = encoders.as_mut_u32_slice();
@@ -226,39 +226,43 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific plane
     fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
-        let mut formats = [0u32; 32];
+        let mut formats: Buffer4x3<u32> = Default::default();
+        let fmt_len: usize;
 
-        let (fmt_len, info) = {
-            let mut fmt_slice = &mut formats[..];
+        let plane = {
+            let mut fmt_slice = formats.as_mut_u32_slice();
+
             let info = ffi::mode::get_plane(self.as_raw_fd(), handle.into(), &mut fmt_slice)
                 .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
-            let plane = plane::Info {
-                handle: handle,
-                crtc: match info.crtc_id {
-                    0 => None,
-                    x => Some(crtc::Handle::from(x)),
-                },
-                fb: match info.fb_id {
-                    0 => None,
-                    x => Some(framebuffer::Handle::from(x)),
-                },
-                pos_crtcs: info.possible_crtcs,
-                gamma_size: info.gamma_size,
-            };
+            fmt_len = fmt_slice.len();
 
-            (fmt_slice.len(), plane)
+            info
         };
 
-        println!("{:?}", formats);
+        formats.update_len(fmt_len);
 
-        Ok(info)
+        let plane = plane::Info {
+            handle: handle,
+            crtc: match plane.crtc_id {
+                0 => None,
+                x => Some(crtc::Handle::from(x)),
+            },
+            fb: match plane.fb_id {
+                0 => None,
+                x => Some(framebuffer::Handle::from(x)),
+            },
+            pos_crtcs: plane.possible_crtcs,
+            gamma_size: plane.gamma_size,
+        };
+
+        Ok(plane)
     }
 }
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// The set of [ResourceHandles](ResourceHandle.t.html) that a
 /// [Device](Device.t.html) exposes. Excluding Plane resources.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct ResourceHandles {
     fbs: Buffer4x32<framebuffer::Handle>,
     crtcs: Buffer4x32<crtc::Handle>,
@@ -290,9 +294,9 @@ impl ResourceHandles {
     }
 }
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// The set of [plane::Handles](plane/Handle.t.html) that a
 /// [Device](Device.t.html) exposes.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct PlaneResourceHandles {
     planes: Buffer4x32<plane::Handle>,
 }
@@ -304,6 +308,7 @@ impl PlaneResourceHandles {
     }
 }
 
+/// Resolution and timing information for a display mode.
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Mode {
     // We're using the FFI struct because the DRM API expects it when giving it
