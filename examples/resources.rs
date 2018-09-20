@@ -20,11 +20,16 @@ pub fn main() {
     for &handle in resources.connectors() {
         let info = card.get_connector(handle).unwrap();
         println!("Connector: {:?}", handle);
-        println!("\t{:?}-{}", info.kind(), info.kind_id());
+        println!("\t{:?}-{}", info.interface(), info.interface_id());
         println!("\t{:?}", info.state());
         println!("\t{:?}", info.size());
-        println!("\t{:?}", info.current_encoder());
+        println!("\t{:?}", info.subpixel_order());
         println!("\t{:?}", info.encoders());
+        println!("\t{:?}", info.current_encoder());
+
+        for &mode in card.get_modes(handle).unwrap().as_slice() {
+            println!("{:?}", mode);
+        }
     }
 
     for &handle in resources.encoders() {

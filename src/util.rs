@@ -1,5 +1,8 @@
 //! Utilities used internally by this crate.
 
+#![allow(dead_code)]
+#![allow(missing_docs)]
+
 use core::str::lossy::Utf8Lossy;
 pub use std::ffi::OsStr;
 
@@ -191,6 +194,7 @@ impl<T, U> BufferNx32<T, U> {
         mem::transmute(self.as_mut_raw_slice())
     }
 
+    /// Updates the length for returning slices.
     pub fn update_len(&mut self, len: usize) {
         self.len = len;
     }

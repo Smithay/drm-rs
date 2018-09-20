@@ -395,6 +395,29 @@ pub fn get_connector_without_props_or_modes(
     Ok(info)
 }
 
+/// Get the list of modes this connector supports.
+pub fn get_connector_without_props_or_encoders(
+    fd: RawFd,
+    id: u32,
+    modes: &mut &mut [drm_mode_modeinfo],
+) -> Result<drm_mode_get_connector, Error> {
+    let mut info = drm_mode_get_connector {
+        connector_id: id,
+        modes_ptr: modes.as_ptr() as _,
+        count_modes: modes.len() as _,
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::get_connector(fd, &mut info)?;
+    }
+
+    modes.shrink(info.count_modes as _);
+
+    Ok(info)
+}
+
+
 /// Get info about an encoder
 pub fn get_encoder(fd: RawFd, id: u32) -> Result<drm_mode_get_encoder, Error> {
     let mut info = drm_mode_get_encoder {

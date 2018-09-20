@@ -6,8 +6,8 @@
 use control::crtc::Handle as CrtcHandle;
 use ffi;
 
+/// A handle to an encoder
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// A handle to a specific encoder
 pub struct Handle(u32);
 
 impl From<u32> for Handle {
@@ -22,8 +22,8 @@ impl Into<u32> for Handle {
     }
 }
 
+/// Information about an encoder
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// Information about a specific encoder
 pub struct Info {
     pub(crate) handle: Handle,
     pub(crate) enc_type: Kind,
@@ -59,9 +59,9 @@ impl Info {
     }
 }
 
+/// The type of encoder.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// The type of encoder.
 pub enum Kind {
     None,
     DAC,

@@ -7,13 +7,12 @@
 //! including the modes that the current display supports.
 
 use control::encoder::Handle as EncoderHandle;
-use control::Mode;
 use ffi;
 
 use util::*;
 
+/// A handle to a connector
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// A handle to a specific connector
 pub struct Handle(u32);
 
 impl From<u32> for Handle {
@@ -28,60 +27,70 @@ impl Into<u32> for Handle {
     }
 }
 
+/// Information about a connector
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// Information about a specific connector
 pub struct Info {
     pub(crate) handle: Handle,
-    pub(crate) kind: Kind,
-    pub(crate) id: u32,
+    pub(crate) interface: Interface,
+    pub(crate) interface_id: u32,
     pub(crate) connection: State,
-    pub(crate) size: (u32, u32),
-    pub(crate) subpixel: (),
+    pub(crate) size: Option<(u32, u32)>,
+    pub(crate) subpixel: Option<SubPixelOrder>,
     pub(crate) encoders: Buffer4x3<EncoderHandle>,
     pub(crate) curr_enc: Option<EncoderHandle>,
 }
 
 impl Info {
-    /// The connector's handle
+    /// Returns the handle to this connector.
     pub fn handle(&self) -> Handle {
         self.handle
     }
 
-    /// The connector's type
-    pub fn kind(&self) -> Kind {
-        self.kind
+    /// Returns the type of `Interface` of this connector.
+    pub fn interface(&self) -> Interface {
+        self.interface
     }
 
-    /// If there are multiple of this `Kind` of connector, this ID will be different
-    pub fn kind_id(&self) -> u32 {
-        self.id
+    /// Returns the interface ID of this connector.
+    ///
+    /// When multiple connectors have the same `Interface`, they will have
+    /// different interface IDs. For example, if a single device has two
+    /// connectors with a DisplayPort `Interface`, then they will each have a
+    /// different ID.
+    pub fn interface_id(&self) -> u32 {
+        self.interface_id
     }
 
-    /// The connector's state
+    /// Returns the `State` of this connector.
     pub fn state(&self) -> State {
         self.connection
     }
 
-    /// The size of this display in millimeters
-    pub fn size(&self) -> (u32, u32) {
+    /// Returns the size of the display (in millimeters) if connected.
+    pub fn size(&self) -> Option<(u32, u32)> {
         self.size
     }
 
-    /// Returns a list of encoders that can be used on this connector
+    /// Returns how subpixels are ordered for this connector's display.
+    pub fn subpixel_order(&self) -> Option<SubPixelOrder> {
+        self.subpixel
+    }
+
+    /// Returns a list of encoders that can be possibly used by this connector.
     pub fn encoders(&self) -> &[EncoderHandle] {
         unsafe { self.encoders.as_slice() }
     }
 
-    /// Gets the handle of the encoder currently used if it exists
+    /// Returns the current encoder attached to this connector.
     pub fn current_encoder(&self) -> Option<EncoderHandle> {
         self.curr_enc
     }
 }
 
+/// A physical interface type.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// The type of connector.
-pub enum Kind {
+pub enum Interface {
     Unknown,
     VGA,
     DVII,
@@ -102,60 +111,60 @@ pub enum Kind {
     DPI,
 }
 
-impl From<u32> for Kind {
+impl From<u32> for Interface {
     fn from(n: u32) -> Self {
         match n {
-            ffi::DRM_MODE_CONNECTOR_Unknown => Kind::Unknown,
-            ffi::DRM_MODE_CONNECTOR_VGA => Kind::VGA,
-            ffi::DRM_MODE_CONNECTOR_DVII => Kind::DVII,
-            ffi::DRM_MODE_CONNECTOR_DVID => Kind::DVID,
-            ffi::DRM_MODE_CONNECTOR_DVIA => Kind::DVIA,
-            ffi::DRM_MODE_CONNECTOR_Composite => Kind::Composite,
-            ffi::DRM_MODE_CONNECTOR_SVIDEO => Kind::SVideo,
-            ffi::DRM_MODE_CONNECTOR_LVDS => Kind::LVDS,
-            ffi::DRM_MODE_CONNECTOR_Component => Kind::Component,
-            ffi::DRM_MODE_CONNECTOR_9PinDIN => Kind::NinePinDIN,
-            ffi::DRM_MODE_CONNECTOR_DisplayPort => Kind::DisplayPort,
-            ffi::DRM_MODE_CONNECTOR_HDMIA => Kind::HDMIA,
-            ffi::DRM_MODE_CONNECTOR_HDMIB => Kind::HDMIB,
-            ffi::DRM_MODE_CONNECTOR_TV => Kind::TV,
-            ffi::DRM_MODE_CONNECTOR_eDP => Kind::EmbeddedDisplayPort,
-            ffi::DRM_MODE_CONNECTOR_VIRTUAL => Kind::Virtual,
-            ffi::DRM_MODE_CONNECTOR_DSI => Kind::DSI,
-            ffi::DRM_MODE_CONNECTOR_DPI => Kind::DPI,
-            _ => Kind::Unknown,
+            ffi::DRM_MODE_CONNECTOR_Unknown => Interface::Unknown,
+            ffi::DRM_MODE_CONNECTOR_VGA => Interface::VGA,
+            ffi::DRM_MODE_CONNECTOR_DVII => Interface::DVII,
+            ffi::DRM_MODE_CONNECTOR_DVID => Interface::DVID,
+            ffi::DRM_MODE_CONNECTOR_DVIA => Interface::DVIA,
+            ffi::DRM_MODE_CONNECTOR_Composite => Interface::Composite,
+            ffi::DRM_MODE_CONNECTOR_SVIDEO => Interface::SVideo,
+            ffi::DRM_MODE_CONNECTOR_LVDS => Interface::LVDS,
+            ffi::DRM_MODE_CONNECTOR_Component => Interface::Component,
+            ffi::DRM_MODE_CONNECTOR_9PinDIN => Interface::NinePinDIN,
+            ffi::DRM_MODE_CONNECTOR_DisplayPort => Interface::DisplayPort,
+            ffi::DRM_MODE_CONNECTOR_HDMIA => Interface::HDMIA,
+            ffi::DRM_MODE_CONNECTOR_HDMIB => Interface::HDMIB,
+            ffi::DRM_MODE_CONNECTOR_TV => Interface::TV,
+            ffi::DRM_MODE_CONNECTOR_eDP => Interface::EmbeddedDisplayPort,
+            ffi::DRM_MODE_CONNECTOR_VIRTUAL => Interface::Virtual,
+            ffi::DRM_MODE_CONNECTOR_DSI => Interface::DSI,
+            ffi::DRM_MODE_CONNECTOR_DPI => Interface::DPI,
+            _ => Interface::Unknown,
         }
     }
 }
 
-impl Into<u32> for Kind {
+impl Into<u32> for Interface {
     fn into(self) -> u32 {
         match self {
-            Kind::Unknown => ffi::DRM_MODE_CONNECTOR_Unknown,
-            Kind::VGA => ffi::DRM_MODE_CONNECTOR_VGA,
-            Kind::DVII => ffi::DRM_MODE_CONNECTOR_DVII,
-            Kind::DVID => ffi::DRM_MODE_CONNECTOR_DVID,
-            Kind::DVIA => ffi::DRM_MODE_CONNECTOR_DVIA,
-            Kind::Composite => ffi::DRM_MODE_CONNECTOR_Composite,
-            Kind::SVideo => ffi::DRM_MODE_CONNECTOR_SVIDEO,
-            Kind::LVDS => ffi::DRM_MODE_CONNECTOR_LVDS,
-            Kind::Component => ffi::DRM_MODE_CONNECTOR_Component,
-            Kind::NinePinDIN => ffi::DRM_MODE_CONNECTOR_9PinDIN,
-            Kind::DisplayPort => ffi::DRM_MODE_CONNECTOR_DisplayPort,
-            Kind::HDMIA => ffi::DRM_MODE_CONNECTOR_HDMIA,
-            Kind::HDMIB => ffi::DRM_MODE_CONNECTOR_HDMIB,
-            Kind::TV => ffi::DRM_MODE_CONNECTOR_TV,
-            Kind::EmbeddedDisplayPort => ffi::DRM_MODE_CONNECTOR_eDP,
-            Kind::Virtual => ffi::DRM_MODE_CONNECTOR_VIRTUAL,
-            Kind::DSI => ffi::DRM_MODE_CONNECTOR_DSI,
-            Kind::DPI => ffi::DRM_MODE_CONNECTOR_DPI,
+            Interface::Unknown => ffi::DRM_MODE_CONNECTOR_Unknown,
+            Interface::VGA => ffi::DRM_MODE_CONNECTOR_VGA,
+            Interface::DVII => ffi::DRM_MODE_CONNECTOR_DVII,
+            Interface::DVID => ffi::DRM_MODE_CONNECTOR_DVID,
+            Interface::DVIA => ffi::DRM_MODE_CONNECTOR_DVIA,
+            Interface::Composite => ffi::DRM_MODE_CONNECTOR_Composite,
+            Interface::SVideo => ffi::DRM_MODE_CONNECTOR_SVIDEO,
+            Interface::LVDS => ffi::DRM_MODE_CONNECTOR_LVDS,
+            Interface::Component => ffi::DRM_MODE_CONNECTOR_Component,
+            Interface::NinePinDIN => ffi::DRM_MODE_CONNECTOR_9PinDIN,
+            Interface::DisplayPort => ffi::DRM_MODE_CONNECTOR_DisplayPort,
+            Interface::HDMIA => ffi::DRM_MODE_CONNECTOR_HDMIA,
+            Interface::HDMIB => ffi::DRM_MODE_CONNECTOR_HDMIB,
+            Interface::TV => ffi::DRM_MODE_CONNECTOR_TV,
+            Interface::EmbeddedDisplayPort => ffi::DRM_MODE_CONNECTOR_eDP,
+            Interface::Virtual => ffi::DRM_MODE_CONNECTOR_VIRTUAL,
+            Interface::DSI => ffi::DRM_MODE_CONNECTOR_DSI,
+            Interface::DPI => ffi::DRM_MODE_CONNECTOR_DPI,
         }
     }
 }
 
+/// The state of a connector.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// The state of the connector.
 pub enum State {
     Connected,
     Disconnected,
@@ -185,3 +194,44 @@ impl Into<u32> for State {
         }
     }
 }
+
+/// The subpixel ordering of a connector.
+#[allow(missing_docs)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum SubPixelOrder {
+    HorizontalRGB,
+    HorizontalBGR,
+    VerticalRGB,
+    VerticalBGR,
+    Unknown
+}
+
+impl From<u32> for SubPixelOrder {
+    fn from(n: u32) -> Self {
+        // These variables are not defined in drm_mode.h for some reason.
+        // They were copied from libdrm's xf86DrmMode.h
+        match n {
+            1 => SubPixelOrder::Unknown,
+            2 => SubPixelOrder::HorizontalRGB,
+            3 => SubPixelOrder::HorizontalBGR,
+            4 => SubPixelOrder::VerticalBGR,
+            5 => SubPixelOrder::VerticalBGR,
+            _ => SubPixelOrder::Unknown,
+        }
+    }
+}
+
+impl Into<u32> for SubPixelOrder {
+    fn into(self) -> u32 {
+        // These variables are not defined in drm_mode.h for some reason.
+        // They were copied from libdrm's xf86DrmMode.h
+        match self {
+            SubPixelOrder::Unknown => 1,
+            SubPixelOrder::HorizontalRGB => 2,
+            SubPixelOrder::HorizontalBGR => 3,
+            SubPixelOrder::VerticalRGB => 4,
+            SubPixelOrder::VerticalBGR => 5,
+        }
+    }
+}
+

@@ -148,11 +148,14 @@ pub trait Device: super::Device {
 
         let connector = connector::Info {
             handle: handle,
-            kind: connector::Kind::from(conn.connector_type),
-            id: conn.connector_type_id,
+            interface: connector::Interface::from(conn.connector_type),
+            interface_id: conn.connector_type_id,
             connection: connector::State::from(conn.connection),
-            size: (conn.mm_width, conn.mm_height),
-            subpixel: (),
+            size: match (conn.mm_width, conn.mm_height) {
+                (0, 0) => None,
+                (x, y) => Some((x, y))
+            },
+            subpixel: None, // TODO: Subpixels are not well supported by drivers
             encoders: encoders,
             curr_enc: match conn.encoder_id {
                 0 => None,
@@ -257,6 +260,32 @@ pub trait Device: super::Device {
         };
 
         Ok(plane)
+    }
+
+    /// Returns the set of `Mode`s that a particular connector supports.
+    fn get_modes(&self, handle: connector::Handle) -> Result<ModeList, SystemError> {
+        let mut modes: BufferNx32<Mode, ffi::drm_mode_modeinfo> = Default::default();
+        let mode_len: usize;
+
+        {
+            let mut mode_slice = modes.as_mut_raw_slice();
+
+            ffi::mode::get_connector_without_props_or_encoders(
+                self.as_raw_fd(),
+                handle.into(),
+                &mut mode_slice,
+            ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+
+            mode_len = mode_slice.len();
+        }
+
+        modes.update_len(mode_len);
+
+        let list = ModeList {
+            modes: modes
+        };
+
+        Ok(list)
     }
 }
 
@@ -363,5 +392,19 @@ impl From<ffi::drm_mode_modeinfo> for Mode {
 impl Into<ffi::drm_mode_modeinfo> for Mode {
     fn into(self) -> ffi::drm_mode_modeinfo {
         self.mode
+    }
+}
+
+/// A simple list of `Mode`s
+pub struct ModeList {
+    modes: BufferNx32<Mode, ffi::drm_mode_modeinfo>
+}
+
+impl ModeList {
+    /// Returns the list as a slice.
+    pub fn as_slice(&self) -> &[Mode] {
+        unsafe {
+            self.modes.as_slice()
+        }
     }
 }
