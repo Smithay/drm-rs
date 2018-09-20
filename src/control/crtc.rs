@@ -15,8 +15,8 @@
 use control::framebuffer::Handle as FramebufferHandle;
 use control::Mode;
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// A handle to a specific CRTC
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(u32);
 
 impl From<u32> for Handle {
@@ -31,8 +31,8 @@ impl Into<u32> for Handle {
     }
 }
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 /// Information about a specific CRTC
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Info {
     pub(crate) handle: Handle,
     pub(crate) position: (u32, u32),

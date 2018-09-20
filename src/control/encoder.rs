@@ -33,27 +33,27 @@ pub struct Info {
 }
 
 impl Info {
-    /// The encoder's handle
+    /// Returns the handle to this encoder.
     pub fn handle(&self) -> Handle {
         self.handle
     }
 
-    /// The encoder's type
+    /// Returns the `Kind` of encoder this is.
     pub fn kind(&self) -> Kind {
         self.enc_type
     }
 
-    /// Gets the handle of the CRTC currently used if it exists
+    /// Returns a handle to the CRTC this encoder is attached to.
     pub fn crtc(&self) -> Option<CrtcHandle> {
         self.crtc
     }
 
-    /// Returns a filter for the possible CRTCs that can use this encoder
+    /// Returns a filter for the possible CRTCs that can use this encoder.
     pub fn possible_crtcs(&self) -> () {
         unimplemented!()
     }
 
-    /// Returns a filter for the possible encoders that clones this one
+    /// Returns a filter for the possible encoders that clones this one.
     pub fn possible_clones(&self) -> () {
         unimplemented!()
     }
