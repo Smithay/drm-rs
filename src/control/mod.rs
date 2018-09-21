@@ -39,6 +39,8 @@ pub mod encoder;
 pub mod framebuffer;
 pub mod plane;
 
+pub mod property;
+
 /// This trait should be implemented by any object that acts as a DRM device and
 /// provides modesetting functionality.
 ///
