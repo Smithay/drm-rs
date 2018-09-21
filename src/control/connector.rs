@@ -35,7 +35,6 @@ pub struct Info {
     pub(crate) interface_id: u32,
     pub(crate) connection: State,
     pub(crate) size: Option<(u32, u32)>,
-    pub(crate) subpixel: Option<SubPixelOrder>,
     pub(crate) encoders: Buffer4x3<EncoderHandle>,
     pub(crate) curr_enc: Option<EncoderHandle>,
 }
@@ -54,9 +53,7 @@ impl Info {
     /// Returns the interface ID of this connector.
     ///
     /// When multiple connectors have the same `Interface`, they will have
-    /// different interface IDs. For example, if a single device has two
-    /// connectors with a DisplayPort `Interface`, then they will each have a
-    /// different ID.
+    /// different interface IDs.
     pub fn interface_id(&self) -> u32 {
         self.interface_id
     }
@@ -69,11 +66,6 @@ impl Info {
     /// Returns the size of the display (in millimeters) if connected.
     pub fn size(&self) -> Option<(u32, u32)> {
         self.size
-    }
-
-    /// Returns how subpixels are ordered for this connector's display.
-    pub fn subpixel_order(&self) -> Option<SubPixelOrder> {
-        self.subpixel
     }
 
     /// Returns a list of encoders that can be possibly used by this connector.
@@ -194,44 +186,3 @@ impl Into<u32> for State {
         }
     }
 }
-
-/// The subpixel ordering of a connector.
-#[allow(missing_docs)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum SubPixelOrder {
-    HorizontalRGB,
-    HorizontalBGR,
-    VerticalRGB,
-    VerticalBGR,
-    Unknown
-}
-
-impl From<u32> for SubPixelOrder {
-    fn from(n: u32) -> Self {
-        // These variables are not defined in drm_mode.h for some reason.
-        // They were copied from libdrm's xf86DrmMode.h
-        match n {
-            1 => SubPixelOrder::Unknown,
-            2 => SubPixelOrder::HorizontalRGB,
-            3 => SubPixelOrder::HorizontalBGR,
-            4 => SubPixelOrder::VerticalBGR,
-            5 => SubPixelOrder::VerticalBGR,
-            _ => SubPixelOrder::Unknown,
-        }
-    }
-}
-
-impl Into<u32> for SubPixelOrder {
-    fn into(self) -> u32 {
-        // These variables are not defined in drm_mode.h for some reason.
-        // They were copied from libdrm's xf86DrmMode.h
-        match self {
-            SubPixelOrder::Unknown => 1,
-            SubPixelOrder::HorizontalRGB => 2,
-            SubPixelOrder::HorizontalBGR => 3,
-            SubPixelOrder::VerticalRGB => 4,
-            SubPixelOrder::VerticalBGR => 5,
-        }
-    }
-}
-

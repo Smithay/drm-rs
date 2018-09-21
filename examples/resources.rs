@@ -23,7 +23,6 @@ pub fn main() {
         println!("\t{:?}-{}", info.interface(), info.interface_id());
         println!("\t{:?}", info.state());
         println!("\t{:?}", info.size());
-        println!("\t{:?}", info.subpixel_order());
         println!("\t{:?}", info.encoders());
         println!("\t{:?}", info.current_encoder());
 
@@ -49,10 +48,20 @@ pub fn main() {
     }
 
     for &handle in resources.framebuffers() {
-        println!("{:#?}", card.get_framebuffer(handle));
+        let info = card.get_framebuffer(handle).unwrap();
+        println!("Framebuffer: {:?}", handle);
+        println!("\tSize: {:?}", info.size());
+        println!("\tPitch: {:?}", info.pitch());
+        println!("\tBPP: {:?}", info.bpp());
+        println!("\tDepth: {:?}", info.depth());
     }
 
     for &handle in plane_res.planes() {
-        println!("{:#?}", card.get_plane(handle));
+        let info = card.get_plane(handle).unwrap();
+        println!("Plane: {:?}", handle);
+        println!("\tCRTC: {:?}", info.crtc());
+        println!("\tFramebuffer: {:?}", info.framebuffer());
+        println!("\tGamma Length: {:?}", info.gamma_length());
+        println!("\tFormats: {:?}", info.formats());
     }
 }

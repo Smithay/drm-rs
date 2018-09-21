@@ -18,8 +18,10 @@
 use control::crtc::Handle as CrtcHandle;
 use control::framebuffer::Handle as FramebufferHandle;
 
+use util::*;
+
+/// A handle to a plane
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// A handle to a specific plane
 pub struct Handle(u32);
 
 impl From<u32> for Handle {
@@ -34,12 +36,34 @@ impl Into<u32> for Handle {
     }
 }
 
+/// Information about a plane
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-/// Information about a specific plane
 pub struct Info {
     pub(crate) handle: Handle,
     pub(crate) crtc: Option<CrtcHandle>,
     pub(crate) fb: Option<FramebufferHandle>,
     pub(crate) pos_crtcs: u32,
-    pub(crate) gamma_size: u32,
+    pub(crate) formats: Buffer4x32<u32>,
+}
+
+impl Info {
+    /// Returns the handle to this plane.
+    pub fn handle(&self) -> Handle {
+        self.handle
+    }
+
+    /// Returns the CRTC this plane is attached to.
+    pub fn crtc(&self) -> Option<CrtcHandle> {
+        self.crtc
+    }
+
+    /// Returns the framebuffer this plane is attached to.
+    pub fn framebuffer(&self) -> Option<FramebufferHandle> {
+        self.fb
+    }
+
+    /// Returns the formats this plane supports.
+    pub fn formats(&self) -> &[u32] {
+        unsafe { self.formats.as_slice() }
+    }
 }

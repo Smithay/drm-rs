@@ -417,7 +417,6 @@ pub fn get_connector_without_props_or_encoders(
     Ok(info)
 }
 
-
 /// Get info about an encoder
 pub fn get_encoder(fd: RawFd, id: u32) -> Result<drm_mode_get_encoder, Error> {
     let mut info = drm_mode_get_encoder {

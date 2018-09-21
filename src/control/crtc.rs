@@ -42,27 +42,27 @@ pub struct Info {
 }
 
 impl Info {
-    /// The CRTC's handle
+    /// Returns the handle to this CRTC.
     pub fn handle(&self) -> Handle {
         self.handle
     }
 
-    /// The CRTC's position
+    /// Returns the position of the CRTC.
     pub fn position(&self) -> (u32, u32) {
         self.position
     }
 
-    /// The current mode this CRTC is using
+    /// Returns the current mode of the CRTC.
     pub fn mode(&self) -> Option<Mode> {
         self.mode
     }
 
-    /// The framebuffer currently attached to this CRTC
+    /// Returns the framebuffer currently attached to this CRTC.
     pub fn framebuffer(&self) -> Option<FramebufferHandle> {
         self.fb
     }
 
-    /// The length of the gamma buffer
+    /// Returns the size of the gamma LUT.
     pub fn gamma_length(&self) -> u32 {
         self.gamma_length
     }

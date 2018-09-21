@@ -153,9 +153,8 @@ pub trait Device: super::Device {
             connection: connector::State::from(conn.connection),
             size: match (conn.mm_width, conn.mm_height) {
                 (0, 0) => None,
-                (x, y) => Some((x, y))
+                (x, y) => Some((x, y)),
             },
-            subpixel: None, // TODO: Subpixels are not well supported by drivers
             encoders: encoders,
             curr_enc: match conn.encoder_id {
                 0 => None,
@@ -229,7 +228,7 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific plane
     fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
-        let mut formats: Buffer4x3<u32> = Default::default();
+        let mut formats: Buffer4x32<u32> = Default::default();
         let fmt_len: usize;
 
         let plane = {
@@ -256,7 +255,7 @@ pub trait Device: super::Device {
                 x => Some(framebuffer::Handle::from(x)),
             },
             pos_crtcs: plane.possible_crtcs,
-            gamma_size: plane.gamma_size,
+            formats: formats,
         };
 
         Ok(plane)
@@ -281,9 +280,7 @@ pub trait Device: super::Device {
 
         modes.update_len(mode_len);
 
-        let list = ModeList {
-            modes: modes
-        };
+        let list = ModeList { modes: modes };
 
         Ok(list)
     }
@@ -397,14 +394,12 @@ impl Into<ffi::drm_mode_modeinfo> for Mode {
 
 /// A simple list of `Mode`s
 pub struct ModeList {
-    modes: BufferNx32<Mode, ffi::drm_mode_modeinfo>
+    modes: BufferNx32<Mode, ffi::drm_mode_modeinfo>,
 }
 
 impl ModeList {
     /// Returns the list as a slice.
     pub fn as_slice(&self) -> &[Mode] {
-        unsafe {
-            self.modes.as_slice()
-        }
+        unsafe { self.modes.as_slice() }
     }
 }
