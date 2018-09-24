@@ -15,8 +15,8 @@
 //! * Cursor - Similar to an overlay plane, these are typically used to display
 //! cursor type objects.
 
-use control::crtc::Handle as CrtcHandle;
-use control::framebuffer::Handle as FramebufferHandle;
+use control;
+use ffi;
 
 use util::*;
 
@@ -24,15 +24,16 @@ use util::*;
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(u32);
 
-impl From<u32> for Handle {
-    fn from(raw: u32) -> Self {
+impl control::Handle for Handle {
+    const OBJ_TYPE: u32 = ffi::DRM_MODE_OBJECT_PLANE;
+
+    fn from_raw(raw: u32) -> Self {
         Handle(raw)
     }
-}
 
-impl Into<u32> for Handle {
-    fn into(self) -> u32 {
-        self.0
+    fn into_raw(self) -> u32 {
+        let Handle(raw) = self;
+        raw
     }
 }
 
@@ -40,8 +41,8 @@ impl Into<u32> for Handle {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Info {
     pub(crate) handle: Handle,
-    pub(crate) crtc: Option<CrtcHandle>,
-    pub(crate) fb: Option<FramebufferHandle>,
+    pub(crate) crtc: Option<control::crtc::Handle>,
+    pub(crate) fb: Option<control::framebuffer::Handle>,
     pub(crate) pos_crtcs: u32,
     pub(crate) formats: Buffer4x32<u32>,
 }
@@ -53,12 +54,12 @@ impl Info {
     }
 
     /// Returns the CRTC this plane is attached to.
-    pub fn crtc(&self) -> Option<CrtcHandle> {
+    pub fn crtc(&self) -> Option<control::crtc::Handle> {
         self.crtc
     }
 
     /// Returns the framebuffer this plane is attached to.
-    pub fn framebuffer(&self) -> Option<FramebufferHandle> {
+    pub fn framebuffer(&self) -> Option<control::framebuffer::Handle> {
         self.fb
     }
 

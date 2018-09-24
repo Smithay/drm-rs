@@ -12,22 +12,23 @@
 //! but they can also use pixel data from other planes to perform hardware
 //! compositing.
 
-use control::framebuffer::Handle as FramebufferHandle;
-use control::Mode;
+use control;
+use ffi;
 
 /// A handle to a specific CRTC
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(u32);
 
-impl From<u32> for Handle {
-    fn from(raw: u32) -> Self {
+impl control::Handle for Handle {
+    const OBJ_TYPE: u32 = ffi::DRM_MODE_OBJECT_CRTC;
+
+    fn from_raw(raw: u32) -> Self {
         Handle(raw)
     }
-}
 
-impl Into<u32> for Handle {
-    fn into(self) -> u32 {
-        self.0
+    fn into_raw(self) -> u32 {
+        let Handle(raw) = self;
+        raw
     }
 }
 
@@ -36,8 +37,8 @@ impl Into<u32> for Handle {
 pub struct Info {
     pub(crate) handle: Handle,
     pub(crate) position: (u32, u32),
-    pub(crate) mode: Option<Mode>,
-    pub(crate) fb: Option<FramebufferHandle>,
+    pub(crate) mode: Option<control::Mode>,
+    pub(crate) fb: Option<control::framebuffer::Handle>,
     pub(crate) gamma_length: u32,
 }
 
@@ -53,12 +54,12 @@ impl Info {
     }
 
     /// Returns the current mode of the CRTC.
-    pub fn mode(&self) -> Option<Mode> {
+    pub fn mode(&self) -> Option<control::Mode> {
         self.mode
     }
 
     /// Returns the framebuffer currently attached to this CRTC.
-    pub fn framebuffer(&self) -> Option<FramebufferHandle> {
+    pub fn framebuffer(&self) -> Option<control::framebuffer::Handle> {
         self.fb
     }
 

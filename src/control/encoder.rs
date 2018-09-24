@@ -3,22 +3,23 @@
 //! An encoder is a bridge between a CRTC and a connector that takes the pixel
 //! data of the CRTC and encodes it into a format the connector understands.
 
-use control::crtc::Handle as CrtcHandle;
+use control;
 use ffi;
 
 /// A handle to an encoder
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(u32);
 
-impl From<u32> for Handle {
-    fn from(raw: u32) -> Self {
+impl control::Handle for Handle {
+    const OBJ_TYPE: u32 = ffi::DRM_MODE_OBJECT_ENCODER;
+
+    fn from_raw(raw: u32) -> Self {
         Handle(raw)
     }
-}
 
-impl Into<u32> for Handle {
-    fn into(self) -> u32 {
-        self.0
+    fn into_raw(self) -> u32 {
+        let Handle(raw) = self;
+        raw
     }
 }
 
@@ -27,7 +28,7 @@ impl Into<u32> for Handle {
 pub struct Info {
     pub(crate) handle: Handle,
     pub(crate) enc_type: Kind,
-    pub(crate) crtc: Option<CrtcHandle>,
+    pub(crate) crtc: Option<control::crtc::Handle>,
     pub(crate) pos_crtcs: u32,
     pub(crate) pos_clones: u32,
 }
@@ -44,7 +45,7 @@ impl Info {
     }
 
     /// Returns a handle to the CRTC this encoder is attached to.
-    pub fn crtc(&self) -> Option<CrtcHandle> {
+    pub fn crtc(&self) -> Option<control::crtc::Handle> {
         self.crtc
     }
 

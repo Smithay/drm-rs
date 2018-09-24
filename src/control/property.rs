@@ -11,19 +11,23 @@
 //! directly changing the property value itself, or by batching property changes
 //! together and executing them all atomically.
 
+use control;
+use ffi;
+
 /// A handle to a property
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(u32);
 
-impl From<u32> for Handle {
-    fn from(raw: u32) -> Self {
+impl control::Handle for Handle {
+    const OBJ_TYPE: u32 = ffi::DRM_MODE_OBJECT_PROPERTY;
+
+    fn from_raw(raw: u32) -> Self {
         Handle(raw)
     }
-}
 
-impl Into<u32> for Handle {
-    fn into(self) -> u32 {
-        self.0
+    fn into_raw(self) -> u32 {
+        let Handle(raw) = self;
+        raw
     }
 }
 

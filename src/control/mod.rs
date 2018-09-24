@@ -137,7 +137,7 @@ pub trait Device: super::Device {
 
             let info = ffi::mode::get_connector_without_props_or_modes(
                 self.as_raw_fd(),
-                handle.into(),
+                handle.into_raw(),
                 &mut enc_slice,
             ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
@@ -160,7 +160,7 @@ pub trait Device: super::Device {
             encoders: encoders,
             curr_enc: match conn.encoder_id {
                 0 => None,
-                x => Some(encoder::Handle::from(x)),
+                x => Some(encoder::Handle::from_raw(x)),
             },
         };
 
@@ -169,7 +169,7 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific encoder
     fn get_encoder(&self, handle: encoder::Handle) -> Result<encoder::Info, SystemError> {
-        let info = ffi::mode::get_encoder(self.as_raw_fd(), handle.into())
+        let info = ffi::mode::get_encoder(self.as_raw_fd(), handle.into_raw())
             .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
         let enc = encoder::Info {
@@ -177,7 +177,7 @@ pub trait Device: super::Device {
             enc_type: encoder::Kind::from(info.encoder_type),
             crtc: match info.crtc_id {
                 0 => None,
-                x => Some(crtc::Handle::from(x)),
+                x => Some(crtc::Handle::from_raw(x)),
             },
             pos_crtcs: info.possible_crtcs,
             pos_clones: info.possible_clones,
@@ -188,7 +188,7 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific CRTC
     fn get_crtc(&self, handle: crtc::Handle) -> Result<crtc::Info, SystemError> {
-        let info = ffi::mode::get_crtc(self.as_raw_fd(), handle.into())
+        let info = ffi::mode::get_crtc(self.as_raw_fd(), handle.into_raw())
             .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
         let crtc = crtc::Info {
@@ -200,7 +200,7 @@ pub trait Device: super::Device {
             },
             fb: match info.fb_id {
                 0 => None,
-                x => Some(framebuffer::Handle::from(x)),
+                x => Some(framebuffer::Handle::from_raw(x)),
             },
             gamma_length: info.gamma_size,
         };
@@ -213,7 +213,7 @@ pub trait Device: super::Device {
         &self,
         handle: framebuffer::Handle,
     ) -> Result<framebuffer::Info, SystemError> {
-        let info = ffi::mode::get_framebuffer(self.as_raw_fd(), handle.into())
+        let info = ffi::mode::get_framebuffer(self.as_raw_fd(), handle.into_raw())
             .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
         let fb = framebuffer::Info {
@@ -236,7 +236,7 @@ pub trait Device: super::Device {
         let plane = {
             let mut fmt_slice = formats.as_mut_u32_slice();
 
-            let info = ffi::mode::get_plane(self.as_raw_fd(), handle.into(), &mut fmt_slice)
+            let info = ffi::mode::get_plane(self.as_raw_fd(), handle.into_raw(), &mut fmt_slice)
                 .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
             fmt_len = fmt_slice.len();
@@ -250,11 +250,11 @@ pub trait Device: super::Device {
             handle: handle,
             crtc: match plane.crtc_id {
                 0 => None,
-                x => Some(crtc::Handle::from(x)),
+                x => Some(crtc::Handle::from_raw(x)),
             },
             fb: match plane.fb_id {
                 0 => None,
-                x => Some(framebuffer::Handle::from(x)),
+                x => Some(framebuffer::Handle::from_raw(x)),
             },
             pos_crtcs: plane.possible_crtcs,
             formats: formats,
@@ -273,7 +273,7 @@ pub trait Device: super::Device {
 
             ffi::mode::get_connector_without_props_or_encoders(
                 self.as_raw_fd(),
-                handle.into(),
+                handle.into_raw(),
                 &mut mode_slice,
             ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
 
@@ -404,4 +404,12 @@ impl ModeList {
     pub fn as_slice(&self) -> &[Mode] {
         unsafe { self.modes.as_slice() }
     }
+}
+
+/// Internal trait used to simplify
+pub(crate) trait Handle: Sized {
+    const OBJ_TYPE: u32;
+
+    fn from_raw(u32) -> Self;
+    fn into_raw(self) -> u32;
 }

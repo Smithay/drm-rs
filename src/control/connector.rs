@@ -6,7 +6,7 @@
 //! a display. These objects keep track of connection information and state,
 //! including the modes that the current display supports.
 
-use control::encoder::Handle as EncoderHandle;
+use control;
 use ffi;
 
 use util::*;
@@ -15,15 +15,16 @@ use util::*;
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(u32);
 
-impl From<u32> for Handle {
-    fn from(raw: u32) -> Self {
+impl control::Handle for Handle {
+    const OBJ_TYPE: u32 = ffi::DRM_MODE_OBJECT_CONNECTOR;
+
+    fn from_raw(raw: u32) -> Self {
         Handle(raw)
     }
-}
 
-impl Into<u32> for Handle {
-    fn into(self) -> u32 {
-        self.0
+    fn into_raw(self) -> u32 {
+        let Handle(raw) = self;
+        raw
     }
 }
 
@@ -35,8 +36,8 @@ pub struct Info {
     pub(crate) interface_id: u32,
     pub(crate) connection: State,
     pub(crate) size: Option<(u32, u32)>,
-    pub(crate) encoders: Buffer4x3<EncoderHandle>,
-    pub(crate) curr_enc: Option<EncoderHandle>,
+    pub(crate) encoders: Buffer4x3<control::encoder::Handle>,
+    pub(crate) curr_enc: Option<control::encoder::Handle>,
 }
 
 impl Info {
@@ -69,12 +70,12 @@ impl Info {
     }
 
     /// Returns a list of encoders that can be possibly used by this connector.
-    pub fn encoders(&self) -> &[EncoderHandle] {
+    pub fn encoders(&self) -> &[control::encoder::Handle] {
         unsafe { self.encoders.as_slice() }
     }
 
     /// Returns the current encoder attached to this connector.
-    pub fn current_encoder(&self) -> Option<EncoderHandle> {
+    pub fn current_encoder(&self) -> Option<control::encoder::Handle> {
         self.curr_enc
     }
 }

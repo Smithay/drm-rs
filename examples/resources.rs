@@ -27,9 +27,10 @@ pub fn main() {
         println!("\t{:?}", info.current_encoder());
 
         for &mode in card.get_modes(handle).unwrap().as_slice() {
-            println!("{:?}", mode);
+            //println!("{:?}", mode);
         }
     }
+    println!("\n");
 
     for &handle in resources.encoders() {
         let info = card.get_encoder(handle).unwrap();
@@ -37,6 +38,7 @@ pub fn main() {
         println!("\t{:?}", info.kind());
         println!("\t{:?}", info.crtc());
     }
+    println!("\n");
 
     for &handle in resources.crtcs() {
         let info = card.get_crtc(handle).unwrap();
@@ -46,6 +48,7 @@ pub fn main() {
         println!("\tFramebuffer: {:?}", info.framebuffer());
         println!("\tGamma Length: {:?}", info.gamma_length());
     }
+    println!("\n");
 
     for &handle in resources.framebuffers() {
         let info = card.get_framebuffer(handle).unwrap();
@@ -56,12 +59,13 @@ pub fn main() {
         println!("\tDepth: {:?}", info.depth());
     }
 
+    println!("\n");
+
     for &handle in plane_res.planes() {
         let info = card.get_plane(handle).unwrap();
         println!("Plane: {:?}", handle);
         println!("\tCRTC: {:?}", info.crtc());
         println!("\tFramebuffer: {:?}", info.framebuffer());
-        println!("\tGamma Length: {:?}", info.gamma_length());
         println!("\tFormats: {:?}", info.formats());
     }
 }
