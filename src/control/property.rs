@@ -14,6 +14,8 @@
 use control;
 use ffi;
 
+use util::*;
+
 /// A handle to a property
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(u32);
@@ -35,4 +37,37 @@ impl control::Handle for Handle {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Info {
     pub(crate) handle: Handle,
+}
+
+/// A value not yet bound to any particular property.
+///
+/// For simplicity, a property value is initially unbound to any particular
+/// property handle. It is the user's responsibility to keep track of which
+/// resource and property handle this value needs to be bound to.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct NonBoundedValue {
+    pub(crate) raw: u64
+}
+
+/// A set of property handles and their values.
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct BoundedValueList {
+    pub(crate) handles: Buffer4x24<Handle>,
+    pub(crate) values: Buffer8x24<NonBoundedValue>,
+}
+
+impl BoundedValueList {
+    /// Returns a list of handles for each property in the list.
+    pub fn handles(&self) -> &[Handle] {
+        unsafe {
+            self.handles.as_slice()
+        }
+    }
+
+    /// Returns a list of non-bounded values for each property in the list.
+    pub fn nonbounded_values(&self) -> &[NonBoundedValue] {
+        unsafe {
+            self.values.as_slice()
+        }
+    }
 }

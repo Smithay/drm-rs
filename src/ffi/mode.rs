@@ -585,10 +585,10 @@ pub fn get_properties(
     fd: RawFd,
     id: u32,
     obj_type: u32,
-    props: &mut &[u64],
-    values: &mut &[u64],
+    props: &mut &mut [u32],
+    values: &mut &mut [u64],
 ) -> Result<(), Error> {
-    let mut props = drm_mode_obj_get_properties {
+    let mut info = drm_mode_obj_get_properties {
         props_ptr: props.as_ptr() as _,
         prop_values_ptr: values.as_ptr() as _,
         count_props: props.len() as _,
@@ -597,8 +597,11 @@ pub fn get_properties(
     };
 
     unsafe {
-        ioctl::mode::obj_get_properties(fd, &mut props)?;
+        ioctl::mode::obj_get_properties(fd, &mut info)?;
     }
+
+    props.shrink(info.count_props as _);
+    values.shrink(info.count_props as _);
 
     Ok(())
 }

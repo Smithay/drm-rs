@@ -263,6 +263,26 @@ pub trait Device: super::Device {
         Ok(plane)
     }
 
+    /// Returns information about a specific property.
+    fn get_property(&self, handle: property::Handle) -> Result<property::Info, SystemError> {
+        let mut values: Buffer8x24<property::NonBoundedValue> = Default::default();
+        let mut enums: Buffer8x24<property::NonBoundedValue> = Default::default();
+
+        {
+            let mut val_slice = values.as_mut_u64_slice();
+            let mut enum_slice = values.as_mut_u64_slice();
+            
+            let info = ffi::mode::get_property(self.as_raw_fd(), handle, &mut val_slice)
+                .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+        }
+
+        let property = property::Info {
+            handle: handle
+        };
+
+        Ok(property)
+    }
+
     /// Returns the set of `Mode`s that a particular connector supports.
     fn get_modes(&self, handle: connector::Handle) -> Result<ModeList, SystemError> {
         let mut modes: BufferNx32<Mode, ffi::drm_mode_modeinfo> = Default::default();
@@ -283,6 +303,38 @@ pub trait Device: super::Device {
         modes.update_len(mode_len);
 
         let list = ModeList { modes: modes };
+
+        Ok(list)
+    }
+
+    /// Gets a list of property handles and values for this resource.
+    fn get_properties<T: Handle>(&self, handle: T) -> Result<property::BoundedValueList, SystemError> {
+        let mut prop_ids: Buffer4x24<property::Handle> = Default::default();
+        let mut prop_vals: Buffer8x24<property::NonBoundedValue> = Default::default();
+        let prop_len: usize;
+
+        {
+            let mut prop_id_slice = prop_ids.as_mut_u32_slice();
+            let mut prop_val_slice = prop_vals.as_mut_u64_slice();
+
+            ffi::mode::get_properties(
+                self.as_raw_fd(),
+                handle.into_raw(),
+                T::OBJ_TYPE,
+                &mut prop_id_slice,
+                &mut prop_val_slice,
+            ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+
+            prop_len = prop_id_slice.len();
+        }
+
+        prop_ids.update_len(prop_len);
+        prop_vals.update_len(prop_len);
+
+        let list = property::BoundedValueList {
+            handles: prop_ids,
+            values: prop_vals
+        };
 
         Ok(list)
     }
@@ -406,10 +458,14 @@ impl ModeList {
     }
 }
 
-/// Internal trait used to simplify
-pub(crate) trait Handle: Sized {
+/// Trait used to represent a handle
+pub trait Handle: Sized {
+    /// The value used by the DRM API to identify the type of object.
     const OBJ_TYPE: u32;
 
+    /// Creates a resource handle from a raw value.
     fn from_raw(u32) -> Self;
+
+    /// Extracts the raw value from a resource handle.
     fn into_raw(self) -> u32;
 }
