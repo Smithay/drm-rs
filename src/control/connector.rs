@@ -14,6 +14,10 @@ use drm_ffi as ffi;
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::ResourceHandle);
 
+impl control::ResourceType for Handle {
+    const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_CONNECTOR;
+}
+
 /// Information about a connector
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Info {

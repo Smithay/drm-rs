@@ -3,11 +3,16 @@
 //! Process specific GPU buffers that can be attached to a plane.
 
 use control;
+use drm_ffi as ffi;
 
 /// A handle to an framebuffer
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::ResourceHandle);
+
+impl control::ResourceType for Handle {
+    const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_FB;
+}
 
 /// Information about a framebuffer
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]

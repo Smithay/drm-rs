@@ -13,10 +13,15 @@
 //! compositing.
 
 use control;
+use drm_ffi as ffi;
 
 /// A handle to a specific CRTC
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::ResourceHandle);
+
+impl control::ResourceType for Handle {
+    const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_CRTC;
+}
 
 /// Information about a specific CRTC
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]

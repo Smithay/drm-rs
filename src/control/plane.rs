@@ -16,13 +16,16 @@
 //! cursor type objects.
 
 use control;
-
-use std::mem;
+use drm_ffi as ffi;
 
 /// A handle to a plane
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::ResourceHandle);
+
+impl control::ResourceType for Handle {
+    const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_PLANE;
+}
 
 /// Information about a plane
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -54,6 +57,6 @@ impl Info {
     /// Returns the formats this plane supports.
     pub fn formats(&self) -> &[u32] {
         let buf_len = std::cmp::min(self.formats.len(), self.fmt_len);
-        unsafe { mem::transmute(&self.formats[..buf_len]) }
+        &self.formats[..buf_len]
     }
 }

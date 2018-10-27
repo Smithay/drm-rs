@@ -37,12 +37,16 @@ pub mod encoder;
 pub mod framebuffer;
 pub mod plane;
 
-//pub mod property;
+pub mod property;
 
 use std::mem;
 
 use core::num::NonZeroU32;
 type ResourceHandle = NonZeroU32;
+
+pub(crate) trait ResourceType {
+    const FFI_TYPE: u32;
+}
 
 /// This trait should be implemented by any object that acts as a DRM device and
 /// provides modesetting functionality.
@@ -233,26 +237,27 @@ pub trait Device: super::Device {
         Ok(plane)
     }
     
-    /*
     /// Returns information about a specific property.
     fn get_property(&self, handle: property::Handle) -> Result<property::Info, SystemError> {
-        let mut values: Buffer8x24<property::NonBoundedValue> = Default::default();
-        let mut enums: Buffer8x24<property::NonBoundedValue> = Default::default();
-    
-        {
-            let mut val_slice = values.as_mut_u64_slice();
-            let mut enum_slice = values.as_mut_u64_slice();
+        let mut values = [0u64; 24];
+        let mut enums = [0u64; 24];
+
+        let mut val_slice = &mut values[..];
+        let mut enum_slice = &mut enums[..];
             
-            let info = ffi::mode::get_property(self.as_raw_fd(), handle, &mut val_slice)
-                .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
-        }
+        let _info = ffi::mode::get_property(
+            self.as_raw_fd(),
+            unsafe { mem::transmute(handle) },
+            Some(&mut val_slice),
+            Some(&mut enum_slice)
+        )?;
     
         let property = property::Info {
             handle: handle
         };
     
         Ok(property)
-    }*/
+    }
     
     /// Returns the set of `Mode`s that a particular connector supports.
     fn get_modes(&self, handle: connector::Handle) -> Result<ModeList, SystemError> {
