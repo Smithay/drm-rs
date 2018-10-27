@@ -16,26 +16,13 @@
 //! cursor type objects.
 
 use control;
-use ffi;
 
-use util::*;
+use std::mem;
 
 /// A handle to a plane
+#[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Handle(u32);
-
-impl control::Handle for Handle {
-    const OBJ_TYPE: u32 = ffi::DRM_MODE_OBJECT_PLANE;
-
-    fn from_raw(raw: u32) -> Self {
-        Handle(raw)
-    }
-
-    fn into_raw(self) -> u32 {
-        let Handle(raw) = self;
-        raw
-    }
-}
+pub struct Handle(control::ResourceHandle);
 
 /// Information about a plane
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -44,7 +31,8 @@ pub struct Info {
     pub(crate) crtc: Option<control::crtc::Handle>,
     pub(crate) fb: Option<control::framebuffer::Handle>,
     pub(crate) pos_crtcs: u32,
-    pub(crate) formats: Buffer4x32<u32>,
+    pub(crate) formats: [u32; 8],
+    pub(crate) fmt_len: usize
 }
 
 impl Info {
@@ -65,6 +53,7 @@ impl Info {
 
     /// Returns the formats this plane supports.
     pub fn formats(&self) -> &[u32] {
-        unsafe { self.formats.as_slice() }
+        let buf_len = std::cmp::min(self.formats.len(), self.fmt_len);
+        unsafe { mem::transmute(&self.formats[..buf_len]) }
     }
 }

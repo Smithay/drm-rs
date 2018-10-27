@@ -7,7 +7,7 @@
 extern crate core;
 
 pub extern crate drm_sys;
-use drm_sys::*;
+pub use drm_sys::*;
 
 #[macro_use]
 extern crate failure;
@@ -131,41 +131,10 @@ pub fn get_client(fd: RawFd, idx: c_int) -> Result<drm_client, Error> {
     Ok(client)
 }
 
-/// Used to check which capabilities your graphics driver has.
-#[repr(u64)]
-pub enum DriverCapability {
-    /// DumbBuffer support for scanout
-    DumbBuffer = DRM_CAP_DUMB_BUFFER as u64,
-    /// Unknown
-    VBlankHighCRTC = DRM_CAP_VBLANK_HIGH_CRTC as u64,
-    /// Preferred depth to use for dumb buffers
-    DumbPreferredDepth = DRM_CAP_DUMB_PREFERRED_DEPTH as u64,
-    /// Unknown
-    DumbPreferShadow = DRM_CAP_DUMB_PREFER_SHADOW as u64,
-    /// PRIME handles are support
-    Prime = DRM_CAP_PRIME as u64,
-    /// Unknown
-    TimestampMonotonic = DRM_CAP_TIMESTAMP_MONOTONIC as u64,
-    /// Asynchronous page flipping support
-    ASyncPageFlip = DRM_CAP_ASYNC_PAGE_FLIP as u64,
-    /// Width of cursor buffers
-    CursorWidth = DRM_CAP_CURSOR_WIDTH as u64,
-    /// Height of cursor buffers
-    CursorHeight = DRM_CAP_CURSOR_HEIGHT as u64,
-    /// You can create framebuffers with modifiers
-    AddFB2Modifiers = DRM_CAP_ADDFB2_MODIFIERS as u64,
-    /// Unknown
-    PageFlipTarget = DRM_CAP_PAGE_FLIP_TARGET as u64,
-    /// Uses the CRTC's ID in vblank events
-    CRTCInVBlankEvent = DRM_CAP_CRTC_IN_VBLANK_EVENT as u64,
-    /// SyncObj support
-    SyncObj = DRM_CAP_SYNCOBJ as u64,
-}
-
 /// Check if a capability is set.
-pub fn get_capability(fd: RawFd, cty: DriverCapability) -> Result<drm_get_cap, Error> {
+pub fn get_capability(fd: RawFd, cty: u64) -> Result<drm_get_cap, Error> {
     let mut cap = drm_get_cap {
-        capability: cty as u64,
+        capability: cty,
         ..Default::default()
     };
 
@@ -176,21 +145,10 @@ pub fn get_capability(fd: RawFd, cty: DriverCapability) -> Result<drm_get_cap, E
     Ok(cap)
 }
 
-#[repr(u64)]
-/// Used to enable/disable capabilities for the process.
-pub enum ClientCapability {
-    /// The driver provides 3D screen control
-    Stereo3D = DRM_CLIENT_CAP_STEREO_3D as u64,
-    /// The driver provides more plane types for modesetting
-    UniversalPlanes = DRM_CLIENT_CAP_UNIVERSAL_PLANES as u64,
-    /// The driver provides atomic modesetting
-    Atomic = DRM_CLIENT_CAP_ATOMIC as u64,
-}
-
 /// Attempt to enable/disable a client's capability.
 pub fn set_capability(fd: RawFd, cty: u64, val: bool) -> Result<drm_set_client_cap, Error> {
     let mut cap = drm_set_client_cap {
-        capability: cty as u64,
+        capability: cty,
         value: val as u64,
     };
 

@@ -28,26 +28,20 @@
 
 #![warn(missing_docs)]
 #![feature(str_internals)]
+#![feature(nll)]
 extern crate core;
 
-extern crate drm_sys;
+extern crate drm_ffi;
 
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate nix;
-
-pub mod ffi;
-pub mod result;
 pub(crate) mod util;
 
 pub mod control;
 //pub mod buffer;
 
-use result::SystemError;
-use util::*;
-
 use std::os::unix::io::AsRawFd;
+
+use drm_ffi::result::SystemError;
+use util::*;
 
 /// This trait should be implemented by any object that acts as a DRM device. It
 /// is a prerequisite for using any DRM functionality.
@@ -109,28 +103,27 @@ pub trait Device: AsRawFd {
     /// This function is only available to processes with CAP_SYS_ADMIN
     /// privileges (usually as root)
     fn acquire_master_lock(&self) -> Result<(), SystemError> {
-        ffi::basic::auth::acquire_master(self.as_raw_fd())
-            .map_err(|e| SystemError::from(result::unwrap_errno(e)))
+        drm_ffi::auth::acquire_master(self.as_raw_fd())?;
+        Ok(())
     }
 
     /// Releases the DRM Master lock for another process to use.
     fn release_master_lock(&self) -> Result<(), SystemError> {
-        ffi::basic::auth::release_master(self.as_raw_fd())
-            .map_err(|e| SystemError::from(result::unwrap_errno(e)))
+        drm_ffi::auth::release_master(self.as_raw_fd())?;
+        Ok(())
     }
 
     /// Generates an [AuthToken](AuthToken.t.html) for this process.
     #[deprecated(note = "Consider opening a render node instead.")]
     fn generate_auth_token(&self) -> Result<AuthToken, SystemError> {
-        let token = ffi::basic::auth::get_magic_token(self.as_raw_fd())
-            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+        let token = drm_ffi::auth::get_magic_token(self.as_raw_fd())?;
         Ok(AuthToken(token.magic))
     }
 
     /// Authenticates an [AuthToken](AuthToken.t.html) from another process.
     fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), SystemError> {
-        ffi::basic::auth::auth_magic_token(self.as_raw_fd(), token.0)
-            .map_err(|e| SystemError::from(result::unwrap_errno(e)))
+        drm_ffi::auth::auth_magic_token(self.as_raw_fd(), token.0)?;
+        Ok(())
     }
 
     /// Requests the driver to expose or hide certain capabilities. See
@@ -140,22 +133,24 @@ pub trait Device: AsRawFd {
         cap: ClientCapability,
         enable: bool,
     ) -> Result<(), SystemError> {
-        ffi::basic::set_capability(self.as_raw_fd(), cap as u64, enable)
-            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+        drm_ffi::set_capability(self.as_raw_fd(), cap as u64, enable)?;
         Ok(())
     }
 
     /// Gets the [BusID](BusID.t.html) of this device.
     fn get_bus_id(&self) -> Result<BusID, SystemError> {
         let mut buffer = [0u8; 32];
-        let len = {
+
+        let buffer_len;
+
+        let _busid = {
             let mut slice = &mut buffer[..];
-            ffi::basic::get_bus_id(self.as_raw_fd(), &mut slice)
-                .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
-            slice.len()
+            let busid = drm_ffi::get_bus_id(self.as_raw_fd(), Some(&mut slice))?;
+            buffer_len = slice.len();
+            busid
         };
 
-        let bus_id = BusID(SmallOsString::new(buffer, len));
+        let bus_id = BusID(SmallOsString::from_u8_buffer(buffer, buffer_len));
 
         Ok(bus_id)
     }
@@ -163,43 +158,50 @@ pub trait Device: AsRawFd {
     /// Check to see if our [AuthToken](AuthToken.t.html) has been authenticated
     /// by the DRM Master
     fn authenticated(&self) -> Result<bool, SystemError> {
-        let client = ffi::basic::get_client(self.as_raw_fd(), 0)
-            .map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+        let client = drm_ffi::get_client(self.as_raw_fd(), 0)?;
         Ok(client.auth == 1)
     }
 
     /// Gets the value of a capability.
     fn get_driver_capability(&self, cap: DriverCapability) -> Result<u64, SystemError> {
-        ffi::basic::get_capability(self.as_raw_fd(), cap as u64)
-            .map_err(|e| SystemError::from(result::unwrap_errno(e)))
+        let cap = drm_ffi::get_capability(self.as_raw_fd(), cap as u64)?;
+        Ok(cap.value)
     }
 
     /// Possible errors:
     ///   - EFAULT: Kernel could not copy fields into userspace
     #[allow(missing_docs)]
     fn get_driver(&self) -> Result<Driver, SystemError> {
-        let mut name = [0u8; 32];
-        let mut date = [0u8; 32];
-        let mut desc = [0u8; 32];
+        let mut name = [0i8; 32];
+        let mut date = [0i8; 32];
+        let mut desc = [0i8; 32];
 
-        let (name_len, date_len, desc_len) = {
+        let name_len;
+        let date_len;
+        let desc_len;
+
+        let _version = {
             let mut name_slice = &mut name[..];
             let mut date_slice = &mut date[..];
             let mut desc_slice = &mut desc[..];
 
-            ffi::basic::get_version(
+            let version = drm_ffi::get_version(
                 self.as_raw_fd(),
-                &mut name_slice,
-                &mut date_slice,
-                &mut desc_slice,
-            ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
+                Some(&mut name_slice),
+                Some(&mut date_slice),
+                Some(&mut desc_slice),
+            )?;
 
-            (name_slice.len(), date_slice.len(), desc_slice.len())
+            name_len = name_slice.len();
+            date_len = date_slice.len();
+            desc_len = desc_slice.len();
+
+            version
         };
 
-        let name = SmallOsString::new(name, name_len);
-        let date = SmallOsString::new(date, date_len);
-        let desc = SmallOsString::new(desc, desc_len);
+        let name = SmallOsString::from_i8_buffer(name, name_len);
+        let date = SmallOsString::from_i8_buffer(date, date_len);
+        let desc = SmallOsString::from_i8_buffer(desc, desc_len);
 
         let driver = Driver {
             name: name,
@@ -224,51 +226,6 @@ pub trait Device: AsRawFd {
 /// provide functionality for generating and authenticating these tokens.
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AuthToken(u32);
-
-/// Capabilities that can be toggled by the driver.
-///
-/// # Notes
-///
-/// Some DRM functionality is not immediately exposed by the driver. Before
-/// a process can access this functionality, we must ask the driver to
-/// expose it. This can be done using
-/// [toggle_capability](toggle_capability.t.html).
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum ClientCapability {
-    /// Stereoscopic 3D Support
-    Stereo3D = ffi::DRM_CLIENT_CAP_STEREO_3D as isize,
-    /// Universal plane access and api
-    UniversalPlanes = ffi::DRM_CLIENT_CAP_UNIVERSAL_PLANES as isize,
-    /// Atomic modesetting support
-    Atomic = ffi::DRM_CLIENT_CAP_ATOMIC as isize,
-}
-
-/// Immutable capabilities and attributes of this driver.
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum DriverCapability {
-    /// Do we support VBlanks at CRTC high
-    VBlankHighCrtc = ffi::DRM_CAP_VBLANK_HIGH_CRTC as isize,
-    /// Driver's preferred dumb buffer depth
-    DumbBufferDepthPref = ffi::DRM_CAP_DUMB_PREFERRED_DEPTH as isize,
-    /// Does the driver prefer shadow dumb buffers
-    DumbBufferShadowPref = ffi::DRM_CAP_DUMB_PREFER_SHADOW as isize,
-    /// Are timestamps monotonic
-    MonotonicTimestamp = ffi::DRM_CAP_TIMESTAMP_MONOTONIC as isize,
-    /// Do we support asynchronous page flips.
-    AsyncPageFlip = ffi::DRM_CAP_ASYNC_PAGE_FLIP as isize,
-    /// What is the width of the cursor plane
-    CursorWidth = ffi::DRM_CAP_CURSOR_WIDTH as isize,
-    /// What is the height of the cursor plane
-    CursorHeight = ffi::DRM_CAP_CURSOR_HEIGHT as isize,
-    /// Can we use modifiers when adding frame buffers
-    AddFBModifiers = ffi::DRM_CAP_ADDFB2_MODIFIERS as isize,
-    /// Target page flip
-    PageFlipTarget = ffi::DRM_CAP_PAGE_FLIP_TARGET as isize,
-    /// Does a VBlank event include the CRTC id
-    CrtcInVBlank = ffi::DRM_CAP_CRTC_IN_VBLANK_EVENT as isize,
-    /// Do we support syncobj
-    SyncObj = ffi::DRM_CAP_SYNCOBJ as isize,
-}
 
 /// Bus ID of a device.
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -305,21 +262,46 @@ impl Driver {
     }
 }
 
-/// Signed point
-#[allow(non_camel_case_types)]
-pub type iPoint = (i32, i32);
+/// Used to check which capabilities your graphics driver has.
+#[repr(u64)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum DriverCapability {
+    /// DumbBuffer support for scanout
+    DumbBuffer = drm_ffi::DRM_CAP_DUMB_BUFFER as u64,
+    /// Unknown
+    VBlankHighCRTC = drm_ffi::DRM_CAP_VBLANK_HIGH_CRTC as u64,
+    /// Preferred depth to use for dumb buffers
+    DumbPreferredDepth = drm_ffi::DRM_CAP_DUMB_PREFERRED_DEPTH as u64,
+    /// Unknown
+    DumbPreferShadow = drm_ffi::DRM_CAP_DUMB_PREFER_SHADOW as u64,
+    /// PRIME handles are support
+    Prime = drm_ffi::DRM_CAP_PRIME as u64,
+    /// Unknown
+    MonotonicTimestamp = drm_ffi::DRM_CAP_TIMESTAMP_MONOTONIC as u64,
+    /// Asynchronous page flipping support
+    ASyncPageFlip = drm_ffi::DRM_CAP_ASYNC_PAGE_FLIP as u64,
+    /// Width of cursor buffers
+    CursorWidth = drm_ffi::DRM_CAP_CURSOR_WIDTH as u64,
+    /// Height of cursor buffers
+    CursorHeight = drm_ffi::DRM_CAP_CURSOR_HEIGHT as u64,
+    /// You can create framebuffers with modifiers
+    AddFB2Modifiers = drm_ffi::DRM_CAP_ADDFB2_MODIFIERS as u64,
+    /// Unknown
+    PageFlipTarget = drm_ffi::DRM_CAP_PAGE_FLIP_TARGET as u64,
+    /// Uses the CRTC's ID in vblank events
+    CRTCInVBlankEvent = drm_ffi::DRM_CAP_CRTC_IN_VBLANK_EVENT as u64,
+    /// SyncObj support
+    SyncObj = drm_ffi::DRM_CAP_SYNCOBJ as u64,
+}
 
-/// Unsigned point
-#[allow(non_camel_case_types)]
-pub type uPoint = (u32, u32);
-
-/// Dimensions (width, height)
-pub type Dimensions = (u32, u32);
-
-/// Rectangle with a signed upper left corner
-#[allow(non_camel_case_types)]
-pub type iRect = (iPoint, Dimensions);
-
-/// Rectangle with an unsigned upper left corner
-#[allow(non_camel_case_types)]
-pub type uRect = (uPoint, Dimensions);
+/// Used to enable/disable capabilities for the process.
+#[repr(u64)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum ClientCapability {
+    /// The driver provides 3D screen control
+    Stereo3D = drm_ffi::DRM_CLIENT_CAP_STEREO_3D as u64,
+    /// The driver provides more plane types for modesetting
+    UniversalPlanes = drm_ffi::DRM_CLIENT_CAP_UNIVERSAL_PLANES as u64,
+    /// The driver provides atomic modesetting
+    Atomic = drm_ffi::DRM_CLIENT_CAP_ATOMIC as u64,
+}

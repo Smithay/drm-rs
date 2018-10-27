@@ -13,24 +13,10 @@
 //! compositing.
 
 use control;
-use ffi;
 
 /// A handle to a specific CRTC
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Handle(u32);
-
-impl control::Handle for Handle {
-    const OBJ_TYPE: u32 = ffi::DRM_MODE_OBJECT_CRTC;
-
-    fn from_raw(raw: u32) -> Self {
-        Handle(raw)
-    }
-
-    fn into_raw(self) -> u32 {
-        let Handle(raw) = self;
-        raw
-    }
-}
+pub struct Handle(control::ResourceHandle);
 
 /// Information about a specific CRTC
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]

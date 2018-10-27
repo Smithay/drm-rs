@@ -104,7 +104,8 @@ pub fn main() {
         &[con.handle()],
         (0, 0),
         Some(mode),
-    ).expect("Could not set CRTC");
+    )
+    .expect("Could not set CRTC");
 
     let five_seconds = ::std::time::Duration::from_millis(5000);
     ::std::thread::sleep(five_seconds);

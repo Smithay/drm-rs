@@ -4,24 +4,11 @@
 //! data of the CRTC and encodes it into a format the connector understands.
 
 use control;
-use ffi;
+use drm_ffi as ffi;
 
 /// A handle to an encoder
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Handle(u32);
-
-impl control::Handle for Handle {
-    const OBJ_TYPE: u32 = ffi::DRM_MODE_OBJECT_ENCODER;
-
-    fn from_raw(raw: u32) -> Self {
-        Handle(raw)
-    }
-
-    fn into_raw(self) -> u32 {
-        let Handle(raw) = self;
-        raw
-    }
-}
+pub struct Handle(control::ResourceHandle);
 
 /// Information about an encoder
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]

@@ -12,16 +12,18 @@ pub const CLIENT_CAP_ENUMS: &[CC] = &[CC::Stereo3D, CC::UniversalPlanes, CC::Ato
 
 use drm::DriverCapability as DC;
 pub const DRIVER_CAP_ENUMS: &[DC] = &[
-    DC::VBlankHighCrtc,
-    DC::DumbBufferDepthPref,
-    DC::DumbBufferShadowPref,
+    DC::DumbBuffer,
+    DC::VBlankHighCRTC,
+    DC::DumbPreferredDepth,
+    DC::DumbPreferShadow,
+    DC::Prime,
     DC::MonotonicTimestamp,
-    DC::AsyncPageFlip,
+    DC::ASyncPageFlip,
     DC::CursorWidth,
     DC::CursorHeight,
-    DC::AddFBModifiers,
+    DC::AddFB2Modifiers,
     DC::PageFlipTarget,
-    DC::CrtcInVBlank,
+    DC::CRTCInVBlankEvent,
     DC::SyncObj,
 ];
 

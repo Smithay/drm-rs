@@ -7,26 +7,12 @@
 //! including the modes that the current display supports.
 
 use control;
-use ffi;
-
-use util::*;
+use drm_ffi as ffi;
 
 /// A handle to a connector
+#[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Handle(u32);
-
-impl control::Handle for Handle {
-    const OBJ_TYPE: u32 = ffi::DRM_MODE_OBJECT_CONNECTOR;
-
-    fn from_raw(raw: u32) -> Self {
-        Handle(raw)
-    }
-
-    fn into_raw(self) -> u32 {
-        let Handle(raw) = self;
-        raw
-    }
-}
+pub struct Handle(control::ResourceHandle);
 
 /// Information about a connector
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -36,7 +22,7 @@ pub struct Info {
     pub(crate) interface_id: u32,
     pub(crate) connection: State,
     pub(crate) size: Option<(u32, u32)>,
-    pub(crate) encoders: Buffer4x3<control::encoder::Handle>,
+    pub(crate) encoders: [Option<control::encoder::Handle>; 3],
     pub(crate) curr_enc: Option<control::encoder::Handle>,
 }
 
@@ -70,8 +56,8 @@ impl Info {
     }
 
     /// Returns a list of encoders that can be possibly used by this connector.
-    pub fn encoders(&self) -> &[control::encoder::Handle] {
-        unsafe { self.encoders.as_slice() }
+    pub fn encoders(&self) -> &[Option<control::encoder::Handle>] {
+        &self.encoders
     }
 
     /// Returns the current encoder attached to this connector.
