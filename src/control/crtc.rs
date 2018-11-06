@@ -296,7 +296,7 @@ where
 pub fn set_cursor<T, B>(device: &T, handle: Handle, buffer: &B) -> Result<()>
 where
     T: control::Device,
-    B: buffer::Buffer,
+    B: buffer::Buffer + ?Sized,
 {
     let dimensions = buffer.size();
 
@@ -319,7 +319,7 @@ where
 pub fn set_cursor2<T, B>(device: &T, handle: Handle, buffer: &B, hotspot: iPoint) -> Result<()>
 where
     T: control::Device,
-    B: buffer::Buffer,
+    B: buffer::Buffer + ?Sized,
 {
     let dimensions = buffer.size();
 

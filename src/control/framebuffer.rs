@@ -78,7 +78,7 @@ impl ResourceInfo for Info {
 pub fn create<T, U>(device: &T, buffer: &U) -> Result<Info>
 where
     T: control::Device,
-    U: super::super::buffer::Buffer,
+    U: super::super::buffer::Buffer + ?Sized,
 {
     let framebuffer = {
         let mut raw: ffi::drm_mode_fb_cmd2 = Default::default();
