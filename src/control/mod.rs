@@ -66,7 +66,7 @@ pub trait Device: Sized + super::Device {
     /// [`framebuffer::Info`]: framebuffer/Info.t.html
     fn create_framebuffer<U>(&self, buffer: &U) -> Result<framebuffer::Info>
     where
-        U: super::buffer::Buffer,
+        U: super::buffer::Buffer + ?Sized,
     {
         framebuffer::create(self, buffer)
     }
