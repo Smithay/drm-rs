@@ -8,5 +8,5 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
 drm-ffi = { path = "drm-ffi" }
-nix = "0.10"
+nix = "0.13"
 failure = "*"
