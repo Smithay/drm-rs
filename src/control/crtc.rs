@@ -19,6 +19,12 @@ use drm_ffi as ffi;
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::ResourceHandle);
 
+impl AsRef<control::ResourceHandle> for Handle {
+    fn as_ref(&self) -> &control::ResourceHandle {
+        &self.0
+    }
+}
+
 impl control::ResourceType for Handle {
     const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_CRTC;
 }

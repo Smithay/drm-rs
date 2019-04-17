@@ -44,7 +44,8 @@ use std::mem;
 use core::num::NonZeroU32;
 type ResourceHandle = NonZeroU32;
 
-pub(crate) trait ResourceType {
+#[doc(hidden)]
+pub trait ResourceType : AsRef<ResourceHandle> {
     const FFI_TYPE: u32;
 }
 
@@ -80,7 +81,7 @@ pub trait Device: super::Device {
             Some(&mut crtc_slice),
             Some(&mut conn_slice),
             Some(&mut enc_slice),
-        )?;
+            )?;
 
         let fb_len = fb_slice.len();
         let crtc_len = crtc_slice.len();
@@ -128,12 +129,12 @@ pub trait Device: super::Device {
 
         let ffi_info = ffi::mode::get_connector(
             self.as_raw_fd(),
-            unsafe { mem::transmute(handle) },
+            unsafe { mem::transmute(*handle.as_ref()) },
             None,
             None,
             None,
             Some(&mut enc_slice),
-        )?;
+            )?;
 
         let connector = connector::Info {
             handle: handle,
@@ -155,8 +156,8 @@ pub trait Device: super::Device {
     fn get_encoder(&self, handle: encoder::Handle) -> Result<encoder::Info, SystemError> {
         let info = ffi::mode::get_encoder(
             self.as_raw_fd(),
-            unsafe { mem::transmute(handle) }
-        )?;
+            unsafe { mem::transmute(*handle.as_ref()) },
+            )?;
 
         let enc = encoder::Info {
             handle: handle,
@@ -173,9 +174,9 @@ pub trait Device: super::Device {
     fn get_crtc(&self, handle: crtc::Handle) -> Result<crtc::Info, SystemError> {
         let info = ffi::mode::get_crtc(
             self.as_raw_fd(),
-            unsafe { mem::transmute(handle) }
-        )?;
-    
+            unsafe { mem::transmute(*handle.as_ref()) },
+            )?;
+
         let crtc = crtc::Info {
             handle: handle,
             position: (info.x, info.y),
@@ -186,20 +187,20 @@ pub trait Device: super::Device {
             fb: unsafe { mem::transmute(info.fb_id) },
             gamma_length: info.gamma_size,
         };
-    
+
         Ok(crtc)
     }
-    
+
     /// Returns information about a specific framebuffer
     fn get_framebuffer(
         &self,
         handle: framebuffer::Handle,
-    ) -> Result<framebuffer::Info, SystemError> {
+        ) -> Result<framebuffer::Info, SystemError> {
         let info = ffi::mode::get_framebuffer(
             self.as_raw_fd(),
-            unsafe { mem::transmute(handle) }
-        )?;
-    
+            unsafe { mem::transmute(*handle.as_ref()) },
+            )?;
+
         let fb = framebuffer::Info {
             handle: handle,
             size: (info.width, info.height),
@@ -208,7 +209,7 @@ pub trait Device: super::Device {
             depth: info.depth,
             buffer: info.handle,
         };
-    
+
         Ok(fb)
     }
 
@@ -216,15 +217,15 @@ pub trait Device: super::Device {
     fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
         let mut formats = [0u32; 8];
         let mut fmt_slice = &mut formats[..];
-    
+
         let info = ffi::mode::get_plane(
             self.as_raw_fd(),
-            unsafe { mem::transmute(handle) },
+            unsafe { mem::transmute(*handle.as_ref()) },
             Some(&mut fmt_slice)
-        )?;
-    
+            )?;
+
         let fmt_len = fmt_slice.len();
-    
+
         let plane = plane::Info {
             handle: handle,
             crtc: unsafe { mem::transmute(info.crtc_id) },
@@ -233,10 +234,10 @@ pub trait Device: super::Device {
             formats: formats,
             fmt_len: fmt_len
         };
-    
+
         Ok(plane)
     }
-    
+
     /// Returns information about a specific property.
     fn get_property(&self, handle: property::Handle) -> Result<property::Info, SystemError> {
         let mut values = [0u64; 24];
@@ -244,34 +245,34 @@ pub trait Device: super::Device {
 
         let mut val_slice = &mut values[..];
         let mut enum_slice = &mut enums[..];
-            
+
         let _info = ffi::mode::get_property(
             self.as_raw_fd(),
-            unsafe { mem::transmute(handle) },
+            unsafe { mem::transmute(*handle.as_ref()) },
             Some(&mut val_slice),
             Some(&mut enum_slice)
-        )?;
-    
+            )?;
+
         let property = property::Info {
             handle: handle
         };
-    
+
         Ok(property)
     }
-    
+
     /// Returns the set of `Mode`s that a particular connector supports.
     fn get_modes(&self, handle: connector::Handle) -> Result<ModeList, SystemError> {
         let mut modes = [ffi::drm_mode_modeinfo::default(); 38];
         let mut mode_slice = &mut modes[..];
-    
+
         let _ffi_info = ffi::mode::get_connector(
             self.as_raw_fd(),
-            unsafe { mem::transmute(handle) },
+            unsafe { mem::transmute(*handle.as_ref()) },
             None,
             None,
             Some(&mut mode_slice),
             None,
-        )?;
+            )?;
 
         let mode_len = mode_slice.len();
 
@@ -279,44 +280,41 @@ pub trait Device: super::Device {
             modes: unsafe { mem::transmute(modes) },
             mode_len: mode_len
         };
-    
+
         Ok(list)
     }
 
-    /*
     /// Gets a list of property handles and values for this resource.
-    fn get_properties<T: Handle>(&self, handle: T) -> Result<property::BoundedValueList, SystemError> {
+    fn get_properties<T: ResourceType>(&self, handle: T) -> Result<(), SystemError> {
         let mut prop_ids = [0u32; 32];
-        let mut prop_vals = [0u32; 32];
-    
-        let mut prop_id_slice = &prop_id;
-        let mut prop_val_slice = prop_vals.as_mut_u64_slice();
-    
+        let mut prop_vals = [0u64; 32];
+
+        let mut prop_id_slice = &mut prop_ids[..];
+        let mut prop_val_slice = &mut prop_vals[..];
+
         ffi::mode::get_properties(
             self.as_raw_fd(),
-            handle.into_raw(),
-            T::OBJ_TYPE,
-            &mut prop_id_slice,
-            &mut prop_val_slice,
-        ).map_err(|e| SystemError::from(result::unwrap_errno(e)))?;
-    
-            prop_len = prop_id_slice.len();
-    
-        prop_ids.update_len(prop_len);
-        prop_vals.update_len(prop_len);
-    
-        let list = property::BoundedValueList {
-            handles: prop_ids,
-            values: prop_vals
+            unsafe { mem::transmute(*handle.as_ref()) },
+            T::FFI_TYPE,
+            Some(&mut prop_id_slice),
+            Some(&mut prop_val_slice),
+            )?;
+
+        let prop_len = prop_id_slice.len();
+
+        let prop_val_set = PropertyValueSet {
+            prop_ids: unsafe { mem::transmute(prop_ids) },
+            prop_vals: unsafe { mem::transmute(prop_vals) },
+            len: prop_len
         };
-    
-        Ok(list)
-    }*/
+
+        Ok(())
+    }
 }
 
 /// The set of [ResourceHandles](ResourceHandle.t.html) that a
 /// [Device](Device.t.html) exposes. Excluding Plane resources.
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct ResourceHandles {
     fbs: [Option<framebuffer::Handle>; 32],
     fb_len: usize,
@@ -356,9 +354,22 @@ impl ResourceHandles {
     }
 }
 
+impl std::fmt::Debug for ResourceHandles {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_struct("ResourceHandles")
+            .field("fbs", &self.framebuffers())
+            .field("crtcs", &self.crtcs())
+            .field("connectors", &self.connectors())
+            .field("encoders", &self.encoders())
+            .field("width", &self.width)
+            .field("height", &self.height)
+            .finish()
+    }
+}
+
 /// The set of [plane::Handles](plane/Handle.t.html) that a
 /// [Device](Device.t.html) exposes.
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct PlaneResourceHandles {
     planes: [Option<plane::Handle>; 32],
     plane_len: usize,
@@ -372,9 +383,17 @@ impl PlaneResourceHandles {
     }
 }
 
+impl std::fmt::Debug for PlaneResourceHandles {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_struct("PlaneResourceHandles")
+            .field("planes", &self.planes())
+            .finish()
+    }
+}
+
 /// Resolution and timing information for a display mode.
 #[repr(transparent)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Mode {
     // We're using the FFI struct because the DRM API expects it when giving it
     // to a CRTC or creating a blob from it. Rather than rearranging the fields
@@ -383,6 +402,14 @@ pub struct Mode {
 }
 
 impl Mode {
+    /// Returns the name of this mode.
+    pub fn name(&self) -> &std::ffi::OsStr {
+        use std::os::unix::ffi::OsStrExt;
+
+        let u8_slice: &[u8] = unsafe { mem::transmute(&self.mode.name[..]) };
+        std::ffi::OsStr::from_bytes(u8_slice)
+    }
+
     /// Returns the clock speed of this mode.
     pub fn clock(&self) -> u32 {
         self.mode.clock
@@ -431,7 +458,23 @@ impl Into<ffi::drm_mode_modeinfo> for Mode {
     }
 }
 
+impl std::fmt::Debug for Mode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_struct("Mode")
+            .field("name", &self.name())
+            .field("clock", &self.clock())
+            .field("size", &self.size())
+            .field("hsync", &self.hsync())
+            .field("vsync", &self.vsync())
+            .field("hskew", &self.hskew())
+            .field("vscan", &self.vscan())
+            .field("vrefresh", &self.vrefresh())
+            .finish()
+    }
+}
+
 /// A simple list of `Mode`s
+#[derive(Copy, Clone)]
 pub struct ModeList {
     modes: [Mode; 38],
     mode_len: usize
@@ -439,8 +482,32 @@ pub struct ModeList {
 
 impl ModeList {
     /// Returns the list as a slice.
-    pub fn as_slice(&self) -> &[Mode] {
+    pub fn modes(&self) -> &[Mode] {
         let buf_len = std::cmp::min(self.modes.len(), self.mode_len);
         unsafe { mem::transmute(&self.modes[..buf_len]) }
+    }
+}
+
+impl std::fmt::Debug for ModeList {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_struct("ModeList")
+            .field("modes", &self.modes())
+            .finish()
+    }
+}
+
+/// Wrapper around a set of property IDs and their raw values.
+pub struct PropertyValueSet {
+    prop_ids: [Option<property::Handle>; 32],
+    prop_vals: [property::RawPropertyValue; 32],
+    len: usize
+}
+
+impl PropertyValueSet {
+    /// Returns a pair representing a set of [property::Handles](property/Handle.t.html) and their raw values
+    pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawPropertyValue]) {
+        unsafe {
+            mem::transmute((&self.prop_ids[..self.len], &self.prop_vals[..self.len]))
+        }
     }
 }

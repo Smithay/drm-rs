@@ -11,8 +11,8 @@ pub fn main() {
     println!("{:#?}", res);
 
     for &i in res.connectors() {
-        let info = card.info(i).unwrap();
-        println!("{:#?}", card.info(i).unwrap());
+        let info = card.get_connector(i).unwrap();
+        println!("{:#?}", info);
 
         /*
         for &j in info.property_handles() {
@@ -22,21 +22,21 @@ pub fn main() {
     }
 
     for &i in res.encoders() {
-        println!("{:#?}", card.info(i).unwrap());
+        println!("{:#?}", card.get_encoder(i).unwrap());
     }
 
     for &i in res.crtcs() {
-        println!("{:#?}", card.info(i).unwrap());
+        println!("{:#?}", card.get_crtc(i).unwrap());
     }
 
     for &i in res.framebuffers() {
-        println!("{:#?}", card.info(i).unwrap());
+        println!("{:#?}", card.get_framebuffer(i).unwrap());
     }
 
     let res = card.plane_handles().unwrap();
     println!("{:#?}", res);
 
     for &i in res.planes() {
-        println!("{:#?}", card.info(i).unwrap());
+        println!("{:#?}", card.get_plane(i).unwrap());
     }
 }
