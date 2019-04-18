@@ -285,7 +285,7 @@ pub trait Device: super::Device {
     }
 
     /// Gets a list of property handles and values for this resource.
-    fn get_properties<T: ResourceType>(&self, handle: T) -> Result<(), SystemError> {
+    fn get_properties<T: ResourceType>(&self, handle: T) -> Result<PropertyValueSet, SystemError> {
         let mut prop_ids = [0u32; 32];
         let mut prop_vals = [0u64; 32];
 
@@ -308,7 +308,7 @@ pub trait Device: super::Device {
             len: prop_len
         };
 
-        Ok(())
+        Ok(prop_val_set)
     }
 }
 

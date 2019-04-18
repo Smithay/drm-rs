@@ -430,7 +430,7 @@ pub fn get_property(
     fd: RawFd,
     id: u32,
     values: Option<&mut &mut [u64]>,
-    enums: Option<&mut &mut [u64]>,
+    enums: Option<&mut &mut [drm_mode_property_enum]>,
 ) -> Result<drm_mode_get_property, Error> {
     let mut prop = drm_mode_get_property {
         values_ptr: map_ptr!(&values),

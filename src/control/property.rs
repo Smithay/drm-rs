@@ -13,6 +13,7 @@
 
 use control;
 use drm_ffi as ffi;
+use util::*;
 
 /// A handle to a property
 #[repr(transparent)]
@@ -38,3 +39,17 @@ pub struct Info {
 /// A raw property value that does not have a specific property type
 pub type RawPropertyValue = u64;
 
+pub struct BetaInfo {
+    pub(crate) handle: Handle,
+    pub(crate) name: SmallOsString,
+    pub(crate) value_type: ValueType
+}
+
+pub enum ValueType {
+    UnsignedRange,
+    SignedRange,
+    Enum,
+    Bitmask,
+    Object,
+    Blob,
+}
