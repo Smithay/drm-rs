@@ -1,5 +1,6 @@
 use result::*;
 use ffi;
+use nix::libc;
 use std::ffi::CStr;
 use std::hash::{Hash, Hasher};
 pub mod connector;
@@ -15,7 +16,7 @@ pub type RawHandle = u32;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, From, Into)]
 /// An array to hold the name of a property.
-pub struct RawName([i8; 32]);
+pub struct RawName([libc::c_char; 32]);
 
 /// A trait for devices that provide control (modesetting) functionality.
 pub trait Device: Sized + super::Device {
