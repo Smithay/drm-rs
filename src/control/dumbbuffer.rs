@@ -8,6 +8,7 @@ use ffi;
 use result::*;
 use control;
 use buffer;
+use nix::libc;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 /// Slow, but generic `Buffer` implementation
@@ -93,7 +94,7 @@ impl DumbBuffer {
             let flags = mman::MAP_SHARED;
             let length = self.length;
             let fd = device.as_raw_fd();
-            let offset = raw.offset as i64;
+            let offset = raw.offset as libc::off_t;
             try!(mman::mmap(addr, length, prot, flags, fd, offset))
         };
 
