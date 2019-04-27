@@ -7,10 +7,13 @@ license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
-drm-sys = "0.0.9"
 nix = "0.8.1"
 derive_more = "0.7.1"
+drm-sys = "0.0.9"
 
 [dependencies.error-chain]
 version = "0.11.0"
 default-features = false
+
+[features]
+use_bindgen = ["drm-sys/use_bindgen"]
