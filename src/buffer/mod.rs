@@ -24,12 +24,8 @@
 //! like a regular one. This allows better control and security, and is the
 //! recommended method of sharing buffers.
 
-use ffi::{self, gem::RawHandle};
-use result::Result;
-
 pub mod format;
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
 /// A handle to a GEM buffer.
 ///
 /// # Notes
@@ -37,9 +33,24 @@ pub mod format;
 /// There are no guarantees that this handle is valid. It is up to the user
 /// to make sure this handle does not outlive the underlying buffer, and to
 /// prevent buffers from leaking by properly closing them after they are done.
-pub struct Handle(RawHandle);
+#[repr(transparent)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+pub struct Handle(u32);
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, From, Into)]
+impl Into<u32> for Handle {
+    fn into(self) -> u32 {
+        self.0
+    }
+}
+
+impl std::fmt::Debug for Handle {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_tuple("buffer::Handle")
+            .field(&self.0)
+            .finish()
+    }
+}
+
 /// The name of a GEM buffer.
 ///
 /// # Notes
@@ -47,43 +58,21 @@ pub struct Handle(RawHandle);
 /// There are no guarantees that this name is valid. It is up to the user
 /// to make sure this name does not outlive the underlying buffer, and to
 /// prevent buffers from leaking by properly closing them after they are done.
-pub struct Name(RawHandle);
+#[repr(transparent)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+pub struct Name(u32);
 
-/// Buffer related commands that can be executed by a [Device](../Device.t.html).
-pub trait Commands: super::Device {
-    /// Acquires the [Handle](Handle.t.html) of a GEM buffer given its global
-    /// name.
-    fn open(&self, name: Name) -> Result<Handle>;
-
-    /// Closes the GEM buffer.
-    fn close(&self, handle: Handle) -> Result<()>;
-
-    /// Publishes a GEM buffer and returns a [Name](Name.t.html) that can be
-    /// used by other processes to acquire it.
-    fn flink(&self, handle: Handle) -> Result<Name>;
+impl Into<u32> for Name {
+    fn into(self) -> u32 {
+        self.0.into()
+    }
 }
 
-impl<T: super::Device> Commands for T {
-    fn open(&self, name: Name) -> Result<Handle> {
-        let mut t = ffi::gem::Open::default();
-        t.as_mut().name = name.into();
-        t.cmd(self.as_raw_fd())?;
-        Ok(Handle::from(t.as_ref().handle))
-    }
-
-    fn close(&self, handle: Handle) -> Result<()> {
-        let mut t = ffi::gem::Close::default();
-        t.as_mut().handle = handle.into();
-        t.cmd(self.as_raw_fd())?;
-        Ok(())
-    }
-
-    // TODO: Raw struct also has '__u64 size;'
-    fn flink(&self, handle: Handle) -> Result<Name> {
-        let mut t = ffi::gem::Flink::default();
-        t.as_mut().handle = handle.into();
-        t.cmd(self.as_raw_fd())?;
-        Ok(Name::from(t.as_ref().name))
+impl std::fmt::Debug for Name {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_tuple("buffer::Name")
+            .field(&self.0)
+            .finish()
     }
 }
 
@@ -99,10 +88,11 @@ pub trait Buffer {
     fn handle(&self) -> Handle;
 }
 
+/*
 /// Planar buffers are buffers where each channel/plane is in its own buffer.
 ///
 /// Each plane has their own handle, pitch, and offsets.
 pub trait PlanarBuffer {
     // TODO
 }
-
+*/

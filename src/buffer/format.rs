@@ -1,6 +1,6 @@
 //! Color formats using standard FourCC.
 
-use ffi::fourcc::*;
+use drm_ffi::fourcc::*;
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
