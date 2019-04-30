@@ -36,7 +36,7 @@ extern crate drm_ffi;
 pub(crate) mod util;
 
 pub mod control;
-//pub mod buffer;
+pub mod buffer;
 
 use std::os::unix::io::AsRawFd;
 
