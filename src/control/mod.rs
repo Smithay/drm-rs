@@ -33,12 +33,14 @@ use drm_ffi::result::SystemError;
 
 pub mod connector;
 pub mod crtc;
+pub mod dumbbuffer;
 pub mod encoder;
 pub mod framebuffer;
 pub mod plane;
 
 pub mod property;
 
+use self::dumbbuffer::*;
 use buffer;
 use std::mem;
 
@@ -448,6 +450,55 @@ pub trait Device: super::Device {
     fn close_buffer(&self, handle: buffer::Handle) -> Result<(), SystemError> {
         let _info = drm_ffi::gem::close(self.as_raw_fd(), handle.into())?;
         Ok(())
+    }
+
+    /// Create a new dumb buffer with a given size and pixel format
+    fn create_dumb_buffer(
+        &self,
+        size: (u32, u32),
+        format: buffer::format::PixelFormat,
+    ) -> Result<DumbBuffer, SystemError> {
+        let info = drm_ffi::mode::dumbbuffer::create(self.as_raw_fd(), size.0, size.1, format.bpp(), 0)?;
+
+        let dumb = DumbBuffer {
+            size: (info.width, info.height),
+            length: info.size as usize,
+            format: format,
+            pitch: info.pitch,
+            handle: unsafe { mem::transmute(info.handle) },
+        };
+
+        Ok(dumb)
+    }
+
+    /// Free the memory resources of a dumb buffer
+    fn destroy_dumb_buffer(&self, buffer: DumbBuffer) -> Result<(), SystemError> {
+        let _info = drm_ffi::mode::dumbbuffer::destroy(self.as_raw_fd(), buffer.handle.into())?;
+
+        Ok(())
+    }
+
+    /// Map the buffer for access
+    fn map_dumb_buffer<'a>(&self, buffer: &'a mut DumbBuffer) -> Result<DumbMapping<'a>, SystemError> {
+        let info = drm_ffi::mode::dumbbuffer::map(self.as_raw_fd(), buffer.handle.into(), 0, 0)?;
+
+        let map = {
+            use ::nix::sys::mman;
+            let addr = core::ptr::null_mut();
+            let prot = mman::ProtFlags::PROT_READ | mman::ProtFlags::PROT_WRITE;
+            let flags = mman::MapFlags::MAP_SHARED;
+            let length = buffer.length;
+            let fd = self.as_raw_fd();
+            let offset = info.offset as i64;
+            unsafe { mman::mmap(addr, length, prot, flags, fd, offset)? }
+        };
+
+        let mapping = DumbMapping {
+            _phantom: ::std::marker::PhantomData,
+            map: unsafe { ::std::slice::from_raw_parts_mut(map as *mut _, buffer.length) },
+        };
+
+        Ok(mapping)
     }
 }
 
