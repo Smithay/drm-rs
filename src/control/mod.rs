@@ -392,6 +392,50 @@ pub trait Device: super::Device {
 
         Ok(prop_val_set)
     }
+    
+    /// Receive the currently set gamma ramp of a crtc
+    fn get_gamma(&self, crtc: crtc::Handle, red: &mut [u16], green: &mut [u16], blue: &mut [u16]) -> Result<(), SystemError> {
+        let crtc_info = self.get_crtc(crtc)?;
+        if crtc_info.gamma_length as usize > red.len() ||
+           crtc_info.gamma_length as usize > green.len() ||
+           crtc_info.gamma_length as usize > blue.len()
+        {
+            return Err(SystemError::InvalidArgument);
+        }
+
+        ffi::mode::get_gamma(
+            self.as_raw_fd(),
+            crtc.as_ref().get(),
+            crtc_info.gamma_length as usize,
+            red,
+            green,
+            blue
+        )?;
+
+        Ok(())
+    }
+
+    /// Set a gamma ramp for the given crtc
+    fn set_gamma(&self, crtc: crtc::Handle, red: &[u16], green: &[u16], blue: &[u16]) -> Result<(), SystemError> {
+        let crtc_info = self.get_crtc(crtc)?;
+        if crtc_info.gamma_length as usize > red.len() ||
+           crtc_info.gamma_length as usize > green.len() ||
+           crtc_info.gamma_length as usize > blue.len()
+        {
+            return Err(SystemError::InvalidArgument);
+        }
+        
+        ffi::mode::set_gamma(
+            self.as_raw_fd(),
+            crtc.as_ref().get(),
+            crtc_info.gamma_length as usize,
+            red,
+            green,
+            blue
+        )?;
+
+        Ok(())
+    }
 }
 
 /// The set of [ResourceHandles](ResourceHandle.t.html) that a
