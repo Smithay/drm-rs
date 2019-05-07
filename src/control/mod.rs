@@ -284,6 +284,11 @@ pub trait Device: super::Device {
         Ok(())
     }
 
+    /// Destroy a framebuffer
+    fn destroy_framebuffer(&self, handle: framebuffer::Handle) -> Result<(), SystemError> {
+        ffi::mode::rm_fb(self.as_raw_fd(), handle.into())
+    }
+
     /// Returns information about a specific plane
     fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
         let mut formats = [0u32; 8];
