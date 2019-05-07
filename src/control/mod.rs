@@ -278,6 +278,12 @@ pub trait Device: super::Device {
         Ok(unsafe { mem::transmute(info.fb_id) })
     }
 
+    /// Mark parts of a framebuffer dirty
+    fn dirty_framebuffer(&self, handle: framebuffer::Handle, clips: &[ClipRect]) -> Result<(), SystemError> {
+        ffi::mode::dirty_fb(self.as_raw_fd(), handle.into(), &clips)?;
+        Ok(())
+    }
+
     /// Returns information about a specific plane
     fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
         let mut formats = [0u32; 8];
@@ -702,3 +708,5 @@ impl PropertyValueSet {
         }
     }
 }
+
+type ClipRect = ffi::drm_sys::drm_clip_rect;
