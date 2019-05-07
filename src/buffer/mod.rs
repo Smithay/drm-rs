@@ -88,11 +88,18 @@ pub trait Buffer {
     fn handle(&self) -> Handle;
 }
 
-/*
 /// Planar buffers are buffers where each channel/plane is in its own buffer.
 ///
 /// Each plane has their own handle, pitch, and offsets.
 pub trait PlanarBuffer {
-    // TODO
+    /// The width and height of the buffer.
+    fn size(&self) -> (u32, u32);
+    /// The format of the buffer.
+    fn format(&self) -> format::PixelFormat;
+    /// The pitches of the buffer.
+    fn pitches(&self) -> [u32; 4];
+    /// The handles to the buffer.
+    fn handles(&self) -> [Option<Handle>; 4];
+    /// The offsets of the buffer.
+    fn offsets(&self) -> [u32; 4];
 }
-*/
