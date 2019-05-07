@@ -224,6 +224,27 @@ pub trait Device: super::Device {
         Ok(fb)
     }
 
+    /// Add a new framebuffer
+    fn add_framebuffer<B>(
+        &self,
+        buffer: &B,
+    ) -> Result<framebuffer::Handle, SystemError>
+    where
+        B: buffer::Buffer + ?Sized,
+    {
+        let (w, h) = buffer.size();
+        let info = ffi::mode::add_fb(
+            self.as_raw_fd(),
+            w, h,
+            buffer.pitch(),
+            buffer.format().bpp(),
+            buffer.format().depth(),
+            buffer.handle().into(),
+        )?;
+
+        Ok(unsafe { mem::transmute(info.fb_id) })
+    }
+
     /// Returns information about a specific plane
     fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
         let mut formats = [0u32; 8];
