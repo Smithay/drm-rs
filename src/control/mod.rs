@@ -244,6 +244,39 @@ pub trait Device: super::Device {
 
         Ok(unsafe { mem::transmute(info.fb_id) })
     }
+    
+    /// Add framebuffer (with modifiers)
+    fn add_planar_framebuffer<B>(
+        &self,
+        planar_buffer: &B,
+        modifiers: &[u64; 4],
+        flags: u32,
+    ) -> Result<framebuffer::Handle, SystemError>
+    where
+        B: buffer::PlanarBuffer + ?Sized,
+    {
+        let (w, h) = planar_buffer.size();
+        let opt_handles = planar_buffer.handles();
+        let handles = [
+            opt_handles[0].map(|x| x.into()).unwrap_or(0),
+            opt_handles[1].map(|x| x.into()).unwrap_or(0),
+            opt_handles[2].map(|x| x.into()).unwrap_or(0),
+            opt_handles[3].map(|x| x.into()).unwrap_or(0),
+        ];
+
+        let info = ffi::mode::add_fb2(
+            self.as_raw_fd(),
+            w, h,
+            planar_buffer.format().as_raw(),
+            &handles,
+            &planar_buffer.pitches(),
+            &planar_buffer.offsets(),
+            modifiers,
+            flags,
+        )?;
+
+        Ok(unsafe { mem::transmute(info.fb_id) })
+    }
 
     /// Returns information about a specific plane
     fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
