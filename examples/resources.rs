@@ -31,7 +31,7 @@ pub fn main() {
         println!("\t{:?}", info.encoders());
         println!("\t{:?}", info.current_encoder());
 
-        for &mode in card.get_modes(handle).unwrap().as_slice() {
+        for &mode in card.get_modes(handle).unwrap().modes() {
             //println!("{:?}", mode);
         }
     }

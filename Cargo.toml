@@ -10,3 +10,4 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 drm-ffi = { path = "drm-ffi" }
 nix = "*"
 failure = "*"
+bitflags = "*"

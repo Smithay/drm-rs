@@ -1,4 +1,5 @@
 pub use drm::control::Device as ControlDevice;
+pub use drm::control::property::*;
 pub use drm::Device;
 
 use std::fs::File;

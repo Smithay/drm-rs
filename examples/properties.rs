@@ -4,6 +4,23 @@ extern crate drm;
 pub mod util;
 use util::*;
 
+fn print_properties<T: drm::control::ResourceType>(card: &Card, handle: T) {
+    let props = card.get_properties(handle).unwrap();
+
+    let (ids, vals) = props.as_props_and_values();
+
+    for (&id, &val) in ids.iter().zip(vals.iter()) {
+        println!("Property: {:?}", id);
+        let info = card.get_property(id).unwrap();
+        println!("{:?}", info.name());
+        println!("{:#?}", info.value_type());
+        println!("Mutable: {}", info.mutable());
+        println!("Atomic: {}", info.atomic());
+        println!("Value: {:?}", info.value_type().convert_value(val));
+        println!("");
+    }
+}
+
 pub fn main() {
     let card = Card::open_global();
 
@@ -16,10 +33,18 @@ pub fn main() {
     let plane_res = card.plane_handles().unwrap();
 
     for &handle in resources.connectors() {
-        let props = card.get_properties(handle).unwrap();
+        print_properties(&card, handle);
+    }
 
-        println!("Connector: {:?}", handle);
-        println!("\t{:?}", props.handles());
-        println!("\t{:?}", props.nonbounded_values());
+    for &handle in resources.framebuffers() {
+        print_properties(&card, handle);
+    }
+
+    for &handle in resources.crtcs() {
+        print_properties(&card, handle);
+    }
+
+    for &handle in plane_res.planes() {
+        print_properties(&card, handle);
     }
 }

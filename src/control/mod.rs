@@ -45,7 +45,7 @@ use core::num::NonZeroU32;
 type ResourceHandle = NonZeroU32;
 
 #[doc(hidden)]
-pub trait ResourceType : AsRef<ResourceHandle> {
+pub trait ResourceType : AsRef<ResourceHandle> + Copy {
     const FFI_TYPE: u32;
 }
 
@@ -241,23 +241,95 @@ pub trait Device: super::Device {
     /// Returns information about a specific property.
     fn get_property(&self, handle: property::Handle) -> Result<property::Info, SystemError> {
         let mut values = [0u64; 24];
-        let mut enums = [0u64; 24];
+        let mut enums = [ffi::drm_mode_property_enum::default(); 24];
 
         let mut val_slice = &mut values[..];
         let mut enum_slice = &mut enums[..];
 
-        let _info = ffi::mode::get_property(
+        let info = ffi::mode::get_property(
             self.as_raw_fd(),
             unsafe { mem::transmute(*handle.as_ref()) },
             Some(&mut val_slice),
             Some(&mut enum_slice)
             )?;
 
+        let val_len = val_slice.len();
+        let enum_len = enum_slice.len();
+
+        let val_type = {
+            use self::property::ValueType;
+            let flags = info.flags;
+
+            if flags & ffi::DRM_MODE_PROP_RANGE != 0 {
+                let min = values[0];
+                let max = values[1];
+
+                match (min, max) {
+                    (0, 1) => ValueType::Boolean,
+                    (min, max) => ValueType::UnsignedRange(min, max)
+                }
+            } else if flags & ffi::DRM_MODE_PROP_SIGNED_RANGE != 0 {
+                let min = values[0];
+                let max = values[1];
+
+                ValueType::SignedRange(min as i64, max as i64)
+            } else if flags & ffi::DRM_MODE_PROP_ENUM != 0 {
+                let enum_values = self::property::EnumValues {
+                    values: values,
+                    enums: unsafe { mem::transmute(enums) },
+                    length: val_len
+                };
+
+                ValueType::Enum(enum_values)
+            } else if flags & ffi::DRM_MODE_PROP_BLOB != 0 {
+                ValueType::Blob
+            } else if flags & ffi::DRM_MODE_PROP_BITMASK != 0 {
+                ValueType::Bitmask
+            } else if flags & ffi::DRM_MODE_PROP_OBJECT != 0 {
+                match values[0] as u32 {
+                    ffi::DRM_MODE_OBJECT_CRTC => ValueType::CRTC,
+                    ffi::DRM_MODE_OBJECT_CONNECTOR => ValueType::Connector,
+                    ffi::DRM_MODE_OBJECT_ENCODER => ValueType::Encoder,
+                    ffi::DRM_MODE_OBJECT_FB => ValueType::Framebuffer,
+                    ffi::DRM_MODE_OBJECT_PLANE => ValueType::Plane,
+                    ffi::DRM_MODE_OBJECT_PROPERTY => ValueType::Property,
+                    ffi::DRM_MODE_OBJECT_BLOB => ValueType::Blob,
+                    ffi::DRM_MODE_OBJECT_ANY => ValueType::Object,
+                    _ => ValueType::Unknown,
+                }
+            } else {
+                ValueType::Unknown
+            }
+        };
+
         let property = property::Info {
-            handle: handle
+            handle: handle,
+            val_type: val_type,
+            mutable: info.flags & ffi::DRM_MODE_PROP_IMMUTABLE == 0,
+            atomic: info.flags & ffi::DRM_MODE_PROP_ATOMIC == 0,
+            info: info
         };
 
         Ok(property)
+    }
+
+    /// Sets a property for a specific resource.
+    fn set_property<T: ResourceType>(
+        &self,
+        handle: T,
+        prop: property::Handle,
+        value: property::RawValue
+        ) -> Result<(), SystemError> {
+
+        ffi::mode::set_property(
+            self.as_raw_fd(),
+            unsafe { mem::transmute(*prop.as_ref()) },
+            unsafe { mem::transmute(*handle.as_ref()) },
+            T::FFI_TYPE,
+            value
+            )?;
+
+        Ok(())
     }
 
     /// Returns the set of `Mode`s that a particular connector supports.
@@ -403,11 +475,8 @@ pub struct Mode {
 
 impl Mode {
     /// Returns the name of this mode.
-    pub fn name(&self) -> &std::ffi::OsStr {
-        use std::os::unix::ffi::OsStrExt;
-
-        let u8_slice: &[u8] = unsafe { mem::transmute(&self.mode.name[..]) };
-        std::ffi::OsStr::from_bytes(u8_slice)
+    pub fn name(&self) -> &std::ffi::CStr {
+        unsafe { std::ffi::CStr::from_ptr(&self.mode.name[0] as _) }
     }
 
     /// Returns the clock speed of this mode.
@@ -497,15 +566,16 @@ impl std::fmt::Debug for ModeList {
 }
 
 /// Wrapper around a set of property IDs and their raw values.
+#[derive(Debug, Copy, Clone)]
 pub struct PropertyValueSet {
     prop_ids: [Option<property::Handle>; 32],
-    prop_vals: [property::RawPropertyValue; 32],
+    prop_vals: [property::RawValue; 32],
     len: usize
 }
 
 impl PropertyValueSet {
     /// Returns a pair representing a set of [property::Handles](property/Handle.t.html) and their raw values
-    pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawPropertyValue]) {
+    pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawValue]) {
         unsafe {
             mem::transmute((&self.prop_ids[..self.len], &self.prop_vals[..self.len]))
         }

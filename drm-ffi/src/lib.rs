@@ -4,6 +4,7 @@
 
 #![warn(missing_docs)]
 #![feature(str_internals)]
+#![feature(untagged_unions)]
 extern crate core;
 
 pub extern crate drm_sys;
