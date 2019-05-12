@@ -201,6 +201,27 @@ pub trait Device: super::Device {
         Ok(crtc)
     }
 
+    /// Set CRTC state
+    fn set_crtc(
+        &self,
+        handle: crtc::Handle,
+        framebuffer: framebuffer::Handle,
+        pos: (u32, u32),
+        conns: &[connector::Handle],
+        mode: Option<Mode>,
+    ) -> Result<(), SystemError> {
+        let _info = ffi::mode::set_crtc(
+            self.as_raw_fd(),
+            handle.into(),
+            framebuffer.into(),
+            pos.0, pos.1,
+            unsafe { mem::transmute(conns) },
+            unsafe { mem::transmute(mode) },
+        )?;
+
+        Ok(())
+    }
+
     /// Returns information about a specific framebuffer
     fn get_framebuffer(
         &self,
