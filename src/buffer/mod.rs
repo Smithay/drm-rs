@@ -103,3 +103,25 @@ pub trait PlanarBuffer {
     /// The offsets of the buffer.
     fn offsets(&self) -> [u32; 4];
 }
+
+impl<B: Buffer> PlanarBuffer for B {
+    fn size(&self) -> (u32, u32) {
+        Buffer::size(self)
+    }
+
+    fn format(&self) -> format::PixelFormat {
+        Buffer::format(self)
+    }
+
+    fn pitches(&self) -> [u32; 4] {
+        [self.pitch(), 0, 0, 0]
+    }
+
+    fn handles(&self) -> [Option<Handle>; 4] {
+        [Some(self.handle()), None, None, None]
+    }
+
+    fn offsets(&self) -> [u32; 4] {
+        [0; 4]
+    }
+}
