@@ -331,6 +331,31 @@ pub trait Device: super::Device {
         Ok(plane)
     }
 
+    /// Set plane state.
+    /// 
+    /// Providing no framebuffer clears the plane.
+    fn set_plane(
+        &self,
+        handle: plane::Handle,
+        crtc: crtc::Handle,
+        framebuffer: Option<framebuffer::Handle>,
+        flags: u32,
+        crtc_rect: (i32, i32, u32, u32),
+        src_rect: (u32, u32, u32, u32),
+    ) -> Result<(), SystemError> {
+        let _info = ffi::mode::set_plane(
+            self.as_raw_fd(),
+            handle.into(),
+            crtc.into(),
+            framebuffer.map(Into::into).unwrap_or(0),
+            flags,
+            crtc_rect.0, crtc_rect.1, crtc_rect.2, crtc_rect.3,
+            src_rect.0, src_rect.1, src_rect.2, src_rect.3,
+        )?;
+
+        Ok(())
+    }
+
     /// Returns information about a specific property.
     fn get_property(&self, handle: property::Handle) -> Result<property::Info, SystemError> {
         let mut values = [0u64; 24];
