@@ -690,6 +690,50 @@ pub trait Device: super::Device {
         let info = ffi::gem::handle_to_fd(self.as_raw_fd(), handle.into(), flags)?;
         Ok(info.fd)
     }
+    
+    /// Queue a page flip on the given crtc
+    fn page_flip(
+        &self,
+        handle: crtc::Handle,
+        framebuffer: framebuffer::Handle,
+        flags: &[PageFlipFlags],
+        target: Option<PageFlipTarget>
+    ) -> Result<(), SystemError> {
+        let mut flags = flags.into_iter().fold(0, |val, flag| val | *flag as u32);
+        if target.is_some() {
+            flags |= ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET;
+        }
+
+        let _info = ffi::mode::page_flip(
+            self.as_raw_fd(),
+            handle.into(),
+            framebuffer.into(),
+            flags,
+            target.map(|x| x as _).unwrap_or(0),
+        )?;
+
+        Ok(())
+    }
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// Flags to alter the behaviour of a page flip
+pub enum PageFlipFlags {
+    /// Request a vblank event on page flip
+    PageFlipEvent = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT,
+    /// Request page flip as soon as possible, not waiting for vblank
+    PageFlipAsync = ffi::drm_sys::DRM_MODE_PAGE_FLIP_ASYNC,
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// Target to alter the sequence of page flips
+pub enum PageFlipTarget {
+    /// Absolute Vblank Sequence
+    Absolute = ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE,
+    /// Relative Vblank Sequence (to the current, when calling)
+    Relative = ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_RELATIVE,
 }
 
 /// The set of [ResourceHandles](ResourceHandle.t.html) that a
