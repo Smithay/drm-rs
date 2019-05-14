@@ -45,7 +45,7 @@ use core::num::NonZeroU32;
 type ResourceHandle = NonZeroU32;
 
 #[doc(hidden)]
-pub trait ResourceType : AsRef<ResourceHandle> + Copy {
+pub trait ResourceType : AsRef<ResourceHandle> + AsMut<ResourceHandle> + Into<ResourceHandle> + Copy {
     const FFI_TYPE: u32;
 }
 

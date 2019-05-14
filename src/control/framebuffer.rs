@@ -10,9 +10,24 @@ use drm_ffi as ffi;
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::ResourceHandle);
 
+impl Into<control::ResourceHandle> for Handle {
+    fn into(self) -> control::ResourceHandle {
+        use std::mem::transmute;
+        unsafe { transmute(self) }
+    }
+}
+
 impl AsRef<control::ResourceHandle> for Handle {
     fn as_ref(&self) -> &control::ResourceHandle {
-        &self.0
+        use std::mem::transmute;
+        unsafe { transmute(&self.0) }
+    }
+}
+
+impl AsMut<control::ResourceHandle> for Handle {
+    fn as_mut(&mut self) -> &mut control::ResourceHandle {
+        use std::mem::transmute;
+        unsafe { transmute(&mut self.0) }
     }
 }
 
