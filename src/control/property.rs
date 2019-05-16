@@ -20,32 +20,37 @@ pub type RawValue = u64;
 
 /// A handle to a property
 #[repr(transparent)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Handle(control::ResourceHandle);
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+pub struct Handle(control::RawResourceHandle);
 
-impl Into<control::ResourceHandle> for Handle {
-    fn into(self) -> control::ResourceHandle {
-        use std::mem::transmute;
-        unsafe { transmute(self) }
+impl Into<control::RawResourceHandle> for Handle {
+    fn into(self) -> control::RawResourceHandle {
+        self.0
     }
 }
 
-impl AsRef<control::ResourceHandle> for Handle {
-    fn as_ref(&self) -> &control::ResourceHandle {
-        use std::mem::transmute;
-        unsafe { transmute(&self.0) }
+impl Into<u32> for Handle {
+    fn into(self) -> u32 {
+        self.0.into()
     }
 }
 
-impl AsMut<control::ResourceHandle> for Handle {
-    fn as_mut(&mut self) -> &mut control::ResourceHandle {
-        use std::mem::transmute;
-        unsafe { transmute(&mut self.0) }
+impl From<control::RawResourceHandle> for Handle {
+    fn from(handle: control::RawResourceHandle) -> Self {
+        Handle(handle)
     }
 }
 
-impl control::ResourceType for Handle {
+impl control::ResourceHandle for Handle {
     const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_PROPERTY;
+}
+
+impl std::fmt::Debug for Handle {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_tuple("property::Handle")
+            .field(&self.0)
+            .finish()
+    }
 }
 
 /// Information about a property
@@ -147,7 +152,7 @@ pub enum Value<'a> {
     Enum(&'a EnumValue),
     Bitmask(u64),
     Blob(u64),
-    Object(Option<super::ResourceHandle>),
+    Object(Option<super::RawResourceHandle>),
     CRTC(Option<super::crtc::Handle>),
     Connector(Option<super::connector::Handle>),
     Encoder(Option<super::encoder::Handle>),

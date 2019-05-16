@@ -42,11 +42,21 @@ pub mod property;
 use std::mem;
 
 use core::num::NonZeroU32;
-type ResourceHandle = NonZeroU32;
+type RawResourceHandle = NonZeroU32;
 
 #[doc(hidden)]
-pub trait ResourceType : AsRef<ResourceHandle> + AsMut<ResourceHandle> + Into<ResourceHandle> + Copy {
+pub trait ResourceHandle : From<RawResourceHandle> + Into<RawResourceHandle> + Into<u32> + Copy + Sized {
     const FFI_TYPE: u32;
+}
+
+fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
+    match raw {
+        0 => None,
+        n => {
+            let raw = unsafe { mem::transmute(n) };
+            Some(T::from(raw))
+        }
+    }
 }
 
 /// This trait should be implemented by any object that acts as a DRM device and
@@ -129,7 +139,7 @@ pub trait Device: super::Device {
 
         let ffi_info = ffi::mode::get_connector(
             self.as_raw_fd(),
-            unsafe { mem::transmute(*handle.as_ref()) },
+            handle.into(),
             None,
             None,
             None,
@@ -156,13 +166,13 @@ pub trait Device: super::Device {
     fn get_encoder(&self, handle: encoder::Handle) -> Result<encoder::Info, SystemError> {
         let info = ffi::mode::get_encoder(
             self.as_raw_fd(),
-            unsafe { mem::transmute(*handle.as_ref()) },
+            handle.into(),
             )?;
 
         let enc = encoder::Info {
             handle: handle,
             enc_type: encoder::Kind::from(info.encoder_type),
-            crtc: unsafe { mem::transmute(info.crtc_id) },
+            crtc: from_u32(info.crtc_id),
             pos_crtcs: info.possible_crtcs,
             pos_clones: info.possible_clones,
         };
@@ -174,7 +184,7 @@ pub trait Device: super::Device {
     fn get_crtc(&self, handle: crtc::Handle) -> Result<crtc::Info, SystemError> {
         let info = ffi::mode::get_crtc(
             self.as_raw_fd(),
-            unsafe { mem::transmute(*handle.as_ref()) },
+            handle.into(),
             )?;
 
         let crtc = crtc::Info {
@@ -184,7 +194,7 @@ pub trait Device: super::Device {
                 0 => None,
                 _ => Some(Mode::from(info.mode)),
             },
-            fb: unsafe { mem::transmute(info.fb_id) },
+            fb: from_u32(info.fb_id),
             gamma_length: info.gamma_size,
         };
 
@@ -198,7 +208,7 @@ pub trait Device: super::Device {
         ) -> Result<framebuffer::Info, SystemError> {
         let info = ffi::mode::get_framebuffer(
             self.as_raw_fd(),
-            unsafe { mem::transmute(*handle.as_ref()) },
+            handle.into(),
             )?;
 
         let fb = framebuffer::Info {
@@ -220,7 +230,7 @@ pub trait Device: super::Device {
 
         let info = ffi::mode::get_plane(
             self.as_raw_fd(),
-            unsafe { mem::transmute(*handle.as_ref()) },
+            handle.into(),
             Some(&mut fmt_slice)
             )?;
 
@@ -228,8 +238,8 @@ pub trait Device: super::Device {
 
         let plane = plane::Info {
             handle: handle,
-            crtc: unsafe { mem::transmute(info.crtc_id) },
-            fb: unsafe { mem::transmute(info.fb_id) },
+            crtc: from_u32(info.crtc_id),
+            fb: from_u32(info.fb_id),
             pos_crtcs: info.possible_crtcs,
             formats: formats,
             fmt_len: fmt_len
@@ -248,7 +258,7 @@ pub trait Device: super::Device {
 
         let info = ffi::mode::get_property(
             self.as_raw_fd(),
-            unsafe { mem::transmute(*handle.as_ref()) },
+            handle.into(),
             Some(&mut val_slice),
             Some(&mut enum_slice)
             )?;
@@ -314,7 +324,7 @@ pub trait Device: super::Device {
     }
 
     /// Sets a property for a specific resource.
-    fn set_property<T: ResourceType>(
+    fn set_property<T: ResourceHandle>(
         &self,
         handle: T,
         prop: property::Handle,
@@ -323,8 +333,8 @@ pub trait Device: super::Device {
 
         ffi::mode::set_property(
             self.as_raw_fd(),
-            unsafe { mem::transmute(*prop.as_ref()) },
-            unsafe { mem::transmute(*handle.as_ref()) },
+            prop.into(),
+            handle.into(),
             T::FFI_TYPE,
             value
             )?;
@@ -339,7 +349,7 @@ pub trait Device: super::Device {
 
         let _ffi_info = ffi::mode::get_connector(
             self.as_raw_fd(),
-            unsafe { mem::transmute(*handle.as_ref()) },
+            handle.into(),
             None,
             None,
             Some(&mut mode_slice),
@@ -357,7 +367,7 @@ pub trait Device: super::Device {
     }
 
     /// Gets a list of property handles and values for this resource.
-    fn get_properties<T: ResourceType>(&self, handle: T) -> Result<PropertyValueSet, SystemError> {
+    fn get_properties<T: ResourceHandle>(&self, handle: T) -> Result<PropertyValueSet, SystemError> {
         let mut prop_ids = [0u32; 32];
         let mut prop_vals = [0u64; 32];
 
@@ -366,7 +376,7 @@ pub trait Device: super::Device {
 
         ffi::mode::get_properties(
             self.as_raw_fd(),
-            unsafe { mem::transmute(*handle.as_ref()) },
+            handle.into(),
             T::FFI_TYPE,
             Some(&mut prop_id_slice),
             Some(&mut prop_val_slice),
