@@ -39,6 +39,7 @@ pub mod plane;
 
 pub mod property;
 
+use buffer;
 use std::mem;
 
 use core::num::NonZeroU32;
@@ -434,6 +435,18 @@ pub trait Device: super::Device {
             blue
         )?;
 
+        Ok(())
+    }
+
+    /// Open a GEM buffer handle by name
+    fn open_buffer(&self, name: buffer::Name) -> Result<buffer::Handle, SystemError> {
+        let info = drm_ffi::gem::open(self.as_raw_fd(), name.into())?;
+        Ok(unsafe { mem::transmute(info.handle) })
+    }
+
+    /// Close a GEM buffer handle
+    fn close_buffer(&self, handle: buffer::Handle) -> Result<(), SystemError> {
+        let _info = drm_ffi::gem::close(self.as_raw_fd(), handle.into())?;
         Ok(())
     }
 }
