@@ -3,14 +3,14 @@
 extern crate drm;
 
 /// Check the `util` module to see how the `Card` structure is implemented.
-pub mod util;
-use util::*;
+pub mod utils;
+use utils::*;
 
 pub fn main() {
     let card = Card::open_global();
 
     // Enable all possible client capabilities
-    for &cap in util::CLIENT_CAP_ENUMS {
+    for &cap in capabilities::CLIENT_CAP_ENUMS {
         card.set_client_capability(cap, true);
     }
 
@@ -22,9 +22,30 @@ fn run_repl(card: &Card) {
 
     let stdin = io::stdin();
     for line in stdin.lock().lines().map(|x| x.unwrap()) {
+        println!("{}", line);
         let args: Vec<_> = line.split_whitespace().collect();
 
         match &args[..] {
+            ["CreateFramebuffer", width, height] => {
+                let width: u32 = str::parse(width).unwrap();
+                let height: u32 = str::parse(height).unwrap();
+                let fmt = drm::buffer::format::PixelFormat::ARGB8888;
+
+                let mut db = card.create_dumb_buffer((width, height), fmt).unwrap();
+
+                {
+                    let mut mapping = card.map_dumb_buffer(&mut db).unwrap();
+                    let mut buffer = mapping.as_mut();
+                    for byte in buffer.iter_mut() {
+                        *byte = 0xFF;
+                    }
+                };
+
+                println!("{:?}", db);
+
+                let fb = card.add_framebuffer(&db).unwrap();
+                println!("{:?}", fb);
+            },
             ["GetResources"] => {
                 let resources = card.resource_handles().unwrap();
                 println!("\tConnectors: {:?}", resources.connectors());
@@ -61,18 +82,6 @@ fn run_repl(card: &Card) {
             ["GetProperties", "Plane", handle] => {
                 let handle: u32 = str::parse(handle).unwrap();
                 let handle: drm::control::plane::Handle = unsafe {
-                    std::mem::transmute(handle)
-                };
-                let props = card.get_properties(handle).unwrap();
-                let (ids, vals) = props.as_props_and_values();
-
-                for (id, val) in ids.iter().zip(vals.iter()) {
-                    println!("\tProperty: {:?}\tValue: {:?}", id, val);
-                }
-            },
-            ["GetProperties", "Framebuffer", handle] => {
-                let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::framebuffer::Handle = unsafe {
                     std::mem::transmute(handle)
                 };
                 let props = card.get_properties(handle).unwrap();
@@ -120,18 +129,6 @@ fn run_repl(card: &Card) {
             ["SetProperty", "Plane", handle, property, value] => {
                 let handle: u32 = str::parse(handle).unwrap();
                 let handle: drm::control::plane::Handle = unsafe {
-                    std::mem::transmute(handle)
-                };
-                let property: u32 = str::parse(property).unwrap();
-                let property: drm::control::property::Handle = unsafe {
-                    std::mem::transmute(property)
-                };
-                let value: u64 = str::parse(value).unwrap();
-                println!("\t{:?}", card.set_property(handle, property, value));
-            },
-            ["SetProperty", "Framebuffer", handle, property, value] => {
-                let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::framebuffer::Handle = unsafe {
                     std::mem::transmute(handle)
                 };
                 let property: u32 = str::parse(property).unwrap();
