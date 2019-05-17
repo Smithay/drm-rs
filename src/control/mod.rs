@@ -405,7 +405,7 @@ pub trait Device: super::Device {
 
         ffi::mode::get_gamma(
             self.as_raw_fd(),
-            crtc.as_ref().get(),
+            crtc.into(),
             crtc_info.gamma_length as usize,
             red,
             green,
@@ -427,7 +427,7 @@ pub trait Device: super::Device {
         
         ffi::mode::set_gamma(
             self.as_raw_fd(),
-            crtc.as_ref().get(),
+            crtc.into(),
             crtc_info.gamma_length as usize,
             red,
             green,
