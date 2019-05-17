@@ -1,5 +1,8 @@
 extern crate drm;
 
+mod utils;
+use utils::*;
+
 use drm::control::Device as ControlDevice;
 use drm::Device as BasicDevice;
 
@@ -8,41 +11,6 @@ use drm::buffer::PixelFormat;
 use drm::control::ResourceHandle;
 use drm::control::ResourceInfo;
 use drm::control::{connector, crtc, dumbbuffer, framebuffer};
-
-use std::fs::File;
-use std::fs::OpenOptions;
-
-use std::os::unix::io::AsRawFd;
-use std::os::unix::io::RawFd;
-
-#[derive(Debug)]
-pub struct Card(File);
-
-impl AsRawFd for Card {
-    fn as_raw_fd(&self) -> RawFd {
-        self.0.as_raw_fd()
-    }
-}
-
-impl BasicDevice for Card {}
-impl ControlDevice for Card {}
-
-impl Card {
-    pub fn open(path: &str) -> Self {
-        let mut options = OpenOptions::new();
-        options.read(true);
-        options.write(true);
-        Card(options.open(path).unwrap())
-    }
-
-    pub fn open_global() -> Self {
-        Self::open("/dev/dri/card0")
-    }
-
-    pub fn open_control() -> Self {
-        Self::open("/dev/dri/controlD64")
-    }
-}
 
 pub fn main() {
     let card = Card::open_global();

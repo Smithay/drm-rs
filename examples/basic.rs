@@ -1,8 +1,8 @@
 extern crate drm;
 
 /// Check the `util` module to see how the `Card` structure is implemented.
-pub mod util;
-use util::*;
+pub mod utils;
+use utils::*;
 
 pub fn main() {
     let card = Card::open_global();
@@ -23,13 +23,13 @@ pub fn main() {
 
     // Enable all possible client capabilities
     println!("Setting client capabilities");
-    for &cap in util::CLIENT_CAP_ENUMS {
+    for &cap in capabilities::CLIENT_CAP_ENUMS {
         println!("\t{:?}: {:?}", cap, card.set_client_capability(cap, true));
     }
 
     // Get driver capabilities
     println!("Getting driver capabilities");
-    for &cap in util::DRIVER_CAP_ENUMS {
+    for &cap in capabilities::DRIVER_CAP_ENUMS {
         println!("\t{:?}: {:?}", cap, card.get_driver_capability(cap));
     }
 }

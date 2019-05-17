@@ -1,10 +1,10 @@
 extern crate drm;
 
 /// Check the `util` module to see how the `Card` structure is implemented.
-pub mod util;
-use util::*;
+pub mod utils;
+use utils::*;
 
-fn print_properties<T: drm::control::ResourceType>(card: &Card, handle: T) {
+fn print_properties<T: drm::control::ResourceHandle>(card: &Card, handle: T) {
     let props = card.get_properties(handle).unwrap();
 
     let (ids, vals) = props.as_props_and_values();
@@ -25,7 +25,7 @@ pub fn main() {
     let card = Card::open_global();
 
     // Enable all possible client capabilities
-    for &cap in util::CLIENT_CAP_ENUMS {
+    for &cap in capabilities::CLIENT_CAP_ENUMS {
         card.set_client_capability(cap, true);
     }
 
