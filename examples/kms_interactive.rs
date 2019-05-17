@@ -26,9 +26,13 @@ fn run_repl(card: &Card) {
         let args: Vec<_> = line.split_whitespace().collect();
 
         match &args[..] {
-            ["CreateFramebuffer", width, height] => {
+            ["CreateFramebuffer", width, height, r, g, b] => {
                 let width: u32 = str::parse(width).unwrap();
                 let height: u32 = str::parse(height).unwrap();
+                let r: u8 = str::parse(r).unwrap();
+                let g: u8 = str::parse(g).unwrap();
+                let b: u8 = str::parse(b).unwrap();
+
                 let fmt = drm::buffer::format::PixelFormat::ARGB8888;
 
                 let mut db = card.create_dumb_buffer((width, height), fmt).unwrap();
@@ -36,8 +40,12 @@ fn run_repl(card: &Card) {
                 {
                     let mut mapping = card.map_dumb_buffer(&mut db).unwrap();
                     let mut buffer = mapping.as_mut();
-                    for byte in buffer.iter_mut() {
-                        *byte = 0xFF;
+                    for byte in buffer.chunks_exact_mut(4) {
+                        // Assuming little endian, it's BGRA
+                        byte[0] = b;
+                        byte[1] = g;
+                        byte[2] = r;
+                        byte[3] = 255;
                     }
                 };
 
