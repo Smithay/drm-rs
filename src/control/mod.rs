@@ -53,13 +53,7 @@ pub trait ResourceHandle : From<RawResourceHandle> + Into<RawResourceHandle> + I
 }
 
 fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
-    match raw {
-        0 => None,
-        n => {
-            let raw = unsafe { mem::transmute(n) };
-            Some(T::from(raw))
-        }
-    }
+    RawResourceHandle::new(raw).map(|n| T::from(n))
 }
 
 /// This trait should be implemented by any object that acts as a DRM device and
@@ -408,7 +402,7 @@ pub trait Device: super::Device {
 
         ffi::mode::get_gamma(
             self.as_raw_fd(),
-            crtc.as_ref().get(),
+            crtc.into(),
             crtc_info.gamma_length as usize,
             red,
             green,
@@ -430,7 +424,7 @@ pub trait Device: super::Device {
         
         ffi::mode::set_gamma(
             self.as_raw_fd(),
-            crtc.as_ref().get(),
+            crtc.into(),
             crtc_info.gamma_length as usize,
             red,
             green,
@@ -451,7 +445,7 @@ pub trait Device: super::Device {
         let _info = drm_ffi::gem::close(self.as_raw_fd(), handle.into())?;
         Ok(())
     }
-
+  
     /// Create a new dumb buffer with a given size and pixel format
     fn create_dumb_buffer(
         &self,
