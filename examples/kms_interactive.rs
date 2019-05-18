@@ -1,6 +1,7 @@
 #![feature(slice_patterns)]
 
 extern crate drm;
+extern crate image;
 
 /// Check the `util` module to see how the `Card` structure is implemented.
 pub mod utils;
@@ -20,39 +21,44 @@ pub fn main() {
 fn run_repl(card: &Card) {
     use std::io::{self, BufRead};
 
+    let images = [
+        images::load_image("1.png"),
+        images::load_image("2.png"),
+        images::load_image("3.png"),
+        images::load_image("4.png")
+    ];
+
+    for image in &images {
+        let fmt = drm::buffer::format::PixelFormat::ARGB8888;
+        let mut db = card.create_dumb_buffer(image.dimensions(), fmt).unwrap();
+
+        {
+            let mut mapping = card.map_dumb_buffer(&mut db).unwrap();
+            let mut buffer = mapping.as_mut();
+            for (img_px, map_px) in image.pixels().zip(buffer.chunks_exact_mut(4)) {
+                // Assuming little endian, it's BGRA
+                map_px[0] = img_px[0]; // Blue
+                map_px[1] = img_px[1]; // Green
+                map_px[2] = img_px[2]; // Red
+                map_px[3] = img_px[3]; // Alpha
+            }
+        };
+
+        let fb = card.add_framebuffer(&db).unwrap();
+    }
+
     let stdin = io::stdin();
     for line in stdin.lock().lines().map(|x| x.unwrap()) {
         println!("{}", line);
         let args: Vec<_> = line.split_whitespace().collect();
 
         match &args[..] {
-            ["CreateFramebuffer", width, height, r, g, b] => {
-                let width: u32 = str::parse(width).unwrap();
-                let height: u32 = str::parse(height).unwrap();
-                let r: u8 = str::parse(r).unwrap();
-                let g: u8 = str::parse(g).unwrap();
-                let b: u8 = str::parse(b).unwrap();
-
-                let fmt = drm::buffer::format::PixelFormat::ARGB8888;
-
-                let mut db = card.create_dumb_buffer((width, height), fmt).unwrap();
-
-                {
-                    let mut mapping = card.map_dumb_buffer(&mut db).unwrap();
-                    let mut buffer = mapping.as_mut();
-                    for byte in buffer.chunks_exact_mut(4) {
-                        // Assuming little endian, it's BGRA
-                        byte[0] = b;
-                        byte[1] = g;
-                        byte[2] = r;
-                        byte[3] = 255;
-                    }
+            ["DestroyFramebuffer", handle] => {
+                let handle: u32 = str::parse(handle).unwrap();
+                let handle: drm::control::framebuffer::Handle = unsafe {
+                    std::mem::transmute(handle)
                 };
-
-                println!("{:?}", db);
-
-                let fb = card.add_framebuffer(&db).unwrap();
-                println!("{:?}", fb);
+                card.destroy_framebuffer(handle);
             },
             ["GetResources"] => {
                 let resources = card.resource_handles().unwrap();

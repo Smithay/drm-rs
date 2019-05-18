@@ -11,3 +11,6 @@ drm-ffi = { path = "drm-ffi" }
 nix = "*"
 failure = "*"
 bitflags = "*"
+
+[dev-dependencies]
+image = "*"

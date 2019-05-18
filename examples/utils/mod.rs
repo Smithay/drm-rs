@@ -63,3 +63,13 @@ pub mod capabilities {
         DC::SyncObj,
     ];
 }
+
+pub mod images {
+    use image;
+    use image::GenericImageView;
+
+    pub fn load_image(name: &str) -> image::RgbaImage {
+        let path = format!("examples/images/{}", name);
+        image::open(path).unwrap().to_rgba()
+    }
+}
