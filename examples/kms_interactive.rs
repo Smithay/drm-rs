@@ -2,6 +2,7 @@
 
 extern crate drm;
 extern crate image;
+extern crate rustyline;
 
 /// Check the `util` module to see how the `Card` structure is implemented.
 pub mod utils;
@@ -19,8 +20,7 @@ pub fn main() {
 }
 
 fn run_repl(card: &Card) {
-    use std::io::{self, BufRead};
-
+    // Load a set of numbered images
     let images = [
         images::load_image("1.png"),
         images::load_image("2.png"),
@@ -29,9 +29,14 @@ fn run_repl(card: &Card) {
     ];
 
     for image in &images {
+        // Create the Dumbbuffer
         let fmt = drm::buffer::format::PixelFormat::ARGB8888;
         let mut db = card.create_dumb_buffer(image.dimensions(), fmt).unwrap();
 
+        // Create a Framebuffer to represent it
+        let fb = card.add_framebuffer(&db).unwrap();
+
+        // Load the image into the buffer
         {
             let mut mapping = card.map_dumb_buffer(&mut db).unwrap();
             let mut buffer = mapping.as_mut();
@@ -43,16 +48,22 @@ fn run_repl(card: &Card) {
                 map_px[3] = img_px[3]; // Alpha
             }
         };
-
-        let fb = card.add_framebuffer(&db).unwrap();
     }
 
-    let stdin = io::stdin();
-    for line in stdin.lock().lines().map(|x| x.unwrap()) {
-        println!("{}", line);
-        let args: Vec<_> = line.split_whitespace().collect();
+    // Using rustyline to create the interactive prompt.
+    let editor_config = rustyline::config::Builder::new()
+        .max_history_size(256)
+        .completion_type(rustyline::config::CompletionType::List)
+        .edit_mode(rustyline::config::EditMode::Vi)
+        .auto_add_history(true)
+        .build();
+    let mut rl = rustyline::Editor::<()>::with_config(editor_config);
 
+    for line in rl.iter("KMS>> ").map(|x| x.unwrap()) {
+        // Match the arguments
+        let args: Vec<_> = line.split_whitespace().collect();
         match &args[..] {
+            // Destroying a framebuffer
             ["DestroyFramebuffer", handle] => {
                 let handle: u32 = str::parse(handle).unwrap();
                 let handle: drm::control::framebuffer::Handle = unsafe {
@@ -60,6 +71,7 @@ fn run_repl(card: &Card) {
                 };
                 card.destroy_framebuffer(handle);
             },
+            // Print out all resources
             ["GetResources"] => {
                 let resources = card.resource_handles().unwrap();
                 println!("\tConnectors: {:?}", resources.connectors());
@@ -69,42 +81,7 @@ fn run_repl(card: &Card) {
                 let planes = card.plane_handles().unwrap();
                 println!("\tPlanes: {:?}", planes.planes());
             },
-            ["GetProperties", "Connector", handle] => {
-                let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::connector::Handle = unsafe {
-                    std::mem::transmute(handle)
-                };
-                let props = card.get_properties(handle).unwrap();
-                let (ids, vals) = props.as_props_and_values();
-
-                for (id, val) in ids.iter().zip(vals.iter()) {
-                    println!("\tProperty: {:?}\tValue: {:?}", id, val);
-                }
-            },
-            ["GetProperties", "CRTC", handle] => {
-                let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::crtc::Handle = unsafe {
-                    std::mem::transmute(handle)
-                };
-                let props = card.get_properties(handle).unwrap();
-                let (ids, vals) = props.as_props_and_values();
-
-                for (id, val) in ids.iter().zip(vals.iter()) {
-                    println!("\tProperty: {:?}\tValue: {:?}", id, val);
-                }
-            },
-            ["GetProperties", "Plane", handle] => {
-                let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::plane::Handle = unsafe {
-                    std::mem::transmute(handle)
-                };
-                let props = card.get_properties(handle).unwrap();
-                let (ids, vals) = props.as_props_and_values();
-
-                for (id, val) in ids.iter().zip(vals.iter()) {
-                    println!("\tProperty: {:?}\tValue: {:?}", id, val);
-                }
-            },
+            // Print out the values of a specific property
             ["GetProperty", handle] => {
                 let handle: u32 = str::parse(handle).unwrap();
                 let handle: drm::control::property::Handle = unsafe {
@@ -116,41 +93,53 @@ fn run_repl(card: &Card) {
                 println!("\tAtomic: {:?}", property.atomic());
                 println!("\tValue: {:#?}", property.value_type());
             },
-            ["SetProperty", "Connector", handle, property, value] => {
-                let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::connector::Handle = unsafe {
-                    std::mem::transmute(handle)
-                };
-                let property: u32 = str::parse(property).unwrap();
-                let property: drm::control::property::Handle = unsafe {
-                    std::mem::transmute(property)
-                };
-                let value: u64 = str::parse(value).unwrap();
-                println!("\t{:?}", card.set_property(handle, property, value));
+            // Get the property-value pairs of a single resource
+            ["GetProperties", handle] => {
+                match HandleWithProperties::from_str(card, handle) {
+                    Ok(handle) => {
+                        let props = match handle {
+                            HandleWithProperties::Connector(handle) => {
+                                card.get_properties(handle).unwrap()
+                            },
+                            HandleWithProperties::CRTC(handle) => {
+                                card.get_properties(handle).unwrap()
+                            },
+                            HandleWithProperties::Plane(handle) => {
+                                card.get_properties(handle).unwrap()
+                            }
+                        };
+                        let (ids, vals) = props.as_props_and_values();
+                        for (id, val) in ids.iter().zip(vals.iter()) {
+                            println!("\tProperty: {:?}\tValue: {:?}", id, val);
+                        }
+                    },
+                    Err(_) => println!("Unknown handle or handle has no properties")
+                }
             },
-            ["SetProperty", "CRTC", handle, property, value] => {
-                let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::crtc::Handle = unsafe {
-                    std::mem::transmute(handle)
-                };
+            // Set a property's value on a resource
+            ["SetProperty", handle, property, value] => {
                 let property: u32 = str::parse(property).unwrap();
                 let property: drm::control::property::Handle = unsafe {
                     std::mem::transmute(property)
                 };
                 let value: u64 = str::parse(value).unwrap();
-                println!("\t{:?}", card.set_property(handle, property, value));
-            },
-            ["SetProperty", "Plane", handle, property, value] => {
-                let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::plane::Handle = unsafe {
-                    std::mem::transmute(handle)
+
+                match HandleWithProperties::from_str(card, handle) {
+                    Ok(handle) => {
+                        match handle {
+                            HandleWithProperties::Connector(handle) => {
+                                println!("\t{:?}", card.set_property(handle, property, value));
+                            },
+                            HandleWithProperties::CRTC(handle) => {
+                                println!("\t{:?}", card.set_property(handle, property, value));
+                            },
+                            HandleWithProperties::Plane(handle) => {
+                                println!("\t{:?}", card.set_property(handle, property, value));
+                            }
+                        };
+                    },
+                    Err(_) => println!("Unknown handle or handle has no properties")
                 };
-                let property: u32 = str::parse(property).unwrap();
-                let property: drm::control::property::Handle = unsafe {
-                    std::mem::transmute(property)
-                };
-                let value: u64 = str::parse(value).unwrap();
-                println!("\t{:?}", card.set_property(handle, property, value));
             },
             [ ] => (),
             _ => {
@@ -160,3 +149,39 @@ fn run_repl(card: &Card) {
     }
 }
 
+enum HandleWithProperties {
+    Connector(drm::control::connector::Handle),
+    CRTC(drm::control::crtc::Handle),
+    Plane(drm::control::plane::Handle),
+}
+
+impl HandleWithProperties {
+    // This is a helper command that will take a string of a number and lookup
+    // the corresponding resource.
+    fn from_str(card: &Card, handle: &str) -> Result<Self, ()> {
+        let handle: u32 = str::parse(handle).unwrap();
+        let handle = drm::control::RawResourceHandle::new(handle).unwrap();
+
+        let rhandles = card.resource_handles().unwrap();
+        for connector in rhandles.connectors().iter().map(|h| (*h).into()) {
+            if handle == connector {
+                return Ok(HandleWithProperties::Connector(handle.into()));
+            }
+        }
+
+        for crtc in rhandles.crtcs().iter().map(|h| (*h).into()) {
+            if handle == crtc {
+                return Ok(HandleWithProperties::CRTC(handle.into()));
+            }
+        }
+
+        let phandles = card.plane_handles().unwrap();
+        for plane in phandles.planes().iter().map(|h| (*h).into()) {
+            if handle == plane {
+                return Ok(HandleWithProperties::Plane(handle.into()));
+            }
+        }
+
+        Err(())
+    }
+}

@@ -45,14 +45,14 @@ use buffer;
 use std::mem;
 
 use core::num::NonZeroU32;
-type RawResourceHandle = NonZeroU32;
+pub type RawResourceHandle = NonZeroU32;
 
 #[doc(hidden)]
 pub trait ResourceHandle : From<RawResourceHandle> + Into<RawResourceHandle> + Into<u32> + Copy + Sized {
     const FFI_TYPE: u32;
 }
 
-fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
+pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
     RawResourceHandle::new(raw).map(|n| T::from(n))
 }
 
