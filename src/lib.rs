@@ -42,7 +42,7 @@ pub mod buffer;
 
 use std::os::unix::io::AsRawFd;
 
-use drm_ffi::result::SystemError;
+pub use drm_ffi::result::SystemError;
 use util::*;
 
 /// This trait should be implemented by any object that acts as a DRM device. It
