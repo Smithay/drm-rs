@@ -73,3 +73,4 @@ pub mod images {
         image::open(path).unwrap().to_rgba()
     }
 }
+

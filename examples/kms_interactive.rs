@@ -57,12 +57,21 @@ fn run_repl(card: &Card) {
         .edit_mode(rustyline::config::EditMode::Vi)
         .auto_add_history(true)
         .build();
-    let mut rl = rustyline::Editor::<()>::with_config(editor_config);
+    let mut kms_editor = rustyline::Editor::<()>::with_config(editor_config);
+    let mut atomic_editor = rustyline::Editor::<()>::with_config(editor_config);
 
-    for line in rl.iter("KMS>> ").map(|x| x.unwrap()) {
-        // Match the arguments
+    for line in kms_editor.iter("KMS>> ").map(|x| x.unwrap()) {
         let args: Vec<_> = line.split_whitespace().collect();
         match &args[..] {
+            ["CreateAtomicSet"] => {
+                for line in atomic_editor.iter("Atomic>> ").map(|x| x.unwrap()) {
+                    let args: Vec<_> = line.split_whitespace().collect();
+                    match &args[..] {
+                        ["Quit"] => break,
+                        args => println!("{:?}", args)
+                    }
+                }
+            },
             // Destroying a framebuffer
             ["DestroyFramebuffer", handle] => {
                 let handle: u32 = str::parse(handle).unwrap();
@@ -141,10 +150,23 @@ fn run_repl(card: &Card) {
                     Err(_) => println!("Unknown handle or handle has no properties")
                 };
             },
+            ["GetModes", handle] => {
+                match HandleWithProperties::from_str(card, handle) {
+                    Ok(HandleWithProperties::Connector(handle)) => {
+                        let modes = card.get_modes(handle).unwrap();
+                        for mode in modes.modes() {
+                            println!("\tName:\t{:?}", mode.name());
+                            println!("\t\tSize:\t{:?}", mode.size());
+                            println!("\t\tRefresh:\t{:?}", mode.vrefresh());
+                        }
+                    },
+                    _ => println!("Unknown handle or handle is not a connector")
+                }
+            }
             [ ] => (),
             _ => {
                 println!("Unknown command");
-            }
+            },
         }
     }
 }
