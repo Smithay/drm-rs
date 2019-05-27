@@ -43,8 +43,10 @@ pub mod property;
 
 use self::dumbbuffer::*;
 use buffer;
+
 use std::mem;
 use std::os::unix::io::RawFd;
+use std::time::Duration;
 
 use core::num::NonZeroU32;
 pub type RawResourceHandle = NonZeroU32;
@@ -714,7 +716,22 @@ pub trait Device: super::Device {
 
         Ok(())
     }
+
+    /// Receive pending events
+    fn receive_events(&self) -> Result<Events, SystemError>
+        where Self: Sized
+    {
+        let mut event_buf: [u8; 1024] = [0; 1024];
+        let amount = ::nix::unistd::read(self.as_raw_fd(), &mut event_buf)?;
+    
+        Ok(Events {
+            event_buf,
+            amount,
+            i: 0,
+        })
+    }
 }
+
 
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -734,6 +751,75 @@ pub enum PageFlipTarget {
     Absolute = ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE,
     /// Relative Vblank Sequence (to the current, when calling)
     Relative = ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_RELATIVE,
+}
+
+/// Iterator over `Event`s of a device. Create via `receive_events`.
+pub struct Events {
+    event_buf: [u8; 1024],
+    amount: usize,
+    i: usize,
+}
+
+/// An event from a device.
+pub enum Event {
+    /// A vblank happened
+    Vblank(VblankEvent),
+    /// A page flip happened
+    PageFlip(PageFlipEvent),
+    /// Unknown event, raw data provided
+    Unknown(Vec<u8>),
+}
+
+/// Vblank event
+pub struct VblankEvent {
+    /// sequence of the frame
+    pub frame: u32,
+    /// duration between events
+    pub duration: Duration,
+    /// crtc that did throw the event
+    pub crtc: crtc::Handle,
+}
+
+/// Page Flip event
+pub struct PageFlipEvent {
+    /// sequence of the frame
+    pub frame: u32,
+    /// duration between events
+    pub duration: Duration,
+    /// crtc that did throw the event
+    pub crtc: crtc::Handle,
+}
+
+impl Iterator for Events {
+    type Item = Event;
+
+    fn next(&mut self) -> Option<Event> {
+        if self.amount > 0 && self.i < self.amount {
+            let event = unsafe { &*(self.event_buf.as_ptr().offset(self.i as isize) as *const ffi::drm_event) };
+            self.i += event.length as usize;
+            match event.type_ {
+                x if x == ffi::DRM_EVENT_VBLANK => {
+                    let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                    Some(Event::Vblank(VblankEvent {
+                        frame: vblank_event.sequence,
+                        duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 100),
+                        crtc: unsafe { mem::transmute(vblank_event.user_data as u32) },
+                    }))
+                },
+                x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
+                    let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                    Some(Event::PageFlip(PageFlipEvent {
+                        frame: vblank_event.sequence,
+                        duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
+                        crtc: unsafe { mem::transmute(if vblank_event.crtc_id != 0 { vblank_event.crtc_id } else { vblank_event.user_data as u32 }) },
+                    }))
+                },
+                _ => Some(Event::Unknown(self.event_buf[self.i-(event.length as usize)..self.i].to_vec())),
+            }
+        } else {
+            None
+        }
+    }
 }
 
 /// The set of [ResourceHandles](ResourceHandle.t.html) that a
