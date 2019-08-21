@@ -163,6 +163,7 @@ fn run_repl(card: &Card) {
                     _ => println!("Unknown handle or handle is not a connector")
                 }
             }
+            ["quit"] => break,
             [ ] => (),
             _ => {
                 println!("Unknown command");
