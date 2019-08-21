@@ -125,7 +125,7 @@ impl ValueType {
 
         match self {
             ValueType::Unknown => Value::Unknown(value),
-            ValueType::Boolean => Value::Boolean(value == 1),
+            ValueType::Boolean => Value::Boolean(value != 0),
             ValueType::UnsignedRange(_, _) => Value::UnsignedRange(value),
             ValueType::SignedRange(_, _) => Value::SignedRange(value as i64),
             ValueType::Enum(values) => Value::Enum(values.get_value_from_raw_value(value)),
@@ -159,6 +159,29 @@ pub enum Value<'a> {
     Framebuffer(Option<super::framebuffer::Handle>),
     Plane(Option<super::plane::Handle>),
     Property(Option<Handle>),
+}
+
+impl<'a> Into<RawValue> for Value<'a> {
+    fn into(self) -> RawValue {
+        use std::mem::transmute as tm;
+
+        match self {
+            Value::Unknown(x) => x,
+            Value::Boolean(x) => if x { 1 } else { 0 },
+            Value::UnsignedRange(x) => x,
+            Value::SignedRange(x) => x as u64,
+            Value::Enum(val) => val.value(),
+            Value::Bitmask(x) => x,
+            Value::Blob(x) => x,
+            Value::Object(x) => unsafe { tm::<_, u32>(x).into() },
+            Value::CRTC(x) => unsafe { tm::<_, u32>(x).into() },
+            Value::Connector(x) => unsafe { tm::<_, u32>(x).into() },
+            Value::Encoder(x) => unsafe { tm::<_, u32>(x).into() },
+            Value::Framebuffer(x) => unsafe { tm::<_, u32>(x).into() },
+            Value::Plane(x) => unsafe { tm::<_, u32>(x).into() },
+            Value::Property(x) => unsafe { tm::<_, u32>(x).into() },
+        }
+    }
 }
 
 /// A single value of an `ValueType::Enum`
