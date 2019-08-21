@@ -13,7 +13,6 @@
 
 use control;
 use drm_ffi as ffi;
-use util::*;
 
 /// A raw property value that does not have a specific property type
 pub type RawValue = u64;

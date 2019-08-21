@@ -628,6 +628,19 @@ pub trait Device: super::Device {
 
         Ok(mapping)
     }
+
+    fn atomic_commit(&self, flags: &[AtomicCommitFlags], mut req: atomic::AtomicModeReq) -> Result<(), SystemError> {
+        use std::mem::transmute as tm;
+
+        drm_ffi::mode::atomic_commit(
+            self.as_raw_fd(),
+            flags.iter().fold(0, |acc, x| acc & *x as u32),
+            unsafe { tm(&mut *req.objects) },
+            &mut *req.count_props_per_object,
+            unsafe { tm(&mut *req.props) },
+            &mut *req.values,
+        )
+    }
 }
 
 /// The set of [ResourceHandles](ResourceHandle.t.html) that a
@@ -829,3 +842,11 @@ impl PropertyValueSet {
 }
 
 type ClipRect = ffi::drm_sys::drm_clip_rect;
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum AtomicCommitFlags {
+    TestOnly = ffi::drm_sys::DRM_MODE_ATOMIC_TEST_ONLY,
+    Nonblock =  ffi::drm_sys::DRM_MODE_ATOMIC_NONBLOCK,
+    AllowModeset = ffi::drm_sys::DRM_MODE_ATOMIC_ALLOW_MODESET,
+}
