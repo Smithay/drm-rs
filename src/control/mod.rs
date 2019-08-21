@@ -31,6 +31,7 @@
 use drm_ffi as ffi;
 use drm_ffi::result::SystemError;
 
+pub mod atomic;
 pub mod connector;
 pub mod crtc;
 pub mod dumbbuffer;
