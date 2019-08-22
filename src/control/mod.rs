@@ -206,7 +206,7 @@ pub trait Device: super::Device {
     fn set_crtc(
         &self,
         handle: crtc::Handle,
-        framebuffer: framebuffer::Handle,
+        framebuffer: Option<framebuffer::Handle>,
         pos: (u32, u32),
         conns: &[connector::Handle],
         mode: Option<Mode>,
@@ -214,7 +214,7 @@ pub trait Device: super::Device {
         let _info = ffi::mode::set_crtc(
             self.as_raw_fd(),
             handle.into(),
-            framebuffer.into(),
+            framebuffer.map(|x| x.into()).unwrap_or(0),
             pos.0, pos.1,
             unsafe { mem::transmute(conns) },
             unsafe { mem::transmute(mode) },
