@@ -788,6 +788,14 @@ impl std::fmt::Debug for ModeList {
     }
 }
 
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PlaneType {
+    Overlay = ffi::DRM_PLANE_TYPE_OVERLAY,
+    Primary = ffi::DRM_PLANE_TYPE_PRIMARY,
+    Cursor = ffi::DRM_PLANE_TYPE_CURSOR,
+}
+
 /// Wrapper around a set of property IDs and their raw values.
 #[derive(Debug, Copy, Clone)]
 pub struct PropertyValueSet {
