@@ -1,4 +1,5 @@
 extern crate drm;
+extern crate image;
 
 mod utils;
 use utils::*;
@@ -6,10 +7,9 @@ use utils::*;
 use drm::control::Device as ControlDevice;
 use drm::Device as BasicDevice;
 
-use drm::buffer::PixelFormat;
+use drm::buffer::format::PixelFormat;
 
 use drm::control::ResourceHandle;
-use drm::control::ResourceInfo;
 use drm::control::{connector, crtc, dumbbuffer, framebuffer};
 
 pub fn main() {
@@ -19,13 +19,13 @@ pub fn main() {
     let res = card
         .resource_handles()
         .expect("Could not load normal resource ids.");
-    let coninfo: Vec<connector::Info> = load_information(&card, res.connectors());
-    let crtcinfo: Vec<crtc::Info> = load_information(&card, res.crtcs());
+    let coninfo: Vec<connector::Info> = res.connectors().iter().flat_map(|con| card.get_connector(*con)).collect();
+    let crtcinfo: Vec<crtc::Info> = res.crtcs().iter().flat_map(|crtc| card.get_crtc(*crtc)).collect();
 
     // Filter each connector until we find one that's connected.
     let con = coninfo
         .iter()
-        .filter(|&i| i.connection_state() == connector::State::Connected)
+        .filter(|&i| i.state() == connector::State::Connected)
         .next()
         .expect("No connected connectors");
 
@@ -40,37 +40,36 @@ pub fn main() {
     let crtc = crtcinfo.iter().next().expect("No crtcs found");
 
     // Select the pixel format
-    let fmt = PixelFormat::XRGB8888;
-    //let fmt = PixelFormat::RGBA8888;
+    //let fmt = PixelFormat::XRGB8888;
+    let fmt = PixelFormat::RGBA8888;
     //let fmt = PixelFormat::ARGB4444;
 
     // Create a DB
-    let mut db = dumbbuffer::DumbBuffer::create_from_device(&card, (1920, 1080), fmt)
+    let mut db = card.create_dumb_buffer((1920, 1080), fmt)
         .expect("Could not create dumb buffer");
 
     // Map it and grey it out.
     {
-        let mut map = db.map(&card).expect("Could not map dumbbuffer");
+        let mut map = card.map_dumb_buffer(&mut db).expect("Could not map dumbbuffer");
         for mut b in map.as_mut() {
             *b = 128;
         }
     }
 
     // Create an FB:
-    let fbinfo = framebuffer::create(&card, &db).expect("Could not create FB");
+    let fb = card.add_framebuffer(&db).expect("Could not create FB");
 
     println!("{:#?}", mode);
-    println!("{:#?}", fbinfo);
+    println!("{:#?}", fb);
     println!("{:#?}", db);
 
     // Set the crtc
     // On many setups, this requires root access.
-    crtc::set(
-        &card,
+    card.set_crtc(
         crtc.handle(),
-        fbinfo.handle(),
-        &[con.handle()],
+        fb,
         (0, 0),
+        &[con.handle()],
         Some(mode),
     )
     .expect("Could not set CRTC");
@@ -78,17 +77,6 @@ pub fn main() {
     let five_seconds = ::std::time::Duration::from_millis(5000);
     ::std::thread::sleep(five_seconds);
 
-    framebuffer::destroy(&card, fbinfo.handle()).unwrap();
-    db.destroy(&card).unwrap();
-}
-
-fn load_information<T, U>(card: &Card, handles: &[T]) -> Vec<U>
-where
-    T: ResourceHandle,
-    U: ResourceInfo<Handle = T>,
-{
-    handles
-        .iter()
-        .map(|&h| card.resource_info(h).expect("Could not load resource info"))
-        .collect()
+    card.destroy_framebuffer(fb).unwrap();
+    card.destroy_dumb_buffer(db).unwrap();
 }
