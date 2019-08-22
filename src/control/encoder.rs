@@ -67,8 +67,8 @@ impl Info {
     }
 
     /// Returns a filter for the possible CRTCs that can use this encoder.
-    pub fn possible_crtcs(&self) -> () {
-        unimplemented!()
+    pub fn possible_crtcs(&self) -> control::CrtcListFilter {
+        control::CrtcListFilter(self.pos_crtcs)
     }
 
     /// Returns a filter for the possible encoders that clones this one.
