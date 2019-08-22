@@ -3,7 +3,6 @@
 #![allow(dead_code)]
 #![allow(missing_docs)]
 
-use core::str::lossy::Utf8Lossy;
 pub use std::ffi::OsStr;
 
 use std::fmt;
@@ -55,7 +54,28 @@ impl fmt::Debug for SmallOsString {
 
 impl fmt::Display for SmallOsString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let lossy_utf8 = Utf8Lossy::from_bytes(self.as_ref());
-        write!(f, "{}", lossy_utf8)
+        let mut input = self.as_ref();
+        loop {
+            match ::std::str::from_utf8(input) {
+                Ok(valid) => {
+                    write!(f, "{}", valid)?;
+                    break
+                }
+                Err(error) => {
+                    let (valid, after_valid) = input.split_at(error.valid_up_to());
+                    unsafe {
+                        write!(f, "{}", ::std::str::from_utf8_unchecked(valid))?;
+                    }
+                    write!(f, "{}", "\u{FFFD}")?;
+
+                    if let Some(invalid_sequence_length) = error.error_len() {
+                        input = &after_valid[invalid_sequence_length..]
+                    } else {
+                        break
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }

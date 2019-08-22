@@ -27,7 +27,6 @@
 //!
 
 #![warn(missing_docs)]
-#![feature(str_internals)]
 #![feature(nll)]
 extern crate core;
 
