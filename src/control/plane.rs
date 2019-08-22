@@ -75,6 +75,10 @@ impl Info {
         self.crtc
     }
 
+    pub fn possible_crtcs(&self) -> control::CrtcListFilter {
+        control::CrtcListFilter(self.pos_crtcs)
+    }
+
     /// Returns the framebuffer this plane is attached to.
     pub fn framebuffer(&self) -> Option<control::framebuffer::Handle> {
         self.fb
