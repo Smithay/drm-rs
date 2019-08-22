@@ -52,6 +52,7 @@ pub struct Info {
     pub(crate) interface_id: u32,
     pub(crate) connection: State,
     pub(crate) size: Option<(u32, u32)>,
+    pub(crate) modes: [control::Mode; 16],
     pub(crate) encoders: [Option<control::encoder::Handle>; 3],
     pub(crate) curr_enc: Option<control::encoder::Handle>,
 }
@@ -88,6 +89,10 @@ impl Info {
     /// Returns a list of encoders that can be possibly used by this connector.
     pub fn encoders(&self) -> &[Option<control::encoder::Handle>] {
         &self.encoders
+    }
+
+    pub fn modes(&self) ->  &[control::Mode] {
+        &self.modes
     }
 
     /// Returns the current encoder attached to this connector.
