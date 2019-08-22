@@ -133,13 +133,15 @@ pub trait Device: super::Device {
         // Maximum number of encoders is 3 due to kernel restrictions
         let mut encoders = [0u32; 3];
         let mut enc_slice = &mut encoders[..];
+        let mut modes = [unsafe { mem::zeroed() }; 16];
+        let mut modes_slice = &mut modes[..];
 
         let ffi_info = ffi::mode::get_connector(
             self.as_raw_fd(),
             handle.into(),
             None,
             None,
-            None,
+            Some(&mut modes_slice),
             Some(&mut enc_slice),
             )?;
 
@@ -152,6 +154,7 @@ pub trait Device: super::Device {
                 (0, 0) => None,
                 (x, y) => Some((x, y)),
             },
+            modes: unsafe { mem::transmute(modes) },
             encoders: unsafe { mem::transmute(encoders) },
             curr_enc: unsafe { mem::transmute(ffi_info.encoder_id) },
         };
