@@ -35,11 +35,23 @@ pub mod format;
 /// prevent buffers from leaking by properly closing them after they are done.
 #[repr(transparent)]
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Handle(u32);
+pub struct Handle(::control::RawResourceHandle);
+
+impl Into<::control::RawResourceHandle> for Handle {
+    fn into(self) -> ::control::RawResourceHandle {
+        self.0
+    }
+}
 
 impl Into<u32> for Handle {
     fn into(self) -> u32 {
-        self.0
+        self.0.into()
+    }
+}
+
+impl From<::control::RawResourceHandle> for Handle {
+    fn from(handle: ::control::RawResourceHandle) -> Self {
+        Handle(handle)
     }
 }
 
