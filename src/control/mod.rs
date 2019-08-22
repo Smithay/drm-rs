@@ -647,6 +647,15 @@ impl ResourceHandles {
         let buf_len = std::cmp::min(self.fbs.len(), self.fb_len);
         unsafe { mem::transmute(&self.fbs[..buf_len]) }
     }
+
+    pub fn filter_crtcs(&self, filter: CrtcListFilter) -> Vec<crtc::Handle> {
+        self.crtcs
+            .iter()
+            .enumerate()
+            .filter(|&(n, _)| (1 << n) & filter.0 != 0)
+            .flat_map(|(_, &e)| e)
+            .collect()
+    }
 }
 
 impl std::fmt::Debug for ResourceHandles {
@@ -685,6 +694,11 @@ impl std::fmt::Debug for PlaneResourceHandles {
             .finish()
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// A filter that can be used with a ResourceHandles to determine the set of
+/// Crtcs that can attach to a specific encoder.
+pub struct CrtcListFilter(u32);
 
 /// Resolution and timing information for a display mode.
 #[repr(transparent)]
