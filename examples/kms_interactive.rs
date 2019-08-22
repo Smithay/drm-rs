@@ -162,7 +162,17 @@ fn run_repl(card: &Card) {
                     },
                     _ => println!("Unknown handle or handle is not a connector")
                 }
+            },
+            ["help"] => {
+                println!("CreateAtomicSet");
+                println!("DestroyFramebuffer <handle>");
+                println!("GetResources");
+                println!("GetProperty <handle>");
+                println!("GetProperties <handle>");
+                println!("SetProperty <handle> <poperty> <value>");
+                println!("GetModes <handle>");
             }
+            ["quit"] => break,
             [ ] => (),
             _ => {
                 println!("Unknown command");
