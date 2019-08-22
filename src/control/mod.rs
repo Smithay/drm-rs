@@ -450,6 +450,28 @@ pub trait Device: super::Device {
         Ok(())
     }
 
+    fn create_property_blob(&self, mode: Mode) -> Result<property::Value, SystemError> {
+        let mut raw_mode: ffi::drm_mode_modeinfo = mode.into();
+        let data = unsafe {
+            std::slice::from_raw_parts_mut(
+                mem::transmute(&mut raw_mode as *mut ffi::drm_mode_modeinfo),
+                mem::size_of::<ffi::drm_mode_modeinfo>()
+            )
+        };
+        let blob = ffi::mode::create_property_blob(
+            self.as_raw_fd(),
+            data,
+        )?;
+
+        Ok(property::Value::Blob(blob.blob_id.into()))
+    }
+
+    fn destroy_property_blob(&self, blob: u64) -> Result<(), SystemError> {
+        ffi::mode::destroy_property_blob(self.as_raw_fd(), blob as u32)?;
+
+        Ok(())
+    }
+
     /// Returns the set of `Mode`s that a particular connector supports.
     fn get_modes(&self, handle: connector::Handle) -> Result<ModeList, SystemError> {
         let mut modes = [ffi::drm_mode_modeinfo::default(); 38];
