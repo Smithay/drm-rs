@@ -48,7 +48,6 @@ use std::mem;
 use core::num::NonZeroU32;
 pub type RawResourceHandle = NonZeroU32;
 
-#[doc(hidden)]
 pub trait ResourceHandle : From<RawResourceHandle> + Into<RawResourceHandle> + Into<u32> + Copy + Sized {
     const FFI_TYPE: u32;
 }
