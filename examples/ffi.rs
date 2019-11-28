@@ -1,6 +1,6 @@
-extern crate drm;
+extern crate drm_ffi;
 
-use drm::ffi;
+use drm_ffi as ffi;
 
 use std::fs::{File, OpenOptions};
 use std::os::unix::io::{AsRawFd, RawFd};
@@ -34,23 +34,39 @@ impl Card {
 }
 
 fn print_busid(fd: RawFd) {
-    let busid = ffi::basic::get_bus_id(fd);
+    let mut buffer = [0u8; 32];
+    let mut slice = &mut buffer[..];
+    let busid = ffi::get_bus_id(fd, Some(&mut slice));
     println!("{:#?}", busid);
 }
 
 fn print_client(fd: RawFd) {
-    let client = ffi::basic::get_client(fd, 0);
+    let client = ffi::get_client(fd, 0);
     println!("{:#?}", client);
 }
 
 fn print_version(fd: RawFd) {
-    let version = ffi::basic::get_driver_version(fd);
+    let mut name = [0i8; 32];
+    let mut date = [0i8; 32];
+    let mut desc = [0i8; 32];
+
+    let mut name_slice = &mut name[..];
+    let mut date_slice = &mut date[..];
+    let mut desc_slice = &mut desc[..];
+
+    let version = ffi::get_version(
+        fd,
+        Some(&mut name_slice),
+        Some(&mut date_slice),
+        Some(&mut desc_slice),
+    );
+
     println!("{:#?}", version);
 }
 
 fn print_capabilities(fd: RawFd) {
     for cty in 1.. {
-        let cap = ffi::basic::get_capability(fd, cty);
+        let cap = ffi::get_capability(fd, cty);
         match cap {
             Ok(_) => println!("{:#?}", cap),
             Err(_) => break,
@@ -59,14 +75,16 @@ fn print_capabilities(fd: RawFd) {
 }
 
 fn print_token(fd: RawFd) {
-    let token = ffi::basic::get_magic_token(fd);
+    let token = ffi::auth::get_magic_token(fd);
     println!("{:#?}", token);
 }
 
+/*
 fn print_stats(fd: RawFd) {
     let stats = ffi::basic::get_stats(fd);
     println!("{:#?}", stats);
 }
+*/
 
 fn main() {
     let card = Card::open_global();
@@ -76,5 +94,6 @@ fn main() {
     print_client(fd);
     print_version(fd);
     print_capabilities(fd);
-    print_stats(fd);
+    print_token(fd);
+    //print_stats(fd);
 }
