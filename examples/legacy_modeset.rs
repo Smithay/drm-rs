@@ -67,7 +67,7 @@ pub fn main() {
     // On many setups, this requires root access.
     card.set_crtc(
         crtc.handle(),
-        fb,
+        Some(fb),
         (0, 0),
         &[con.handle()],
         Some(mode),
