@@ -636,7 +636,7 @@ pub trait Device: super::Device {
 
         drm_ffi::mode::atomic_commit(
             self.as_raw_fd(),
-            flags.iter().fold(0, |acc, x| acc & *x as u32),
+            flags.iter().fold(0, |acc, x| acc | *x as u32),
             unsafe { tm(&mut *req.objects) },
             &mut *req.count_props_per_object,
             unsafe { tm(&mut *req.props) },
@@ -873,4 +873,5 @@ pub enum AtomicCommitFlags {
     TestOnly = ffi::drm_sys::DRM_MODE_ATOMIC_TEST_ONLY,
     Nonblock =  ffi::drm_sys::DRM_MODE_ATOMIC_NONBLOCK,
     AllowModeset = ffi::drm_sys::DRM_MODE_ATOMIC_ALLOW_MODESET,
+    PageFlipEvent = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT,
 }
