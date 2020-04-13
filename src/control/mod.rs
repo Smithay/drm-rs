@@ -453,7 +453,7 @@ pub trait Device: super::Device {
         Ok(())
     }
 
-    fn create_property_blob(&self, mode: Mode) -> Result<property::Value, SystemError> {
+    fn create_property_blob(&self, mode: Mode) -> Result<property::Value<'static>, SystemError> {
         let mut raw_mode: ffi::drm_mode_modeinfo = mode.into();
         let data = unsafe {
             std::slice::from_raw_parts_mut(
