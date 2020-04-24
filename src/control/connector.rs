@@ -45,14 +45,14 @@ impl std::fmt::Debug for Handle {
 }
 
 /// Information about a connector
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Info {
     pub(crate) handle: Handle,
     pub(crate) interface: Interface,
     pub(crate) interface_id: u32,
     pub(crate) connection: State,
     pub(crate) size: Option<(u32, u32)>,
-    pub(crate) modes: [control::Mode; 16],
+    pub(crate) modes: Vec<control::Mode>,
     pub(crate) encoders: [Option<control::encoder::Handle>; 3],
     pub(crate) curr_enc: Option<control::encoder::Handle>,
 }
