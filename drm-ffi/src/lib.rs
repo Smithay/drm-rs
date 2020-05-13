@@ -11,8 +11,6 @@ pub extern crate drm_sys;
 pub use drm_sys::*;
 
 #[macro_use]
-extern crate failure;
-#[macro_use]
 extern crate nix;
 
 #[macro_use]
