@@ -13,5 +13,5 @@ failure = "*"
 bitflags = "*"
 
 [dev-dependencies]
-image = "*"
+image = { version = "*", default-features = false, features = ["png"] }
 rustyline = "*"
