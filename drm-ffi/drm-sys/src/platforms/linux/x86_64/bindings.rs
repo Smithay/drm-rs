@@ -19,17 +19,21 @@ pub const DRM_CAP_ADDFB2_MODIFIERS: u32 = 16;
 pub const DRM_CAP_PAGE_FLIP_TARGET: u32 = 17;
 pub const DRM_CAP_CRTC_IN_VBLANK_EVENT: u32 = 18;
 pub const DRM_CAP_SYNCOBJ: u32 = 19;
+pub const DRM_CAP_SYNCOBJ_TIMELINE: u32 = 20;
 pub const DRM_CLIENT_CAP_STEREO_3D: u32 = 1;
 pub const DRM_CLIENT_CAP_UNIVERSAL_PLANES: u32 = 2;
 pub const DRM_CLIENT_CAP_ATOMIC: u32 = 3;
+pub const DRM_CLIENT_CAP_ASPECT_RATIO: u32 = 4;
+pub const DRM_CLIENT_CAP_WRITEBACK_CONNECTORS: u32 = 5;
 pub const DRM_SYNCOBJ_CREATE_SIGNALED: u32 = 1;
 pub const DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_IMPORT_SYNC_FILE: u32 = 1;
 pub const DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_EXPORT_SYNC_FILE: u32 = 1;
 pub const DRM_SYNCOBJ_WAIT_FLAGS_WAIT_ALL: u32 = 1;
 pub const DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT: u32 = 2;
+pub const DRM_SYNCOBJ_WAIT_FLAGS_WAIT_AVAILABLE: u32 = 4;
+pub const DRM_SYNCOBJ_QUERY_FLAGS_LAST_SUBMITTED: u32 = 1;
 pub const DRM_CRTC_SEQUENCE_RELATIVE: u32 = 1;
 pub const DRM_CRTC_SEQUENCE_NEXT_ON_MISS: u32 = 2;
-pub const DRM_DISPLAY_INFO_LEN: u32 = 32;
 pub const DRM_CONNECTOR_NAME_LEN: u32 = 32;
 pub const DRM_DISPLAY_MODE_LEN: u32 = 32;
 pub const DRM_PROP_NAME_LEN: u32 = 32;
@@ -40,6 +44,7 @@ pub const DRM_MODE_TYPE_PREFERRED: u32 = 8;
 pub const DRM_MODE_TYPE_DEFAULT: u32 = 16;
 pub const DRM_MODE_TYPE_USERDEF: u32 = 32;
 pub const DRM_MODE_TYPE_DRIVER: u32 = 64;
+pub const DRM_MODE_TYPE_ALL: u32 = 104;
 pub const DRM_MODE_FLAG_PHSYNC: u32 = 1;
 pub const DRM_MODE_FLAG_NHSYNC: u32 = 2;
 pub const DRM_MODE_FLAG_PVSYNC: u32 = 4;
@@ -67,10 +72,20 @@ pub const DRM_MODE_FLAG_3D_SIDE_BY_SIDE_HALF: u32 = 131072;
 pub const DRM_MODE_PICTURE_ASPECT_NONE: u32 = 0;
 pub const DRM_MODE_PICTURE_ASPECT_4_3: u32 = 1;
 pub const DRM_MODE_PICTURE_ASPECT_16_9: u32 = 2;
+pub const DRM_MODE_PICTURE_ASPECT_64_27: u32 = 3;
+pub const DRM_MODE_PICTURE_ASPECT_256_135: u32 = 4;
+pub const DRM_MODE_CONTENT_TYPE_NO_DATA: u32 = 0;
+pub const DRM_MODE_CONTENT_TYPE_GRAPHICS: u32 = 1;
+pub const DRM_MODE_CONTENT_TYPE_PHOTO: u32 = 2;
+pub const DRM_MODE_CONTENT_TYPE_CINEMA: u32 = 3;
+pub const DRM_MODE_CONTENT_TYPE_GAME: u32 = 4;
 pub const DRM_MODE_FLAG_PIC_AR_MASK: u32 = 7864320;
 pub const DRM_MODE_FLAG_PIC_AR_NONE: u32 = 0;
 pub const DRM_MODE_FLAG_PIC_AR_4_3: u32 = 524288;
 pub const DRM_MODE_FLAG_PIC_AR_16_9: u32 = 1048576;
+pub const DRM_MODE_FLAG_PIC_AR_64_27: u32 = 1572864;
+pub const DRM_MODE_FLAG_PIC_AR_256_135: u32 = 2097152;
+pub const DRM_MODE_FLAG_ALL: u32 = 521215;
 pub const DRM_MODE_DPMS_ON: u32 = 0;
 pub const DRM_MODE_DPMS_STANDBY: u32 = 1;
 pub const DRM_MODE_DPMS_SUSPEND: u32 = 2;
@@ -95,6 +110,9 @@ pub const DRM_MODE_ROTATE_MASK: u32 = 15;
 pub const DRM_MODE_REFLECT_X: u32 = 16;
 pub const DRM_MODE_REFLECT_Y: u32 = 32;
 pub const DRM_MODE_REFLECT_MASK: u32 = 48;
+pub const DRM_MODE_CONTENT_PROTECTION_UNDESIRED: u32 = 0;
+pub const DRM_MODE_CONTENT_PROTECTION_DESIRED: u32 = 1;
+pub const DRM_MODE_CONTENT_PROTECTION_ENABLED: u32 = 2;
 pub const DRM_MODE_PRESENT_TOP_FIELD: u32 = 1;
 pub const DRM_MODE_PRESENT_BOTTOM_FIELD: u32 = 2;
 pub const DRM_MODE_ENCODER_NONE: u32 = 0;
@@ -124,6 +142,7 @@ pub const DRM_MODE_CONNECTOR_eDP: u32 = 14;
 pub const DRM_MODE_CONNECTOR_VIRTUAL: u32 = 15;
 pub const DRM_MODE_CONNECTOR_DSI: u32 = 16;
 pub const DRM_MODE_CONNECTOR_DPI: u32 = 17;
+pub const DRM_MODE_CONNECTOR_WRITEBACK: u32 = 18;
 pub const DRM_MODE_PROP_PENDING: u32 = 1;
 pub const DRM_MODE_PROP_RANGE: u32 = 2;
 pub const DRM_MODE_PROP_IMMUTABLE: u32 = 4;
@@ -194,7 +213,7 @@ pub struct drm_drawable_info {
 }
 impl Default for drm_drawable_info {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -214,7 +233,7 @@ pub struct drm_hw_lock {
 }
 impl Default for drm_hw_lock {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -232,7 +251,7 @@ pub struct drm_version {
 }
 impl Default for drm_version {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -243,7 +262,7 @@ pub struct drm_unique {
 }
 impl Default for drm_unique {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -254,7 +273,7 @@ pub struct drm_list {
 }
 impl Default for drm_list {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -277,7 +296,7 @@ pub mod drm_control__bindgen_ty_1 {
 }
 impl Default for drm_control {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub mod drm_map_type {
@@ -308,7 +327,7 @@ pub struct drm_ctx_priv_map {
 }
 impl Default for drm_ctx_priv_map {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -323,7 +342,7 @@ pub struct drm_map {
 }
 impl Default for drm_map {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -368,12 +387,12 @@ pub struct drm_stats__bindgen_ty_1 {
 }
 impl Default for drm_stats__bindgen_ty_1 {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 impl Default for drm_stats {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub mod drm_lock_flags {
@@ -393,7 +412,7 @@ pub struct drm_lock {
 }
 impl Default for drm_lock {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub mod drm_dma_flags {
@@ -425,7 +444,7 @@ pub mod drm_buf_desc__bindgen_ty_1 {
 }
 impl Default for drm_buf_desc {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -436,7 +455,7 @@ pub struct drm_buf_info {
 }
 impl Default for drm_buf_info {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -447,7 +466,7 @@ pub struct drm_buf_free {
 }
 impl Default for drm_buf_free {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -460,7 +479,7 @@ pub struct drm_buf_pub {
 }
 impl Default for drm_buf_pub {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -472,7 +491,7 @@ pub struct drm_buf_map {
 }
 impl Default for drm_buf_map {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -491,7 +510,7 @@ pub struct drm_dma {
 }
 impl Default for drm_dma {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub mod drm_ctx_flags {
@@ -507,7 +526,7 @@ pub struct drm_ctx {
 }
 impl Default for drm_ctx {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -518,7 +537,7 @@ pub struct drm_ctx_res {
 }
 impl Default for drm_ctx_res {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -571,7 +590,7 @@ pub struct drm_wait_vblank_request {
 }
 impl Default for drm_wait_vblank_request {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -584,7 +603,7 @@ pub struct drm_wait_vblank_reply {
 }
 impl Default for drm_wait_vblank_reply {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -596,7 +615,7 @@ pub union drm_wait_vblank {
 }
 impl Default for drm_wait_vblank {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -711,8 +730,29 @@ pub struct drm_syncobj_handle {
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_syncobj_transfer {
+    pub src_handle: __u32,
+    pub dst_handle: __u32,
+    pub src_point: __u64,
+    pub dst_point: __u64,
+    pub flags: __u32,
+    pub pad: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_syncobj_wait {
     pub handles: __u64,
+    pub timeout_nsec: __s64,
+    pub count_handles: __u32,
+    pub flags: __u32,
+    pub first_signaled: __u32,
+    pub pad: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_syncobj_timeline_wait {
+    pub handles: __u64,
+    pub points: __u64,
     pub timeout_nsec: __s64,
     pub count_handles: __u32,
     pub flags: __u32,
@@ -725,6 +765,14 @@ pub struct drm_syncobj_array {
     pub handles: __u64,
     pub count_handles: __u32,
     pub pad: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_syncobj_timeline_array {
+    pub handles: __u64,
+    pub points: __u64,
+    pub count_handles: __u32,
+    pub flags: __u32,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -986,7 +1034,7 @@ pub struct drm_mode_crtc_lut {
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_color_ctm {
-    pub matrix: [__s64; 9usize],
+    pub matrix: [__u64; 9usize],
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -1109,6 +1157,14 @@ pub struct drm_mode_revoke_lease {
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_mode_rect {
+    pub x1: __s32,
+    pub y1: __s32,
+    pub x2: __s32,
+    pub y2: __s32,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_event {
     pub type_: __u32,
     pub length: __u32,
@@ -1140,8 +1196,8 @@ pub type drm_unique_t = drm_unique;
 pub type drm_list_t = drm_list;
 pub type drm_block_t = drm_block;
 pub type drm_control_t = drm_control;
-pub use self::drm_map_type::Type as drm_map_type_t;
 pub use self::drm_map_flags::Type as drm_map_flags_t;
+pub use self::drm_map_type::Type as drm_map_type_t;
 pub type drm_ctx_priv_map_t = drm_ctx_priv_map;
 pub type drm_map_t = drm_map;
 pub type drm_client_t = drm_client;
