@@ -32,6 +32,7 @@ mod use_bindgen {
             .derive_hash(true)
             .derive_eq(true)
             .whitelist_recursively(true)
+            .use_core()
     }
 
     const TMP_BIND_PREFIX: &str = "__BINDGEN_TMP_";

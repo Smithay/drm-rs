@@ -7,7 +7,7 @@ license = "MIT"
 build = "build.rs"
 
 [dependencies]
-libc = "*"
+libc = { version = "*", default-features = false }
 
 [features]
 default = []
