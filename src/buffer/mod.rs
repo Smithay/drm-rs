@@ -116,7 +116,7 @@ pub trait PlanarBuffer {
     fn offsets(&self) -> [u32; 4];
 }
 
-impl<B: Buffer> PlanarBuffer for B {
+impl<B: Buffer + ?Sized> PlanarBuffer for B {
     fn size(&self) -> (u32, u32) {
         Buffer::size(self)
     }
