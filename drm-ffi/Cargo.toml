@@ -9,5 +9,4 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 [dependencies]
 drm-sys = { path = "drm-sys" }
 nix = "*"
-failure = "*"
 bitflags = "*"
