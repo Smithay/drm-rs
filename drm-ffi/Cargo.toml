@@ -10,3 +10,6 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 drm-sys = { path = "drm-sys" }
 nix = "*"
 bitflags = "*"
+
+[features]
+use_bindgen = ["drm-sys/use_bindgen"]
