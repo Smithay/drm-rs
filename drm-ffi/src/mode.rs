@@ -256,6 +256,10 @@ pub fn set_gamma(
 }
 
 /// Set cursor state
+///
+/// The buffer must be allocated using the buffer manager of the driver (GEM or TTM). It is not
+/// allowed to be a dumb buffer.
+#[deprecated = "use a cursor plane instead"]
 pub fn set_cursor(fd: RawFd, id: u32, buf_id: u32, w: u32, h: u32) -> Result<drm_mode_cursor, Error> {
     let mut cursor = drm_mode_cursor {
         flags: DRM_MODE_CURSOR_BO,
@@ -273,15 +277,22 @@ pub fn set_cursor(fd: RawFd, id: u32, buf_id: u32, w: u32, h: u32) -> Result<drm
     Ok(cursor)
 }
 
-/// Set cursor state (with position)
+/// Set cursor state (with hotspot position)
+///
+/// The buffer must be allocated using the buffer manager of the driver (GEM or TTM). It is not
+/// allowed to be a dumb buffer.
+///
+/// The hotspot position is used to coordinate the guest and host cursor location in case of
+/// virtualization.
+#[deprecated = "use a cursor plane instead"]
 pub fn set_cursor2(
     fd: RawFd,
     id: u32,
     buf_id: u32,
     w: u32,
     h: u32,
-    x: i32,
-    y: i32,
+    hot_x: i32,
+    hot_y: i32,
 ) -> Result<drm_mode_cursor2, Error> {
     let mut cursor = drm_mode_cursor2 {
         flags: DRM_MODE_CURSOR_BO,
@@ -289,8 +300,8 @@ pub fn set_cursor2(
         width: w,
         height: h,
         handle: buf_id,
-        hot_x: x,
-        hot_y: y,
+        hot_x,
+        hot_y,
         ..Default::default()
     };
 
@@ -302,6 +313,7 @@ pub fn set_cursor2(
 }
 
 /// Move cursor
+#[deprecated = "use a cursor plane instead"]
 pub fn move_cursor(fd: RawFd, id: u32, x: i32, y: i32) -> Result<drm_mode_cursor, Error> {
     let mut cursor = drm_mode_cursor {
         flags: DRM_MODE_CURSOR_MOVE,
