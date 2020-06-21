@@ -14,3 +14,6 @@ bitflags = "*"
 [dev-dependencies]
 image = { version = "*", default-features = false, features = ["png"] }
 rustyline = "*"
+
+[features]
+use_bindgen = ["drm-ffi/use_bindgen"]
