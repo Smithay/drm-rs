@@ -592,14 +592,6 @@ pub trait Device: super::Device {
 
         Ok(dumb)
     }
-
-    /// Free the memory resources of a dumb buffer
-    fn destroy_dumb_buffer(&self, buffer: DumbBuffer) -> Result<(), SystemError> {
-        let _info = drm_ffi::mode::dumbbuffer::destroy(self.as_raw_fd(), buffer.handle.into())?;
-
-        Ok(())
-    }
-
     /// Map the buffer for access
     fn map_dumb_buffer<'a>(&self, buffer: &'a mut DumbBuffer) -> Result<DumbMapping<'a>, SystemError> {
         let info = drm_ffi::mode::dumbbuffer::map(self.as_raw_fd(), buffer.handle.into(), 0, 0)?;
@@ -621,6 +613,57 @@ pub trait Device: super::Device {
         };
 
         Ok(mapping)
+    }
+
+    /// Free the memory resources of a dumb buffer
+    fn destroy_dumb_buffer(&self, buffer: DumbBuffer) -> Result<(), SystemError> {
+        let _info = drm_ffi::mode::dumbbuffer::destroy(self.as_raw_fd(), buffer.handle.into())?;
+
+        Ok(())
+    }
+
+    /// Sets a hardware-cursor on the given crtc with the image of a given buffer
+    ///
+    /// A buffer argument of `None` will clear the cursor.
+    fn set_cursor<B>(&self, crtc: crtc::Handle, buffer: Option<&B>) -> Result<(), SystemError>
+    where
+        B: buffer::Buffer + ?Sized,
+    {
+        let (id, w, h) = buffer
+            .map(|buf| {
+                let (w, h) = buf.size();
+                (buf.handle().into(), w, h)
+            })
+            .unwrap_or((0, 0, 0));
+        drm_ffi::mode::set_cursor(self.as_raw_fd(), crtc.into(), id, w, h)?;
+
+        Ok(())
+    }
+
+    /// Sets a hardware-cursor on the given crtc with the image of a given buffer
+    /// and a hotspot marking the click point of the cursor.
+    ///
+    /// A buffer argument of `None` will clear the cursor.
+    fn set_cursor2<B>(&self, crtc: crtc::Handle, buffer: Option<&B>, hotspot: (i32, i32)) -> Result<(), SystemError>
+    where
+        B: buffer::Buffer + ?Sized,
+    {
+        let (id, w, h) = buffer
+            .map(|buf| {
+                let (w, h) = buf.size();
+                (buf.handle().into(), w, h)
+            })
+            .unwrap_or((0, 0, 0));
+        drm_ffi::mode::set_cursor2(self.as_raw_fd(), crtc.into(), id, w, h, hotspot.0, hotspot.1)?;
+
+        Ok(())
+    }
+
+    /// Moves a set cursor on a given crtc
+    fn move_cursor(&self, crtc: crtc::Handle, pos: (i32, i32)) -> Result<(), SystemError> {
+        drm_ffi::mode::move_cursor(self.as_raw_fd(), crtc.into(), pos.0, pos.1)?;
+
+        Ok(())
     }
 
     fn atomic_commit(&self, flags: &[AtomicCommitFlags], mut req: atomic::AtomicModeReq) -> Result<(), SystemError> {
