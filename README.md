@@ -2,6 +2,8 @@
 
 __This library is currently a work in progress.__
 
+__A nightly compiler is required__
+
 A safe interface to the Direct Rendering Manager.
 
 ## Direct Rendering Manager
