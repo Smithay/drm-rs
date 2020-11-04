@@ -133,15 +133,14 @@ pub trait Device: super::Device {
         // Maximum number of encoders is 3 due to kernel restrictions
         let mut encoders = [0u32; 3];
         let mut enc_slice = &mut encoders[..];
-        let mut modes = [unsafe { mem::zeroed() }; 16];
-        let mut modes_slice = &mut modes[..];
+        let mut modes = Vec::new();
 
         let ffi_info = ffi::mode::get_connector(
             self.as_raw_fd(),
             handle.into(),
             None,
             None,
-            Some(&mut modes_slice),
+            Some(&mut modes),
             Some(&mut enc_slice),
             )?;
 
@@ -476,27 +475,19 @@ pub trait Device: super::Device {
     }
 
     /// Returns the set of `Mode`s that a particular connector supports.
-    fn get_modes(&self, handle: connector::Handle) -> Result<ModeList, SystemError> {
-        let mut modes = [ffi::drm_mode_modeinfo::default(); 38];
-        let mut mode_slice = &mut modes[..];
+    fn get_modes(&self, handle: connector::Handle) -> Result<Vec<Mode>, SystemError> {
+        let mut modes = Vec::new();
 
         let _ffi_info = ffi::mode::get_connector(
             self.as_raw_fd(),
             handle.into(),
             None,
             None,
-            Some(&mut mode_slice),
+            Some(&mut modes),
             None,
             )?;
 
-        let mode_len = mode_slice.len();
-
-        let list = ModeList {
-            modes: unsafe { mem::transmute(modes) },
-            mode_len: mode_len
-        };
-
-        Ok(list)
+        Ok(unsafe { mem::transmute(modes) })
     }
 
     /// Gets a list of property handles and values for this resource.
@@ -813,29 +804,6 @@ impl std::fmt::Debug for Mode {
             .field("hskew", &self.hskew())
             .field("vscan", &self.vscan())
             .field("vrefresh", &self.vrefresh())
-            .finish()
-    }
-}
-
-/// A simple list of `Mode`s
-#[derive(Copy, Clone)]
-pub struct ModeList {
-    modes: [Mode; 38],
-    mode_len: usize
-}
-
-impl ModeList {
-    /// Returns the list as a slice.
-    pub fn modes(&self) -> &[Mode] {
-        let buf_len = std::cmp::min(self.modes.len(), self.mode_len);
-        unsafe { mem::transmute(&self.modes[..buf_len]) }
-    }
-}
-
-impl std::fmt::Debug for ModeList {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_struct("ModeList")
-            .field("modes", &self.modes())
             .finish()
     }
 }

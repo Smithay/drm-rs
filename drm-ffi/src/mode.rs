@@ -336,17 +336,38 @@ pub fn get_connector(
     id: u32,
     props: Option<&mut &mut [u32]>,
     prop_values: Option<&mut &mut [u64]>,
-    modes: Option<&mut &mut [drm_mode_modeinfo]>,
+    mut modes: Option<&mut Vec<drm_mode_modeinfo>>,
     encoders: Option<&mut &mut [u32]>,
 ) -> Result<drm_mode_get_connector, Error> {
+
+    let modes_count = if modes.is_some() {
+        let mut info = drm_mode_get_connector {
+            connector_id: id,
+            ..Default::default()
+        };
+
+        unsafe {
+            ioctl::mode::get_connector(fd, &mut info)?;
+        }
+ 
+        info.count_modes
+    } else { 0 };
+ 
     let mut info = drm_mode_get_connector {
         connector_id: id,
         props_ptr: map_ptr!(&props),
         prop_values_ptr: map_ptr!(&prop_values),
-        modes_ptr: map_ptr!(&modes),
+        modes_ptr: match modes.as_mut() {
+            Some(modes) => {
+                modes.clear();
+                modes.reserve_exact(modes_count as usize);
+                modes.as_ptr() as _
+            },
+            None => 0 as _,
+        },
         encoders_ptr: map_ptr!(&encoders),
         count_props: map_len!(&props),
-        count_modes: map_len!(&modes),
+        count_modes: modes_count,
         count_encoders: map_len!(&encoders),
         ..Default::default()
     };
@@ -355,9 +376,14 @@ pub fn get_connector(
         ioctl::mode::get_connector(fd, &mut info)?;
     }
 
+    if let Some(modes) = modes {
+        unsafe {
+            modes.set_len(info.count_modes as usize);
+        }
+    }
+
     map_shrink!(props, info.count_props as usize);
     map_shrink!(prop_values, info.count_props as usize);
-    map_shrink!(modes, info.count_modes as usize);
     map_shrink!(encoders, info.count_encoders as usize);
 
     Ok(info)
