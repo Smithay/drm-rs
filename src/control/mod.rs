@@ -44,6 +44,7 @@ pub mod property;
 use self::dumbbuffer::*;
 use buffer;
 use std::mem;
+use std::os::unix::io::RawFd;
 
 use core::num::NonZeroU32;
 pub type RawResourceHandle = NonZeroU32;
@@ -633,6 +634,18 @@ pub trait Device: super::Device {
             unsafe { tm(&mut *req.props) },
             &mut *req.values,
         )
+    }
+
+    /// Convert a prime file descriptor to a GEM buffer handle
+    fn prime_fd_to_buffer(&self, fd: RawFd) -> Result<buffer::Handle, SystemError> {
+        let info = ffi::gem::fd_to_handle(self.as_raw_fd(), fd)?;
+        Ok(unsafe { mem::transmute(info.handle) })
+    }
+
+    /// Convert a prime file descriptor to a GEM buffer handle
+    fn buffer_to_prime_fd(&self, handle: buffer::Handle, flags: u32) -> Result<RawFd, SystemError> {
+        let info = ffi::gem::handle_to_fd(self.as_raw_fd(), handle.into(), flags)?;
+        Ok(info.fd)
     }
 }
 
