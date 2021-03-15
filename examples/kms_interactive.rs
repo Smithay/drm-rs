@@ -154,7 +154,7 @@ fn run_repl(card: &Card) {
                 match HandleWithProperties::from_str(card, handle) {
                     Ok(HandleWithProperties::Connector(handle)) => {
                         let modes = card.get_modes(handle).unwrap();
-                        for mode in modes.modes() {
+                        for mode in modes {
                             println!("\tName:\t{:?}", mode.name());
                             println!("\t\tSize:\t{:?}", mode.size());
                             println!("\t\tRefresh:\t{:?}", mode.vrefresh());
