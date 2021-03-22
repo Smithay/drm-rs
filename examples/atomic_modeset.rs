@@ -48,6 +48,8 @@ pub fn main() {
         .next()
         .expect("No modes found on connector");
 
+	let (disp_width, disp_height) = mode.size();
+	
     // Find a crtc and FB
     let crtc = crtcinfo.iter().next().expect("No crtcs found");
 
@@ -57,7 +59,9 @@ pub fn main() {
     //let fmt = PixelFormat::ARGB4444;
 
     // Create a DB
-    let mut db = card.create_dumb_buffer((1920, 1080), fmt)
+    // If buffer resolution is above display resolution, a ENOSPC (not enough GPU memory) error may
+    // occur
+    let mut db = card.create_dumb_buffer((disp_width.into(), disp_height.into()), fmt)
         .expect("Could not create dumb buffer");
 
     // Map it and grey it out.
