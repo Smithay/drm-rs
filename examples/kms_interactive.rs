@@ -1,5 +1,3 @@
-#![feature(slice_patterns)]
-
 extern crate drm;
 extern crate image;
 extern crate rustyline;

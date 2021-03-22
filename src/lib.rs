@@ -27,7 +27,6 @@
 //!
 
 #![warn(missing_docs)]
-#![feature(nll)]
 extern crate core;
 
 extern crate drm_ffi;

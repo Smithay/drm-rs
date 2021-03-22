@@ -4,7 +4,6 @@
 
 #![warn(missing_docs)]
 #![allow(unused_doc_comments)]
-#![feature(untagged_unions)]
 extern crate core;
 
 pub extern crate drm_sys;
