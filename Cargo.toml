@@ -8,6 +8,7 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
 drm-ffi = { path = "drm-ffi" }
+drm-fourcc = "2.0"
 nix = "*"
 bitflags = "*"
 

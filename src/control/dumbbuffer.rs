@@ -6,12 +6,12 @@
 
 use buffer;
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// Slow, but generic `Buffer` implementation
 pub struct DumbBuffer {
     pub(crate) size: (u32, u32),
     pub(crate) length: usize,
-    pub(crate) format: buffer::format::PixelFormat,
+    pub(crate) format: buffer::DrmFourcc,
     pub(crate) pitch: u32,
     pub(crate) handle: buffer::Handle,
 }
@@ -42,7 +42,7 @@ impl buffer::Buffer for DumbBuffer {
     fn size(&self) -> (u32, u32) {
         self.size
     }
-    fn format(&self) -> buffer::format::PixelFormat {
+    fn format(&self) -> buffer::DrmFourcc {
         self.format
     }
     fn pitch(&self) -> u32 {

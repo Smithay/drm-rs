@@ -30,6 +30,7 @@
 
 use drm_ffi as ffi;
 use drm_ffi::result::SystemError;
+use drm_fourcc::DrmModifier;
 
 pub mod atomic;
 pub mod connector;
@@ -248,6 +249,8 @@ pub trait Device: super::Device {
     fn add_framebuffer<B>(
         &self,
         buffer: &B,
+        depth: u32,
+        bpp: u32,
     ) -> Result<framebuffer::Handle, SystemError>
     where
         B: buffer::Buffer + ?Sized,
@@ -257,8 +260,8 @@ pub trait Device: super::Device {
             self.as_raw_fd(),
             w, h,
             buffer.pitch(),
-            buffer.format().bpp(),
-            buffer.format().depth(),
+            bpp,
+            depth,
             buffer.handle().into(),
         )?;
 
@@ -269,7 +272,7 @@ pub trait Device: super::Device {
     fn add_planar_framebuffer<B>(
         &self,
         planar_buffer: &B,
-        modifiers: &[u64; 4],
+        modifiers: &[Option<DrmModifier>; 4],
         flags: u32,
     ) -> Result<framebuffer::Handle, SystemError>
     where
@@ -283,15 +286,21 @@ pub trait Device: super::Device {
             opt_handles[2].map(|x| x.into()).unwrap_or(0),
             opt_handles[3].map(|x| x.into()).unwrap_or(0),
         ];
+        let mods = [
+            modifiers[0].map(Into::<u64>::into).unwrap_or(0),
+            modifiers[1].map(Into::<u64>::into).unwrap_or(0),
+            modifiers[2].map(Into::<u64>::into).unwrap_or(0),
+            modifiers[3].map(Into::<u64>::into).unwrap_or(0),
+        ];
 
         let info = ffi::mode::add_fb2(
             self.as_raw_fd(),
             w, h,
-            planar_buffer.format().as_raw(),
+            planar_buffer.format() as u32,
             &handles,
             &planar_buffer.pitches(),
             &planar_buffer.offsets(),
-            modifiers,
+            &mods,
             flags,
         )?;
 
@@ -578,14 +587,15 @@ pub trait Device: super::Device {
     fn create_dumb_buffer(
         &self,
         size: (u32, u32),
-        format: buffer::format::PixelFormat,
+        format: buffer::DrmFourcc,
+        bpp: u32,
     ) -> Result<DumbBuffer, SystemError> {
-        let info = drm_ffi::mode::dumbbuffer::create(self.as_raw_fd(), size.0, size.1, format.bpp(), 0)?;
+        let info = drm_ffi::mode::dumbbuffer::create(self.as_raw_fd(), size.0, size.1, bpp, 0)?;
 
         let dumb = DumbBuffer {
             size: (info.width, info.height),
             length: info.size as usize,
-            format: format,
+            format,
             pitch: info.pitch,
             handle: unsafe { mem::transmute(info.handle) },
         };

@@ -32,6 +32,7 @@ extern crate core;
 extern crate drm_ffi;
 
 extern crate nix;
+extern crate drm_fourcc;
 
 pub(crate) mod util;
 
