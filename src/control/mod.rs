@@ -76,7 +76,7 @@ pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
 /// provide a concrete object for this trait.
 ///
 /// # Example
-/// ```
+/// ```ignore
 /// use drm::control::Device as ControlDevice;
 ///
 /// // Assuming the `Card` wrapper already implements drm::Device
