@@ -52,14 +52,19 @@ pub enum SystemError {
 
 impl fmt::Display for SystemError {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> fmt::Result {
-        write!(fmt, "{}", match self {
-            SystemError::InvalidFileDescriptor => "invalid file descriptor",
-            SystemError::MemoryFault => "invalid memory access",
-            SystemError::InvalidArgument => "invalid argument",
-            SystemError::InvalidFileType => "invalid file type",
-            SystemError::PermissionDenied => "permission denied",
-            SystemError::Unknown { errno } => return write!(fmt, "unknown system error: {}", errno),
-        })
+        write!(
+            fmt,
+            "{}",
+            match self {
+                SystemError::InvalidFileDescriptor => "invalid file descriptor",
+                SystemError::MemoryFault => "invalid memory access",
+                SystemError::InvalidArgument => "invalid argument",
+                SystemError::InvalidFileType => "invalid file type",
+                SystemError::PermissionDenied => "permission denied",
+                SystemError::Unknown { errno } =>
+                    return write!(fmt, "unknown system error: {}", errno),
+            }
+        )
     }
 }
 

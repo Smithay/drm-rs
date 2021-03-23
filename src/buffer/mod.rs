@@ -24,7 +24,7 @@
 //! like a regular one. This allows better control and security, and is the
 //! recommended method of sharing buffers.
 
-pub use drm_fourcc::{DrmFourcc, UnrecognizedFourcc, DrmModifier, DrmVendor, UnrecognizedVendor};
+pub use drm_fourcc::{DrmFourcc, DrmModifier, DrmVendor, UnrecognizedFourcc, UnrecognizedVendor};
 
 /// A handle to a GEM buffer.
 ///
@@ -57,9 +57,7 @@ impl From<::control::RawResourceHandle> for Handle {
 
 impl std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_tuple("buffer::Handle")
-            .field(&self.0)
-            .finish()
+        f.debug_tuple("buffer::Handle").field(&self.0).finish()
     }
 }
 
@@ -82,9 +80,7 @@ impl Into<u32> for Name {
 
 impl std::fmt::Debug for Name {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_tuple("buffer::Name")
-            .field(&self.0)
-            .finish()
+        f.debug_tuple("buffer::Name").field(&self.0).finish()
     }
 }
 

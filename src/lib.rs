@@ -31,13 +31,13 @@ extern crate core;
 
 extern crate drm_ffi;
 
-extern crate nix;
 extern crate drm_fourcc;
+extern crate nix;
 
 pub(crate) mod util;
 
-pub mod control;
 pub mod buffer;
+pub mod control;
 
 use std::os::unix::io::AsRawFd;
 

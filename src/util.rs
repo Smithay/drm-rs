@@ -59,7 +59,7 @@ impl fmt::Display for SmallOsString {
             match ::std::str::from_utf8(input) {
                 Ok(valid) => {
                     write!(f, "{}", valid)?;
-                    break
+                    break;
                 }
                 Err(error) => {
                     let (valid, after_valid) = input.split_at(error.valid_up_to());
@@ -71,7 +71,7 @@ impl fmt::Display for SmallOsString {
                     if let Some(invalid_sequence_length) = error.error_len() {
                         input = &after_valid[invalid_sequence_length..]
                     } else {
-                        break
+                        break;
                     }
                 }
             }

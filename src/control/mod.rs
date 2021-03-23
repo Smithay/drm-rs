@@ -55,7 +55,9 @@ use core::num::NonZeroU32;
 pub type RawResourceHandle = NonZeroU32;
 
 /// Handle for a drm resource
-pub trait ResourceHandle : From<RawResourceHandle> + Into<RawResourceHandle> + Into<u32> + Copy + Sized {
+pub trait ResourceHandle:
+    From<RawResourceHandle> + Into<RawResourceHandle> + Into<u32> + Copy + Sized
+{
     /// Associated encoded object type
     const FFI_TYPE: u32;
 }
@@ -99,7 +101,7 @@ pub trait Device: super::Device {
             Some(&mut crtc_slice),
             Some(&mut conn_slice),
             Some(&mut enc_slice),
-            )?;
+        )?;
 
         let fb_len = fb_slice.len();
         let crtc_len = crtc_slice.len();
@@ -153,7 +155,7 @@ pub trait Device: super::Device {
             None,
             Some(&mut modes),
             Some(&mut enc_slice),
-            )?;
+        )?;
 
         let connector = connector::Info {
             handle: handle,
@@ -174,10 +176,7 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific encoder
     fn get_encoder(&self, handle: encoder::Handle) -> Result<encoder::Info, SystemError> {
-        let info = ffi::mode::get_encoder(
-            self.as_raw_fd(),
-            handle.into(),
-            )?;
+        let info = ffi::mode::get_encoder(self.as_raw_fd(), handle.into())?;
 
         let enc = encoder::Info {
             handle: handle,
@@ -192,10 +191,7 @@ pub trait Device: super::Device {
 
     /// Returns information about a specific CRTC
     fn get_crtc(&self, handle: crtc::Handle) -> Result<crtc::Info, SystemError> {
-        let info = ffi::mode::get_crtc(
-            self.as_raw_fd(),
-            handle.into(),
-            )?;
+        let info = ffi::mode::get_crtc(self.as_raw_fd(), handle.into())?;
 
         let crtc = crtc::Info {
             handle: handle,
@@ -224,7 +220,8 @@ pub trait Device: super::Device {
             self.as_raw_fd(),
             handle.into(),
             framebuffer.map(|x| x.into()).unwrap_or(0),
-            pos.0, pos.1,
+            pos.0,
+            pos.1,
             unsafe { mem::transmute(conns) },
             unsafe { mem::transmute(mode) },
         )?;
@@ -236,11 +233,8 @@ pub trait Device: super::Device {
     fn get_framebuffer(
         &self,
         handle: framebuffer::Handle,
-        ) -> Result<framebuffer::Info, SystemError> {
-        let info = ffi::mode::get_framebuffer(
-            self.as_raw_fd(),
-            handle.into(),
-            )?;
+    ) -> Result<framebuffer::Info, SystemError> {
+        let info = ffi::mode::get_framebuffer(self.as_raw_fd(), handle.into())?;
 
         let fb = framebuffer::Info {
             handle: handle,
@@ -267,7 +261,8 @@ pub trait Device: super::Device {
         let (w, h) = buffer.size();
         let info = ffi::mode::add_fb(
             self.as_raw_fd(),
-            w, h,
+            w,
+            h,
             buffer.pitch(),
             bpp,
             depth,
@@ -276,7 +271,7 @@ pub trait Device: super::Device {
 
         Ok(unsafe { mem::transmute(info.fb_id) })
     }
-    
+
     /// Add framebuffer (with modifiers)
     fn add_planar_framebuffer<B>(
         &self,
@@ -304,7 +299,8 @@ pub trait Device: super::Device {
 
         let info = ffi::mode::add_fb2(
             self.as_raw_fd(),
-            w, h,
+            w,
+            h,
             planar_buffer.format() as u32,
             &handles,
             &planar_buffer.pitches(),
@@ -317,7 +313,11 @@ pub trait Device: super::Device {
     }
 
     /// Mark parts of a framebuffer dirty
-    fn dirty_framebuffer(&self, handle: framebuffer::Handle, clips: &[ClipRect]) -> Result<(), SystemError> {
+    fn dirty_framebuffer(
+        &self,
+        handle: framebuffer::Handle,
+        clips: &[ClipRect],
+    ) -> Result<(), SystemError> {
         ffi::mode::dirty_fb(self.as_raw_fd(), handle.into(), &clips)?;
         Ok(())
     }
@@ -332,11 +332,7 @@ pub trait Device: super::Device {
         let mut formats = [0u32; 8];
         let mut fmt_slice = &mut formats[..];
 
-        let info = ffi::mode::get_plane(
-            self.as_raw_fd(),
-            handle.into(),
-            Some(&mut fmt_slice)
-            )?;
+        let info = ffi::mode::get_plane(self.as_raw_fd(), handle.into(), Some(&mut fmt_slice))?;
 
         let fmt_len = fmt_slice.len();
 
@@ -346,14 +342,14 @@ pub trait Device: super::Device {
             fb: from_u32(info.fb_id),
             pos_crtcs: info.possible_crtcs,
             formats: formats,
-            fmt_len: fmt_len
+            fmt_len: fmt_len,
         };
 
         Ok(plane)
     }
 
     /// Set plane state.
-    /// 
+    ///
     /// Providing no framebuffer clears the plane.
     fn set_plane(
         &self,
@@ -370,8 +366,14 @@ pub trait Device: super::Device {
             crtc.into(),
             framebuffer.map(Into::into).unwrap_or(0),
             flags,
-            crtc_rect.0, crtc_rect.1, crtc_rect.2, crtc_rect.3,
-            src_rect.0, src_rect.1, src_rect.2, src_rect.3,
+            crtc_rect.0,
+            crtc_rect.1,
+            crtc_rect.2,
+            crtc_rect.3,
+            src_rect.0,
+            src_rect.1,
+            src_rect.2,
+            src_rect.3,
         )?;
 
         Ok(())
@@ -389,8 +391,8 @@ pub trait Device: super::Device {
             self.as_raw_fd(),
             handle.into(),
             Some(&mut val_slice),
-            Some(&mut enum_slice)
-            )?;
+            Some(&mut enum_slice),
+        )?;
 
         let val_len = val_slice.len();
 
@@ -404,7 +406,7 @@ pub trait Device: super::Device {
 
                 match (min, max) {
                     (0, 1) => ValueType::Boolean,
-                    (min, max) => ValueType::UnsignedRange(min, max)
+                    (min, max) => ValueType::UnsignedRange(min, max),
                 }
             } else if flags & ffi::DRM_MODE_PROP_SIGNED_RANGE != 0 {
                 let min = values[0];
@@ -415,7 +417,7 @@ pub trait Device: super::Device {
                 let enum_values = self::property::EnumValues {
                     values: values,
                     enums: unsafe { mem::transmute(enums) },
-                    length: val_len
+                    length: val_len,
                 };
 
                 ValueType::Enum(enum_values)
@@ -445,7 +447,7 @@ pub trait Device: super::Device {
             val_type: val_type,
             mutable: info.flags & ffi::DRM_MODE_PROP_IMMUTABLE == 0,
             atomic: info.flags & ffi::DRM_MODE_PROP_ATOMIC == 0,
-            info: info
+            info: info,
         };
 
         Ok(property)
@@ -456,16 +458,15 @@ pub trait Device: super::Device {
         &self,
         handle: T,
         prop: property::Handle,
-        value: property::RawValue
-        ) -> Result<(), SystemError> {
-
+        value: property::RawValue,
+    ) -> Result<(), SystemError> {
         ffi::mode::set_property(
             self.as_raw_fd(),
             prop.into(),
             handle.into(),
             T::FFI_TYPE,
-            value
-            )?;
+            value,
+        )?;
 
         Ok(())
     }
@@ -476,13 +477,10 @@ pub trait Device: super::Device {
         let data = unsafe {
             std::slice::from_raw_parts_mut(
                 mem::transmute(&mut raw_mode as *mut ffi::drm_mode_modeinfo),
-                mem::size_of::<ffi::drm_mode_modeinfo>()
+                mem::size_of::<ffi::drm_mode_modeinfo>(),
             )
         };
-        let blob = ffi::mode::create_property_blob(
-            self.as_raw_fd(),
-            data,
-        )?;
+        let blob = ffi::mode::create_property_blob(self.as_raw_fd(), data)?;
 
         Ok(property::Value::Blob(blob.blob_id.into()))
     }
@@ -505,13 +503,16 @@ pub trait Device: super::Device {
             None,
             Some(&mut modes),
             None,
-            )?;
+        )?;
 
         Ok(unsafe { mem::transmute(modes) })
     }
 
     /// Gets a list of property handles and values for this resource.
-    fn get_properties<T: ResourceHandle>(&self, handle: T) -> Result<PropertyValueSet, SystemError> {
+    fn get_properties<T: ResourceHandle>(
+        &self,
+        handle: T,
+    ) -> Result<PropertyValueSet, SystemError> {
         let mut prop_ids = [0u32; 32];
         let mut prop_vals = [0u64; 32];
 
@@ -524,25 +525,31 @@ pub trait Device: super::Device {
             T::FFI_TYPE,
             Some(&mut prop_id_slice),
             Some(&mut prop_val_slice),
-            )?;
+        )?;
 
         let prop_len = prop_id_slice.len();
 
         let prop_val_set = PropertyValueSet {
             prop_ids: unsafe { mem::transmute(prop_ids) },
             prop_vals: unsafe { mem::transmute(prop_vals) },
-            len: prop_len
+            len: prop_len,
         };
 
         Ok(prop_val_set)
     }
-    
+
     /// Receive the currently set gamma ramp of a crtc
-    fn get_gamma(&self, crtc: crtc::Handle, red: &mut [u16], green: &mut [u16], blue: &mut [u16]) -> Result<(), SystemError> {
+    fn get_gamma(
+        &self,
+        crtc: crtc::Handle,
+        red: &mut [u16],
+        green: &mut [u16],
+        blue: &mut [u16],
+    ) -> Result<(), SystemError> {
         let crtc_info = self.get_crtc(crtc)?;
-        if crtc_info.gamma_length as usize > red.len() ||
-           crtc_info.gamma_length as usize > green.len() ||
-           crtc_info.gamma_length as usize > blue.len()
+        if crtc_info.gamma_length as usize > red.len()
+            || crtc_info.gamma_length as usize > green.len()
+            || crtc_info.gamma_length as usize > blue.len()
         {
             return Err(SystemError::InvalidArgument);
         }
@@ -553,29 +560,35 @@ pub trait Device: super::Device {
             crtc_info.gamma_length as usize,
             red,
             green,
-            blue
+            blue,
         )?;
 
         Ok(())
     }
 
     /// Set a gamma ramp for the given crtc
-    fn set_gamma(&self, crtc: crtc::Handle, red: &[u16], green: &[u16], blue: &[u16]) -> Result<(), SystemError> {
+    fn set_gamma(
+        &self,
+        crtc: crtc::Handle,
+        red: &[u16],
+        green: &[u16],
+        blue: &[u16],
+    ) -> Result<(), SystemError> {
         let crtc_info = self.get_crtc(crtc)?;
-        if crtc_info.gamma_length as usize > red.len() ||
-           crtc_info.gamma_length as usize > green.len() ||
-           crtc_info.gamma_length as usize > blue.len()
+        if crtc_info.gamma_length as usize > red.len()
+            || crtc_info.gamma_length as usize > green.len()
+            || crtc_info.gamma_length as usize > blue.len()
         {
             return Err(SystemError::InvalidArgument);
         }
-        
+
         ffi::mode::set_gamma(
             self.as_raw_fd(),
             crtc.into(),
             crtc_info.gamma_length as usize,
             red,
             green,
-            blue
+            blue,
         )?;
 
         Ok(())
@@ -592,7 +605,7 @@ pub trait Device: super::Device {
         let _info = drm_ffi::gem::close(self.as_raw_fd(), handle.into())?;
         Ok(())
     }
-  
+
     /// Create a new dumb buffer with a given size and pixel format
     fn create_dumb_buffer(
         &self,
@@ -613,11 +626,14 @@ pub trait Device: super::Device {
         Ok(dumb)
     }
     /// Map the buffer for access
-    fn map_dumb_buffer<'a>(&self, buffer: &'a mut DumbBuffer) -> Result<DumbMapping<'a>, SystemError> {
+    fn map_dumb_buffer<'a>(
+        &self,
+        buffer: &'a mut DumbBuffer,
+    ) -> Result<DumbMapping<'a>, SystemError> {
         let info = drm_ffi::mode::dumbbuffer::map(self.as_raw_fd(), buffer.handle.into(), 0, 0)?;
 
         let map = {
-            use ::nix::sys::mman;
+            use nix::sys::mman;
             let addr = core::ptr::null_mut();
             let prot = mman::ProtFlags::PROT_READ | mman::ProtFlags::PROT_WRITE;
             let flags = mman::MapFlags::MAP_SHARED;
@@ -668,7 +684,12 @@ pub trait Device: super::Device {
     /// A buffer argument of `None` will clear the cursor.
     #[deprecated(note = "Usage of deprecated ioctl set_cursor2: use a cursor plane instead")]
     #[allow(deprecated)]
-    fn set_cursor2<B>(&self, crtc: crtc::Handle, buffer: Option<&B>, hotspot: (i32, i32)) -> Result<(), SystemError>
+    fn set_cursor2<B>(
+        &self,
+        crtc: crtc::Handle,
+        buffer: Option<&B>,
+        hotspot: (i32, i32),
+    ) -> Result<(), SystemError>
     where
         B: buffer::Buffer + ?Sized,
     {
@@ -678,7 +699,15 @@ pub trait Device: super::Device {
                 (buf.handle().into(), w, h)
             })
             .unwrap_or((0, 0, 0));
-        drm_ffi::mode::set_cursor2(self.as_raw_fd(), crtc.into(), id, w, h, hotspot.0, hotspot.1)?;
+        drm_ffi::mode::set_cursor2(
+            self.as_raw_fd(),
+            crtc.into(),
+            id,
+            w,
+            h,
+            hotspot.0,
+            hotspot.1,
+        )?;
 
         Ok(())
     }
@@ -693,7 +722,11 @@ pub trait Device: super::Device {
     }
 
     /// Request an atomic commit with given flags and property-value pair for a list of objects.
-    fn atomic_commit(&self, flags: &[AtomicCommitFlags], mut req: atomic::AtomicModeReq) -> Result<(), SystemError> {
+    fn atomic_commit(
+        &self,
+        flags: &[AtomicCommitFlags],
+        mut req: atomic::AtomicModeReq,
+    ) -> Result<(), SystemError> {
         use std::mem::transmute as tm;
 
         drm_ffi::mode::atomic_commit(
@@ -717,14 +750,14 @@ pub trait Device: super::Device {
         let info = ffi::gem::handle_to_fd(self.as_raw_fd(), handle.into(), flags)?;
         Ok(info.fd)
     }
-    
+
     /// Queue a page flip on the given crtc
     fn page_flip(
         &self,
         handle: crtc::Handle,
         framebuffer: framebuffer::Handle,
         flags: &[PageFlipFlags],
-        target: Option<PageFlipTarget>
+        target: Option<PageFlipTarget>,
     ) -> Result<(), SystemError> {
         let mut flags = flags.into_iter().fold(0, |val, flag| val | *flag as u32);
         if target.is_some() {
@@ -744,11 +777,12 @@ pub trait Device: super::Device {
 
     /// Receive pending events
     fn receive_events(&self) -> Result<Events, SystemError>
-        where Self: Sized
+    where
+        Self: Sized,
     {
         let mut event_buf: [u8; 1024] = [0; 1024];
         let amount = ::nix::unistd::read(self.as_raw_fd(), &mut event_buf)?;
-    
+
         Ok(Events {
             event_buf,
             amount,
@@ -756,7 +790,6 @@ pub trait Device: super::Device {
         })
     }
 }
-
 
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -820,26 +853,42 @@ impl Iterator for Events {
 
     fn next(&mut self) -> Option<Event> {
         if self.amount > 0 && self.i < self.amount {
-            let event = unsafe { &*(self.event_buf.as_ptr().offset(self.i as isize) as *const ffi::drm_event) };
+            let event = unsafe {
+                &*(self.event_buf.as_ptr().offset(self.i as isize) as *const ffi::drm_event)
+            };
             self.i += event.length as usize;
             match event.type_ {
                 x if x == ffi::DRM_EVENT_VBLANK => {
                     let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
                     Some(Event::Vblank(VblankEvent {
                         frame: vblank_event.sequence,
-                        duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 100),
+                        duration: Duration::new(
+                            vblank_event.tv_sec as u64,
+                            vblank_event.tv_usec * 100,
+                        ),
                         crtc: unsafe { mem::transmute(vblank_event.user_data as u32) },
                     }))
-                },
+                }
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
                     let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
                     Some(Event::PageFlip(PageFlipEvent {
                         frame: vblank_event.sequence,
-                        duration: Duration::new(vblank_event.tv_sec as u64, vblank_event.tv_usec * 1000),
-                        crtc: unsafe { mem::transmute(if vblank_event.crtc_id != 0 { vblank_event.crtc_id } else { vblank_event.user_data as u32 }) },
+                        duration: Duration::new(
+                            vblank_event.tv_sec as u64,
+                            vblank_event.tv_usec * 1000,
+                        ),
+                        crtc: unsafe {
+                            mem::transmute(if vblank_event.crtc_id != 0 {
+                                vblank_event.crtc_id
+                            } else {
+                                vblank_event.user_data as u32
+                            })
+                        },
                     }))
-                },
-                _ => Some(Event::Unknown(self.event_buf[self.i-(event.length as usize)..self.i].to_vec())),
+                }
+                _ => Some(Event::Unknown(
+                    self.event_buf[self.i - (event.length as usize)..self.i].to_vec(),
+                )),
             }
         } else {
             None
@@ -1037,15 +1086,13 @@ pub enum PlaneType {
 pub struct PropertyValueSet {
     prop_ids: [Option<property::Handle>; 32],
     prop_vals: [property::RawValue; 32],
-    len: usize
+    len: usize,
 }
 
 impl PropertyValueSet {
     /// Returns a pair representing a set of [property::Handle] and their raw values
     pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawValue]) {
-        unsafe {
-            mem::transmute((&self.prop_ids[..self.len], &self.prop_vals[..self.len]))
-        }
+        unsafe { mem::transmute((&self.prop_ids[..self.len], &self.prop_vals[..self.len])) }
     }
 }
 
@@ -1058,7 +1105,7 @@ pub enum AtomicCommitFlags {
     /// Test only validity of the request, do not actually apply the requested changes.
     TestOnly = ffi::drm_sys::DRM_MODE_ATOMIC_TEST_ONLY,
     /// Do not block on the request and return early.
-    Nonblock =  ffi::drm_sys::DRM_MODE_ATOMIC_NONBLOCK,
+    Nonblock = ffi::drm_sys::DRM_MODE_ATOMIC_NONBLOCK,
     /// Allow the changes to trigger a modeset, if necessary.
     ///
     /// Changes requiring a modeset are rejected otherwise.

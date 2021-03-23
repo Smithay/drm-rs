@@ -47,9 +47,7 @@ impl control::ResourceHandle for Handle {
 
 impl std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_tuple("plane::Handle")
-            .field(&self.0)
-            .finish()
+        f.debug_tuple("plane::Handle").field(&self.0).finish()
     }
 }
 
@@ -61,7 +59,7 @@ pub struct Info {
     pub(crate) fb: Option<control::framebuffer::Handle>,
     pub(crate) pos_crtcs: u32,
     pub(crate) formats: [u32; 8],
-    pub(crate) fmt_len: usize
+    pub(crate) fmt_len: usize,
 }
 
 impl Info {
