@@ -125,11 +125,39 @@ mod use_bindgen {
             .write_to_file(bind_file)
             .expect("Could not write bindings");
     }
+
+    #[cfg(feature = "update_bindings")]
+    pub fn update_bindings() {
+        use std::{fs, io::Write};
+
+        let out_path = String::from(var("OUT_DIR").unwrap());
+        let bind_file = PathBuf::from(out_path).join("bindings.rs");
+        let dest_dir = PathBuf::from("src")
+            .join("platforms")
+            .join(var("CARGO_CFG_TARGET_OS").unwrap())
+            .join(var("CARGO_CFG_TARGET_ARCH").unwrap());
+        let dest_file = dest_dir.join("bindings.rs");
+
+        fs::create_dir_all(&dest_dir).unwrap();
+        fs::copy(&bind_file, &dest_file).unwrap();
+
+        if let Ok(github_env) = var("GITHUB_ENV") {
+            let mut env_file = fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(github_env)
+                .unwrap();
+            writeln!(env_file, "DRM_SYS_BINDINGS_FILE={}", dest_file.display()).unwrap();
+        }
+    }
 }
 
 #[cfg(feature = "use_bindgen")]
 pub fn main() {
     use_bindgen::generate_bindings();
+
+    #[cfg(feature = "update_bindings")]
+    use_bindgen::update_bindings();
 }
 
 #[cfg(not(feature = "use_bindgen"))]
