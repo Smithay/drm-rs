@@ -8,6 +8,9 @@ extern crate libc;
 #[cfg(feature = "use_bindgen")]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
+#[cfg(all(not(feature = "use_bindgen"), target_os = "linux", target_arch = "x86"))]
+include!(concat!("platforms/linux/x86/bindings.rs"));
+
 #[cfg(all(
     not(feature = "use_bindgen"),
     target_os = "linux",
@@ -15,12 +18,15 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 ))]
 include!(concat!("platforms/linux/x86_64/bindings.rs"));
 
+#[cfg(all(not(feature = "use_bindgen"), target_os = "linux", target_arch = "arm"))]
+include!(concat!("platforms/linux/arm/bindings.rs"));
+
 #[cfg(all(
     not(feature = "use_bindgen"),
     target_os = "linux",
     target_arch = "aarch64"
 ))]
-include!(concat!("platforms/linux/aarch64//bindings.rs"));
+include!(concat!("platforms/linux/aarch64/bindings.rs"));
 
 #[cfg(all(
     not(feature = "use_bindgen"),
