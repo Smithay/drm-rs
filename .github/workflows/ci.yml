@@ -1,0 +1,275 @@
+name: Rust
+on:
+  push:
+    branches:
+      - master
+      - develop
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+          default: true
+          override: true
+      - name: Cargo cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-rust_stable-${{ hashFiles('**/Cargo.toml') }}
+      - name: Format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  doc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rust-docs
+          default: true
+          override: true
+      - name: Cargo cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-rust_nightly-${{ hashFiles('**/Cargo.toml') }}
+      - name: Documentation
+        uses: actions-rs/cargo@v1
+        env:
+          DOCS_RS: 1
+        with:
+          command: doc
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - run: sudo apt-get install -y libdrm-dev
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          profile: minimal
+          components: clippy
+          default: true
+          override: true
+      - name: Cargo cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-rust_nightly-${{ hashFiles('**/Cargo.toml') }}
+      - name: Build cache
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.os }}-build-rust_nightly-check-${{ hashFiles('**/Cargo.toml') }}
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all --all-features
+
+  test:
+    needs:
+      - format
+      - doc
+      - check
+    strategy:
+      fail-fast: ${{ startsWith(github.ref, 'refs/tags/') }}
+      matrix:
+        include:
+          # Generate bindings
+          - task: bindings
+            os: ubuntu-latest
+            rust: stable
+            target: i686-unknown-linux-gnu
+          - task: bindings
+            os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+          - task: bindings
+            os: ubuntu-latest
+            rust: stable
+            target: arm-unknown-linux-gnueabihf
+          - task: bindings
+            os: ubuntu-latest
+            rust: stable
+            target: armv7-unknown-linux-gnueabihf
+          - task: bindings
+            os: ubuntu-latest
+            rust: stable
+            target: aarch64-unknown-linux-gnu
+          # Test channels
+          - task: channels
+            os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+          - task: channels
+            os: ubuntu-latest
+            rust: beta
+            target: x86_64-unknown-linux-gnu
+          - task: channels
+            os: ubuntu-latest
+            rust: nightly
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup linux toolchain
+        if: contains(matrix.target, '-linux-') && startsWith(matrix.target, 'x86_64-')
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libdrm-dev
+      - name: Setup cross linux toolchain
+        if: contains(matrix.target, '-linux-') && !startsWith(matrix.target, 'x86_64-')
+        run: |
+          case "${{ matrix.target }}" in
+            i686-*) SYSTEM_ARCH=i386 ;;
+            arm*) SYSTEM_ARCH=armhf ;;
+            aarch64*) SYSTEM_ARCH=arm64 ;;
+          esac
+          GCC_TARGET=$(printf "${{ matrix.target }}" | sed 's/-unknown-/-/' | sed 's/arm[^-]*/arm/g')
+          ENV_TARGET=$(printf "${{ matrix.target }}" | tr '-' '_')
+          ENV_TARGET_UC=$(printf "${ENV_TARGET}" | tr '[[:lower:]]' '[[:upper:]]')
+          sudo rm -f /etc/apt/sources.list.d/*.list
+          case "${{ matrix.target }}" in
+            arm* | aarch64*)
+          sudo tee /etc/apt/sources.list << EOF
+          deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ focal main universe
+          deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ focal-updates main universe
+          deb [arch=i386,amd64] http://security.ubuntu.com/ubuntu/ focal-security main universe
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal main universe
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main universe
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-security main universe
+          EOF
+              ;;
+          esac
+          sudo dpkg --add-architecture ${SYSTEM_ARCH}
+          dpkg --print-foreign-architectures
+          sudo apt-get update -y
+          sudo apt-get upgrade -y --fix-broken
+          sudo apt-get install -y libdrm-dev:${SYSTEM_ARCH} gcc-${GCC_TARGET} pkg-config-${GCC_TARGET}
+          echo "CARGO_TARGET_${ENV_TARGET_UC}_LINKER=${GCC_TARGET}-gcc" >> $GITHUB_ENV
+          echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
+          echo "PKG_CONFIG_${ENV_TARGET}=${GCC_TARGET}-pkg-config" >> $GITHUB_ENV
+          echo "PKG_CONFIG=${GCC_TARGET}-pkg-config" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS=--sysroot=/usr/${GCC_TARGET}" >> $GITHUB_ENV
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          target: ${{ matrix.target }}
+          profile: minimal
+          components: rustfmt
+          default: true
+          override: true
+      - name: Cargo cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-rust_${{ matrix.rust }}-${{ hashFiles('**/Cargo.toml') }}
+      - name: Build cache
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.os }}-build-rust_${{ matrix.rust }}-target_${{ matrix.target }}-${{ hashFiles('**/Cargo.toml') }}
+      - name: Update deps
+        uses: actions-rs/cargo@v1
+        with:
+          command: update
+      - name: Build sys
+        uses: actions-rs/cargo@v1
+        env:
+          RUST_LOG: bindgen=warn,bindgen::ir=error,bindgen::codegen=error
+        with:
+          command: build
+          args: --manifest-path drm-ffi/drm-sys/Cargo.toml --target ${{ matrix.target }} --features update_bindings
+      - name: Upload bindings
+        if: matrix.task == 'bindings'
+        uses: actions/upload-artifact@v2
+        with:
+          name: bindings
+          path: |
+            drm-ffi/drm-sys/${{ env.DRM_SYS_BINDINGS_FILE }}
+            LICENSE
+            README.md
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --target ${{ matrix.target }}
+      - name: Test
+        if: contains(matrix.target, '-linux-') && (startsWith(matrix.target, 'x86_64-') || startsWith(matrix.target, 'i686-'))
+        uses: actions-rs/cargo@v1
+        timeout-minutes: 12
+        env:
+          RUST_BACKTRACE: full
+        with:
+          command: test
+          args: --all --target ${{ matrix.target }}
+
+  update-bindings:
+    if: ${{ github.event_name != 'pull_request' && !startsWith(github.ref, 'refs/tags/') }}
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download bindings
+        uses: actions/download-artifact@v2
+        with:
+          name: bindings
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          base: ${{ github.head_ref }}
+          commit-message: Updated bindings
+          branch: update-bindings
+          delete-branch: true
+          title: Update bindings
+          body: |
+            Bindings should be updated to be consistent with latest changes
+
+  publish:
+    if: github.repository == 'Smithay/drm-rs' && startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - format
+      - doc
+      - check
+      - test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Publish crates
+        uses: katyo/publish-crates@v1
+        with:
+          registry-token: ${{ secrets.CRATES_TOKEN }}
+          args: --no-verify
+          #dry-run: true
