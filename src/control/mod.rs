@@ -639,7 +639,7 @@ pub trait Device: super::Device {
             let flags = mman::MapFlags::MAP_SHARED;
             let length = buffer.length;
             let fd = self.as_raw_fd();
-            let offset = info.offset as i64;
+            let offset = info.offset as _;
             unsafe { mman::mmap(addr, length, prot, flags, fd, offset)? }
         };
 
