@@ -66,7 +66,7 @@ pub trait ResourceHandle:
 ///
 /// Note: This does no verification on the validity of the original value
 pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
-    RawResourceHandle::new(raw).map(|n| T::from(n))
+    RawResourceHandle::new(raw).map(T::from)
 }
 
 /// This trait should be implemented by any object that acts as a DRM device and
@@ -110,13 +110,13 @@ pub trait Device: super::Device {
 
         let res = ResourceHandles {
             fbs: unsafe { mem::transmute(fbs) },
-            fb_len: fb_len,
+            fb_len,
             crtcs: unsafe { mem::transmute(crtcs) },
-            crtc_len: crtc_len,
+            crtc_len,
             connectors: unsafe { mem::transmute(connectors) },
-            conn_len: conn_len,
+            conn_len,
             encoders: unsafe { mem::transmute(encoders) },
-            enc_len: enc_len,
+            enc_len,
             width: (ffi_res.min_width, ffi_res.max_width),
             height: (ffi_res.min_height, ffi_res.max_height),
         };
@@ -135,7 +135,7 @@ pub trait Device: super::Device {
 
         let res = PlaneResourceHandles {
             planes: unsafe { mem::transmute(planes) },
-            plane_len: plane_len,
+            plane_len,
         };
 
         Ok(res)
@@ -158,7 +158,7 @@ pub trait Device: super::Device {
         )?;
 
         let connector = connector::Info {
-            handle: handle,
+            handle,
             interface: connector::Interface::from(ffi_info.connector_type),
             interface_id: ffi_info.connector_type_id,
             connection: connector::State::from(ffi_info.connection),
@@ -179,7 +179,7 @@ pub trait Device: super::Device {
         let info = ffi::mode::get_encoder(self.as_raw_fd(), handle.into())?;
 
         let enc = encoder::Info {
-            handle: handle,
+            handle,
             enc_type: encoder::Kind::from(info.encoder_type),
             crtc: from_u32(info.crtc_id),
             pos_crtcs: info.possible_crtcs,
@@ -194,7 +194,7 @@ pub trait Device: super::Device {
         let info = ffi::mode::get_crtc(self.as_raw_fd(), handle.into())?;
 
         let crtc = crtc::Info {
-            handle: handle,
+            handle,
             position: (info.x, info.y),
             mode: match info.mode_valid {
                 0 => None,
@@ -222,7 +222,7 @@ pub trait Device: super::Device {
             framebuffer.map(|x| x.into()).unwrap_or(0),
             pos.0,
             pos.1,
-            unsafe { mem::transmute(conns) },
+            unsafe { &*(conns as *const _ as *const [u32]) },
             unsafe { mem::transmute(mode) },
         )?;
 
@@ -237,7 +237,7 @@ pub trait Device: super::Device {
         let info = ffi::mode::get_framebuffer(self.as_raw_fd(), handle.into())?;
 
         let fb = framebuffer::Info {
-            handle: handle,
+            handle,
             size: (info.width, info.height),
             pitch: info.pitch,
             bpp: info.bpp,
@@ -337,12 +337,12 @@ pub trait Device: super::Device {
         let fmt_len = fmt_slice.len();
 
         let plane = plane::Info {
-            handle: handle,
+            handle,
             crtc: from_u32(info.crtc_id),
             fb: from_u32(info.fb_id),
             pos_crtcs: info.possible_crtcs,
-            formats: formats,
-            fmt_len: fmt_len,
+            formats,
+            fmt_len,
         };
 
         Ok(plane)
@@ -415,7 +415,7 @@ pub trait Device: super::Device {
                 ValueType::SignedRange(min as i64, max as i64)
             } else if flags & ffi::DRM_MODE_PROP_ENUM != 0 {
                 let enum_values = self::property::EnumValues {
-                    values: values,
+                    values,
                     enums: unsafe { mem::transmute(enums) },
                     length: val_len,
                 };
@@ -443,11 +443,11 @@ pub trait Device: super::Device {
         };
 
         let property = property::Info {
-            handle: handle,
-            val_type: val_type,
+            handle,
+            val_type,
             mutable: info.flags & ffi::DRM_MODE_PROP_IMMUTABLE == 0,
             atomic: info.flags & ffi::DRM_MODE_PROP_ATOMIC == 0,
-            info: info,
+            info,
         };
 
         Ok(property)
@@ -476,7 +476,7 @@ pub trait Device: super::Device {
         let mut raw_mode: ffi::drm_mode_modeinfo = mode.into();
         let data = unsafe {
             std::slice::from_raw_parts_mut(
-                mem::transmute(&mut raw_mode as *mut ffi::drm_mode_modeinfo),
+                &mut raw_mode as *mut _ as *mut u64,
                 mem::size_of::<ffi::drm_mode_modeinfo>(),
             )
         };
@@ -727,14 +727,12 @@ pub trait Device: super::Device {
         flags: &[AtomicCommitFlags],
         mut req: atomic::AtomicModeReq,
     ) -> Result<(), SystemError> {
-        use std::mem::transmute as tm;
-
         drm_ffi::mode::atomic_commit(
             self.as_raw_fd(),
             flags.iter().fold(0, |acc, x| acc | *x as u32),
-            unsafe { tm(&mut *req.objects) },
+            unsafe { &mut *(&mut *req.objects as *mut _ as *mut [u32]) },
             &mut *req.count_props_per_object,
-            unsafe { tm(&mut *req.props) },
+            unsafe { &mut *(&mut *req.props as *mut _ as *mut [u32]) },
             &mut *req.values,
         )
     }
@@ -759,7 +757,7 @@ pub trait Device: super::Device {
         flags: &[PageFlipFlags],
         target: Option<PageFlipTarget>,
     ) -> Result<(), SystemError> {
-        let mut flags = flags.into_iter().fold(0, |val, flag| val | *flag as u32);
+        let mut flags = flags.iter().fold(0, |val, flag| val | *flag as u32);
         if target.is_some() {
             flags |= ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET;
         }
@@ -853,13 +851,12 @@ impl Iterator for Events {
 
     fn next(&mut self) -> Option<Event> {
         if self.amount > 0 && self.i < self.amount {
-            let event = unsafe {
-                &*(self.event_buf.as_ptr().offset(self.i as isize) as *const ffi::drm_event)
-            };
+            let event = unsafe { &*(self.event_buf.as_ptr().add(self.i) as *const ffi::drm_event) };
             self.i += event.length as usize;
             match event.type_ {
                 x if x == ffi::DRM_EVENT_VBLANK => {
-                    let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                    let vblank_event =
+                        unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
                     Some(Event::Vblank(VblankEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(
@@ -870,7 +867,8 @@ impl Iterator for Events {
                     }))
                 }
                 x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
-                    let vblank_event: &ffi::drm_event_vblank = unsafe { mem::transmute(event) };
+                    let vblank_event =
+                        unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
                     Some(Event::PageFlip(PageFlipEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(
@@ -916,25 +914,25 @@ impl ResourceHandles {
     /// Returns the set of [connector::Handle]
     pub fn connectors(&self) -> &[connector::Handle] {
         let buf_len = std::cmp::min(self.connectors.len(), self.conn_len);
-        unsafe { mem::transmute(&self.connectors[..buf_len]) }
+        unsafe { &*(&self.connectors[..buf_len] as *const _ as *const [connector::Handle]) }
     }
 
     /// Returns the set of [encoder::Handle]
     pub fn encoders(&self) -> &[encoder::Handle] {
         let buf_len = std::cmp::min(self.encoders.len(), self.enc_len);
-        unsafe { mem::transmute(&self.encoders[..buf_len]) }
+        unsafe { &*(&self.encoders[..buf_len] as *const _ as *const [encoder::Handle]) }
     }
 
     /// Returns the set of [crtc::Handle]
     pub fn crtcs(&self) -> &[crtc::Handle] {
         let buf_len = std::cmp::min(self.crtcs.len(), self.crtc_len);
-        unsafe { mem::transmute(&self.crtcs[..buf_len]) }
+        unsafe { &*(&self.crtcs[..buf_len] as *const _ as *const [crtc::Handle]) }
     }
 
     /// Returns the set of [framebuffer::Handle]
     pub fn framebuffers(&self) -> &[framebuffer::Handle] {
         let buf_len = std::cmp::min(self.fbs.len(), self.fb_len);
-        unsafe { mem::transmute(&self.fbs[..buf_len]) }
+        unsafe { &*(&self.fbs[..buf_len] as *const _ as *const [framebuffer::Handle]) }
     }
 
     /// Apply a filter the all crtcs of these resources, resulting in a list of crtcs allowed.
@@ -973,7 +971,7 @@ impl PlaneResourceHandles {
     /// Returns the set of [plane::Handle]
     pub fn planes(&self) -> &[plane::Handle] {
         let buf_len = std::cmp::min(self.planes.len(), self.plane_len);
-        unsafe { mem::transmute(&self.planes[..buf_len]) }
+        unsafe { &*(&self.planes[..buf_len] as *const _ as *const [plane::Handle]) }
     }
 }
 
@@ -1048,9 +1046,9 @@ impl From<ffi::drm_mode_modeinfo> for Mode {
     }
 }
 
-impl Into<ffi::drm_mode_modeinfo> for Mode {
-    fn into(self) -> ffi::drm_mode_modeinfo {
-        self.mode
+impl From<Mode> for ffi::drm_mode_modeinfo {
+    fn from(mode: Mode) -> Self {
+        mode.mode
     }
 }
 
@@ -1092,12 +1090,19 @@ pub struct PropertyValueSet {
 impl PropertyValueSet {
     /// Returns a pair representing a set of [property::Handle] and their raw values
     pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawValue]) {
-        unsafe { mem::transmute((&self.prop_ids[..self.len], &self.prop_vals[..self.len])) }
+        unsafe {
+            (
+                &*(&self.prop_ids[..self.len] as *const _ as *const [property::Handle]),
+                &*(&self.prop_vals[..self.len] as *const _ as *const [property::RawValue]),
+            )
+        }
     }
 }
 
 type ClipRect = ffi::drm_sys::drm_clip_rect;
 
+/// Commit flags for atomic mode setting
+#[allow(missing_docs)]
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Flags for an atomic commit

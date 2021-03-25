@@ -22,15 +22,15 @@ pub type RawValue = u64;
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::RawResourceHandle);
 
-impl Into<control::RawResourceHandle> for Handle {
-    fn into(self) -> control::RawResourceHandle {
-        self.0
+impl From<Handle> for control::RawResourceHandle {
+    fn from(handle: Handle) -> Self {
+        handle.0
     }
 }
 
-impl Into<u32> for Handle {
-    fn into(self) -> u32 {
-        self.0.into()
+impl From<Handle> for u32 {
+    fn from(handle: Handle) -> Self {
+        handle.0.into()
     }
 }
 
@@ -83,6 +83,7 @@ impl Info {
 }
 
 /// A `ValueType` describes the types of value that a property uses.
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum ValueType {
     /// A catch-all for any unknown types
@@ -140,6 +141,8 @@ impl ValueType {
 }
 
 /// The value of a property, in a typed format
+#[allow(missing_docs)]
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum Value<'a> {
     /// Unknown value
@@ -172,11 +175,11 @@ pub enum Value<'a> {
     Property(Option<Handle>),
 }
 
-impl<'a> Into<RawValue> for Value<'a> {
-    fn into(self) -> RawValue {
+impl<'a> From<Value<'a>> for RawValue {
+    fn from(value: Value<'a>) -> Self {
         use std::mem::transmute as tm;
 
-        match self {
+        match value {
             Value::Unknown(x) => x,
             Value::Boolean(x) => {
                 if x {

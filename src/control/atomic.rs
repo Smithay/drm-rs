@@ -11,15 +11,21 @@ pub struct AtomicModeReq {
     pub(super) values: Vec<control::property::RawValue>,
 }
 
-impl AtomicModeReq {
-    /// Create a new and empty atomic commit request
-    pub fn new() -> AtomicModeReq {
+impl Default for AtomicModeReq {
+    fn default() -> Self {
         AtomicModeReq {
             objects: Vec::new(),
             count_props_per_object: Vec::new(),
             props: Vec::new(),
             values: Vec::new(),
         }
+    }
+}
+
+impl AtomicModeReq {
+    /// Create a new and empty atomic commit request
+    pub fn new() -> AtomicModeReq {
+        Self::default()
     }
 
     /// Add a property and value pair for a given raw resource to the request
@@ -40,11 +46,7 @@ impl AtomicModeReq {
         };
 
         // get start of our objects props
-        let prop_slice_start = self
-            .count_props_per_object
-            .iter()
-            .take(idx)
-            .fold(0, |acc, x| acc + x) as usize;
+        let prop_slice_start = self.count_props_per_object.iter().take(idx).sum::<u32>() as usize;
         // get end
         let prop_slice_end = prop_slice_start + prop_count as usize;
 

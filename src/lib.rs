@@ -204,11 +204,7 @@ pub trait Device: AsRawFd {
         let date = SmallOsString::from_i8_buffer(date, date_len);
         let desc = SmallOsString::from_i8_buffer(desc, desc_len);
 
-        let driver = Driver {
-            name: name,
-            date: date,
-            desc: desc,
-        };
+        let driver = Driver { name, date, desc };
 
         Ok(driver)
     }
