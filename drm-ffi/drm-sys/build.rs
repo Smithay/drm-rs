@@ -161,4 +161,30 @@ pub fn main() {
 }
 
 #[cfg(not(feature = "use_bindgen"))]
-pub fn main() {}
+pub fn main() {
+    use std::env::var;
+
+    let target_os = var("CARGO_CFG_TARGET_OS").unwrap();
+    let target_os = target_os.as_str();
+    if matches!(target_os, "linux" | "freebsd") {
+        println!("cargo:rustc-env=DRM_TARGET_OS={}", target_os);
+    } else {
+        panic!(
+            "No prebuilt bindings for target os: {}. Try use `gen` feature.",
+            target_os
+        );
+    }
+
+    let target_arch = var("CARGO_CFG_TARGET_ARCH").unwrap();
+    let target_arch = target_arch.as_str();
+    if matches!(target_os, "linux") && matches!(target_arch, "x86" | "x86_64" | "arm" | "aarch64")
+        || matches!(target_os, "freebsd") && matches!(target_arch, "x86_64")
+    {
+        println!("cargo:rustc-env=DRM_TARGET_ARCH={}", target_arch);
+    } else {
+        panic!(
+            "No prebuilt bindings for target arch: {}. Try use `gen` feature.",
+            target_arch
+        );
+    }
+}
