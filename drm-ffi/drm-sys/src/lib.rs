@@ -23,8 +23,6 @@ include!(concat!("platforms/linux/aarch64//bindings.rs"));
           target_arch="x86_64"))]
 include!(concat!("platforms/freebsd/x86_64/bindings.rs"));
 
-pub mod fourcc;
-
 pub const DRM_PLANE_TYPE_OVERLAY: u32 = 0;
 pub const DRM_PLANE_TYPE_PRIMARY: u32 = 1;
 pub const DRM_PLANE_TYPE_CURSOR:  u32 = 2;

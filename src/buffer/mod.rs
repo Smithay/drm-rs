@@ -24,7 +24,7 @@
 //! like a regular one. This allows better control and security, and is the
 //! recommended method of sharing buffers.
 
-pub mod format;
+pub use drm_fourcc::{DrmFourcc, UnrecognizedFourcc, DrmModifier, DrmVendor, UnrecognizedVendor};
 
 /// A handle to a GEM buffer.
 ///
@@ -93,7 +93,7 @@ pub trait Buffer {
     /// The width and height of the buffer.
     fn size(&self) -> (u32, u32);
     /// The format of the buffer.
-    fn format(&self) -> format::PixelFormat;
+    fn format(&self) -> DrmFourcc;
     /// The pitch of the buffer.
     fn pitch(&self) -> u32;
     /// The handle to the buffer.
@@ -107,7 +107,7 @@ pub trait PlanarBuffer {
     /// The width and height of the buffer.
     fn size(&self) -> (u32, u32);
     /// The format of the buffer.
-    fn format(&self) -> format::PixelFormat;
+    fn format(&self) -> DrmFourcc;
     /// The pitches of the buffer.
     fn pitches(&self) -> [u32; 4];
     /// The handles to the buffer.
@@ -121,7 +121,7 @@ impl<B: Buffer + ?Sized> PlanarBuffer for B {
         Buffer::size(self)
     }
 
-    fn format(&self) -> format::PixelFormat {
+    fn format(&self) -> DrmFourcc {
         Buffer::format(self)
     }
 
