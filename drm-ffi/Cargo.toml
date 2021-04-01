@@ -8,8 +8,7 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
 drm-sys = { path = "drm-sys" }
-nix = "*"
-bitflags = "*"
+nix = "^0.20.0"
 
 [features]
 use_bindgen = ["drm-sys/use_bindgen"]

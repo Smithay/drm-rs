@@ -8,13 +8,12 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
 drm-ffi = { path = "drm-ffi" }
-drm-fourcc = "2.0"
-nix = "*"
-bitflags = "*"
+drm-fourcc = "^2.0.0"
+nix = "^0.20.0"
 
 [dev-dependencies]
-image = { version = "*", default-features = false, features = ["png"] }
-rustyline = "*"
+image = { version = "^0.23.14", default-features = false, features = ["png"] }
+rustyline = "^8.0.0"
 
 [features]
 use_bindgen = ["drm-ffi/use_bindgen"]
