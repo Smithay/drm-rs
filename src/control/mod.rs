@@ -25,8 +25,8 @@
 //!
 //! # Usage
 //!
-//! To begin using modesetting functionality, the [Device trait](Device.t.html)
-//! must be implemented on top of the [basic Device trait](../Device.t.html).
+//! To begin using modesetting functionality, the [Device] trait
+//! must be implemented on top of the basic [super::Device] trait.
 
 use drm_ffi as ffi;
 use drm_ffi::result::SystemError;
@@ -70,7 +70,7 @@ pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
 /// This trait should be implemented by any object that acts as a DRM device and
 /// provides modesetting functionality.
 ///
-/// Like the parent [Device](../Device.t.html) trait, this crate does not
+/// Like the parent [super::Device] trait, this crate does not
 /// provide a concrete object for this trait.
 ///
 /// # Example
@@ -847,8 +847,8 @@ impl Iterator for Events {
     }
 }
 
-/// The set of [ResourceHandles](ResourceHandle.t.html) that a
-/// [Device](Device.t.html) exposes. Excluding Plane resources.
+/// The set of [ResourceHandles] that a
+/// [Device] exposes. Excluding Plane resources.
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct ResourceHandles {
     fbs: [Option<framebuffer::Handle>; 32],
@@ -864,25 +864,25 @@ pub struct ResourceHandles {
 }
 
 impl ResourceHandles {
-    /// Returns the set of [connector::Handles](connector/Handle.t.html)
+    /// Returns the set of [connector::Handle]
     pub fn connectors(&self) -> &[connector::Handle] {
         let buf_len = std::cmp::min(self.connectors.len(), self.conn_len);
         unsafe { mem::transmute(&self.connectors[..buf_len]) }
     }
 
-    /// Returns the set of [encoder::Handles](encoder/Handle.t.html)
+    /// Returns the set of [encoder::Handle]
     pub fn encoders(&self) -> &[encoder::Handle] {
         let buf_len = std::cmp::min(self.encoders.len(), self.enc_len);
         unsafe { mem::transmute(&self.encoders[..buf_len]) }
     }
 
-    /// Returns the set of [crtc::Handles](crtc/Handle.t.html)
+    /// Returns the set of [crtc::Handle]
     pub fn crtcs(&self) -> &[crtc::Handle] {
         let buf_len = std::cmp::min(self.crtcs.len(), self.crtc_len);
         unsafe { mem::transmute(&self.crtcs[..buf_len]) }
     }
 
-    /// Returns the set of [framebuffer::Handles](framebuffer/Handle.t.html)
+    /// Returns the set of [framebuffer::Handle]
     pub fn framebuffers(&self) -> &[framebuffer::Handle] {
         let buf_len = std::cmp::min(self.fbs.len(), self.fb_len);
         unsafe { mem::transmute(&self.fbs[..buf_len]) }
@@ -912,8 +912,8 @@ impl std::fmt::Debug for ResourceHandles {
     }
 }
 
-/// The set of [plane::Handles](plane/Handle.t.html) that a
-/// [Device](Device.t.html) exposes.
+/// The set of [plane::Handle] that a
+/// [Device] exposes.
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct PlaneResourceHandles {
     planes: [Option<plane::Handle>; 32],
@@ -921,7 +921,7 @@ pub struct PlaneResourceHandles {
 }
 
 impl PlaneResourceHandles {
-    /// Returns the set of [plane::Handles](plane/Handle.t.html)
+    /// Returns the set of [plane::Handle]
     pub fn planes(&self) -> &[plane::Handle] {
         let buf_len = std::cmp::min(self.planes.len(), self.plane_len);
         unsafe { mem::transmute(&self.planes[..buf_len]) }
@@ -1041,7 +1041,7 @@ pub struct PropertyValueSet {
 }
 
 impl PropertyValueSet {
-    /// Returns a pair representing a set of [property::Handles](property/Handle.t.html) and their raw values
+    /// Returns a pair representing a set of [property::Handle] and their raw values
     pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawValue]) {
         unsafe {
             mem::transmute((&self.prop_ids[..self.len], &self.prop_vals[..self.len]))
