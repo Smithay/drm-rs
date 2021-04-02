@@ -36,7 +36,7 @@ pub fn shrink<T>(slice_ref: &mut &mut [T], min: usize) {
     if min < slice_ref.len() {
         let ptr = slice_ref.as_mut_ptr();
         unsafe {
-            replace(slice_ref, from_raw_parts_mut(ptr, min));
+            let _ = replace(slice_ref, from_raw_parts_mut(ptr, min));
         }
     }
 }

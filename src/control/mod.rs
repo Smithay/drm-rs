@@ -386,7 +386,6 @@ pub trait Device: super::Device {
             )?;
 
         let val_len = val_slice.len();
-        let enum_len = enum_slice.len();
 
         let val_type = {
             use self::property::ValueType;
