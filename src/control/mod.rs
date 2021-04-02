@@ -50,12 +50,19 @@ use std::os::unix::io::RawFd;
 use std::time::Duration;
 
 use core::num::NonZeroU32;
+
+/// Raw handle for a drm resource
 pub type RawResourceHandle = NonZeroU32;
 
+/// Handle for a drm resource
 pub trait ResourceHandle : From<RawResourceHandle> + Into<RawResourceHandle> + Into<u32> + Copy + Sized {
+    /// Associated encoded object type
     const FFI_TYPE: u32;
 }
 
+/// Convert from a raw drm object value to a typed Handle
+///
+/// Note: This does no verification on the validity of the original value
 pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
     RawResourceHandle::new(raw).map(|n| T::from(n))
 }
@@ -463,6 +470,7 @@ pub trait Device: super::Device {
         Ok(())
     }
 
+    /// Create a property blob value from a given Mode
     fn create_property_blob(&self, mode: Mode) -> Result<property::Value<'static>, SystemError> {
         let mut raw_mode: ffi::drm_mode_modeinfo = mode.into();
         let data = unsafe {
@@ -479,6 +487,7 @@ pub trait Device: super::Device {
         Ok(property::Value::Blob(blob.blob_id.into()))
     }
 
+    /// Destroy a given property blob value
     fn destroy_property_blob(&self, blob: u64) -> Result<(), SystemError> {
         ffi::mode::destroy_property_blob(self.as_raw_fd(), blob as u32)?;
 
@@ -683,6 +692,7 @@ pub trait Device: super::Device {
         Ok(())
     }
 
+    /// Request an atomic commit with given flags and property-value pair for a list of objects.
     fn atomic_commit(&self, flags: &[AtomicCommitFlags], mut req: atomic::AtomicModeReq) -> Result<(), SystemError> {
         use std::mem::transmute as tm;
 
@@ -878,6 +888,7 @@ impl ResourceHandles {
         unsafe { mem::transmute(&self.fbs[..buf_len]) }
     }
 
+    /// Apply a filter the all crtcs of these resources, resulting in a list of crtcs allowed.
     pub fn filter_crtcs(&self, filter: CrtcListFilter) -> Vec<crtc::Handle> {
         self.crtcs
             .iter()
@@ -1009,11 +1020,15 @@ impl std::fmt::Debug for Mode {
     }
 }
 
+/// Type of a plane
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PlaneType {
+    /// Overlay plane
     Overlay = ffi::DRM_PLANE_TYPE_OVERLAY,
+    /// Primary plane
     Primary = ffi::DRM_PLANE_TYPE_PRIMARY,
+    /// Cursor plane
     Cursor = ffi::DRM_PLANE_TYPE_CURSOR,
 }
 
@@ -1038,9 +1053,16 @@ type ClipRect = ffi::drm_sys::drm_clip_rect;
 
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+/// Flags for an atomic commit
 pub enum AtomicCommitFlags {
+    /// Test only validity of the request, do not actually apply the requested changes.
     TestOnly = ffi::drm_sys::DRM_MODE_ATOMIC_TEST_ONLY,
+    /// Do not block on the request and return early.
     Nonblock =  ffi::drm_sys::DRM_MODE_ATOMIC_NONBLOCK,
+    /// Allow the changes to trigger a modeset, if necessary.
+    ///
+    /// Changes requiring a modeset are rejected otherwise.
     AllowModeset = ffi::drm_sys::DRM_MODE_ATOMIC_ALLOW_MODESET,
+    /// Generate a page flip event, when the changes are applied.
     PageFlipEvent = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT,
 }

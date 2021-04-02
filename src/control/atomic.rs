@@ -1,5 +1,8 @@
+//! Helpers for atomic modesetting.
+
 use control;
 
+/// Helper struct to construct atomic commit requests
 #[derive(Debug, Clone)]
 pub struct AtomicModeReq {
     pub(super) objects: Vec<control::RawResourceHandle>,
@@ -9,6 +12,7 @@ pub struct AtomicModeReq {
 }
 
 impl AtomicModeReq {
+    /// Create a new and empty atomic commit request
     pub fn new() -> AtomicModeReq {
         AtomicModeReq {
             objects: Vec::new(),
@@ -18,6 +22,7 @@ impl AtomicModeReq {
         }
     }
 
+    /// Add a property and value pair for a given raw resource to the request
     pub fn add_raw_property(
         &mut self,
         obj_id: control::RawResourceHandle,
@@ -57,6 +62,7 @@ impl AtomicModeReq {
         }
     }
 
+    /// Add a property and value pair for a given handle to the request
     pub fn add_property<H>(
         &mut self,
         handle: H,

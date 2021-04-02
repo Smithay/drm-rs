@@ -91,6 +91,7 @@ impl Info {
         &self.encoders
     }
 
+    /// Returns a list of modes this connector reports as supported.
     pub fn modes(&self) ->  &[control::Mode] {
         &self.modes
     }

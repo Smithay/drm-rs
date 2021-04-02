@@ -75,6 +75,10 @@ impl Info {
         self.crtc
     }
 
+    /// Returns a filter for supported crtcs of this plane.
+    ///
+    /// Use with [ResourceHandles::filter_crtcs](../struct.ResourceHandles.html#method.filter_crtcs)
+    /// to receive a list of crtcs.
     pub fn possible_crtcs(&self) -> control::CrtcListFilter {
         control::CrtcListFilter(self.pos_crtcs)
     }

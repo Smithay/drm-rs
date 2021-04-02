@@ -144,19 +144,33 @@ impl ValueType {
 /// The value of a property, in a typed format
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum Value<'a> {
+    /// Unknown value
     Unknown(RawValue),
+    /// Boolean value
     Boolean(bool),
+    /// Unsigned range value
     UnsignedRange(u64),
+    /// Signed range value
     SignedRange(i64),
+    /// Enum Value
     Enum(&'a EnumValue),
+    /// Bitmask value
     Bitmask(u64),
+    /// Opaque (blob) value
     Blob(u64),
+    /// Unknown object value
     Object(Option<super::RawResourceHandle>),
+    /// Crtc object value
     CRTC(Option<super::crtc::Handle>),
+    /// Connector object value
     Connector(Option<super::connector::Handle>),
+    /// Encoder object value
     Encoder(Option<super::encoder::Handle>),
+    /// Framebuffer object value
     Framebuffer(Option<super::framebuffer::Handle>),
+    /// Plane object value
     Plane(Option<super::plane::Handle>),
+    /// Property object value
     Property(Option<Handle>),
 }
 
@@ -223,6 +237,9 @@ impl EnumValues {
         (&self.values[..self.length], &self.enums[..self.length])
     }
 
+    /// Returns an `EnumValue` for a `RawValue`
+    ///
+    /// Note: This is a dumb translation, not every RawValue is part of en Enum
     pub fn get_value_from_raw_value(&self, value: RawValue) -> &EnumValue {
         let (_, enums) = self.values();
         &enums[value as usize]
