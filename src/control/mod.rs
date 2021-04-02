@@ -637,6 +637,8 @@ pub trait Device: super::Device {
     /// Sets a hardware-cursor on the given crtc with the image of a given buffer
     ///
     /// A buffer argument of `None` will clear the cursor.
+    #[deprecated(note = "Usage of deprecated ioctl set_cursor: use a cursor plane instead")]
+    #[allow(deprecated)]
     fn set_cursor<B>(&self, crtc: crtc::Handle, buffer: Option<&B>) -> Result<(), SystemError>
     where
         B: buffer::Buffer + ?Sized,
@@ -656,6 +658,8 @@ pub trait Device: super::Device {
     /// and a hotspot marking the click point of the cursor.
     ///
     /// A buffer argument of `None` will clear the cursor.
+    #[deprecated(note = "Usage of deprecated ioctl set_cursor2: use a cursor plane instead")]
+    #[allow(deprecated)]
     fn set_cursor2<B>(&self, crtc: crtc::Handle, buffer: Option<&B>, hotspot: (i32, i32)) -> Result<(), SystemError>
     where
         B: buffer::Buffer + ?Sized,
@@ -672,6 +676,8 @@ pub trait Device: super::Device {
     }
 
     /// Moves a set cursor on a given crtc
+    #[deprecated(note = "Usage of deprecated ioctl move_cursor: use a cursor plane instead")]
+    #[allow(deprecated)]
     fn move_cursor(&self, crtc: crtc::Handle, pos: (i32, i32)) -> Result<(), SystemError> {
         drm_ffi::mode::move_cursor(self.as_raw_fd(), crtc.into(), pos.0, pos.1)?;
 
