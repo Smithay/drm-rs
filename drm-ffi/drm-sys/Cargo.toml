@@ -7,12 +7,12 @@ license = "MIT"
 build = "build.rs"
 
 [dependencies]
-libc = { version = "*", default-features = false }
+libc = { version = "^0.2.29", default-features = false }
 
 [features]
 default = []
 use_bindgen = ["bindgen", "pkg-config"]
 
 [build-dependencies]
-bindgen = { version = "*", optional = true }
-pkg-config = { version = "*", optional = true }
+bindgen = { version = "^0.57.0", optional = true }
+pkg-config = { version = "^0.3.19", optional = true }
