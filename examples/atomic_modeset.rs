@@ -10,11 +10,11 @@ use drm::Device as BasicDevice;
 use drm::buffer::DrmFourcc;
 
 use drm::control::ResourceHandle;
-use drm::control::{self, atomic, connector, crtc, dumbbuffer, framebuffer, property, AtomicCommitFlags};
+use drm::control::{self, atomic, connector, crtc, property, AtomicCommitFlags};
 
 fn find_prop_id<T: ResourceHandle>(card: &Card, handle: T, name: &'static str) -> Option<property::Handle> {
     let props = card.get_properties(handle).expect("Could not get props of connector");
-    let (ids, vals) = props.as_props_and_values();
+    let (ids, _vals) = props.as_props_and_values();
     ids.iter().find(|&id| {
         let info = card.get_property(*id).unwrap();
         info.name().to_str().map(|x| x == name).unwrap_or(false)
@@ -24,8 +24,11 @@ fn find_prop_id<T: ResourceHandle>(card: &Card, handle: T, name: &'static str) -
 pub fn main() {
     let card = Card::open_global();
 
-    card.set_client_capability(drm::ClientCapability::UniversalPlanes, true); 
-    card.set_client_capability(drm::ClientCapability::Atomic, true); 
+    card.set_client_capability(drm::ClientCapability::UniversalPlanes, true)
+        .expect("Unable to request UniversalPlanes capability"); 
+    card.set_client_capability(drm::ClientCapability::Atomic, true)
+        .expect("Unable to request Atomic capability"); 
+ 
 
     // Load the information.
     let res = card
@@ -65,7 +68,7 @@ pub fn main() {
     // Map it and grey it out.
     {
         let mut map = card.map_dumb_buffer(&mut db).expect("Could not map dumbbuffer");
-        for mut b in map.as_mut() {
+        for b in map.as_mut() {
             *b = 128;
         }
     }
