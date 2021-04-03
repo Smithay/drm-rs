@@ -11,9 +11,7 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 #[cfg(not(feature = "use_bindgen"))]
 include!(concat!(
     "platforms/",
-    env!("DRM_TARGET_OS"),
-    "/",
-    env!("DRM_TARGET_ARCH"),
+    env!("DRM_SYS_BINDINGS_PATH"),
     "/bindings.rs"
 ));
 
