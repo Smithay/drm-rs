@@ -27,7 +27,10 @@ pub fn main() {
 
     // Enable all possible client capabilities
     for &cap in capabilities::CLIENT_CAP_ENUMS {
-        card.set_client_capability(cap, true);
+        if let Err(_) = card.set_client_capability(cap, true) {
+            eprintln!("Unable to activate capability: {:?}", cap);
+            return;
+        }
     }
 
     let resources = card.resource_handles().unwrap();

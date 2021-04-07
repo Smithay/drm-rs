@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub use drm::Device;
 pub use drm::control::Device as ControlDevice;
 
@@ -32,10 +34,6 @@ impl Card {
     pub fn open_global() -> Self {
         Self::open("/dev/dri/card0")
     }
-
-    pub fn open_control() -> Self {
-        Self::open("/dev/dri/controlD64")
-    }
 }
 
 pub mod capabilities {
@@ -66,11 +64,10 @@ pub mod capabilities {
 
 pub mod images {
     use image;
-    use image::GenericImageView;
 
     pub fn load_image(name: &str) -> image::RgbaImage {
         let path = format!("examples/images/{}", name);
-        image::open(path).unwrap().to_rgba()
+        image::open(path).unwrap().to_rgba8()
     }
 }
 

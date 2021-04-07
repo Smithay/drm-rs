@@ -21,8 +21,8 @@
 //!
 //! ## Usage
 //!
-//! To begin using this crate, the [Device trait](Device.t.html) must be
-//! implemented. See the trait's [example](Device.t.html#example) section for
+//! To begin using this crate, the [Device] trait must be
+//! implemented. See the trait's [example section](trait@Device#example) for
 //! details on how to implement it.
 //!
 
@@ -114,21 +114,21 @@ pub trait Device: AsRawFd {
         Ok(())
     }
 
-    /// Generates an [AuthToken](AuthToken.t.html) for this process.
+    /// Generates an [AuthToken] for this process.
     #[deprecated(note = "Consider opening a render node instead.")]
     fn generate_auth_token(&self) -> Result<AuthToken, SystemError> {
         let token = drm_ffi::auth::get_magic_token(self.as_raw_fd())?;
         Ok(AuthToken(token.magic))
     }
 
-    /// Authenticates an [AuthToken](AuthToken.t.html) from another process.
+    /// Authenticates an [AuthToken] from another process.
     fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), SystemError> {
         drm_ffi::auth::auth_magic_token(self.as_raw_fd(), token.0)?;
         Ok(())
     }
 
     /// Requests the driver to expose or hide certain capabilities. See
-    /// [ClientCapability](ClientCapability.t.html) for more information.
+    /// [ClientCapability] for more information.
     fn set_client_capability(
         &self,
         cap: ClientCapability,
@@ -138,7 +138,7 @@ pub trait Device: AsRawFd {
         Ok(())
     }
 
-    /// Gets the [BusID](BusID.t.html) of this device.
+    /// Gets the [BusID] of this device.
     fn get_bus_id(&self) -> Result<BusID, SystemError> {
         let mut buffer = [0u8; 32];
 
@@ -156,7 +156,7 @@ pub trait Device: AsRawFd {
         Ok(bus_id)
     }
 
-    /// Check to see if our [AuthToken](AuthToken.t.html) has been authenticated
+    /// Check to see if our [AuthToken] has been authenticated
     /// by the DRM Master
     fn authenticated(&self) -> Result<bool, SystemError> {
         let client = drm_ffi::get_client(self.as_raw_fd(), 0)?;

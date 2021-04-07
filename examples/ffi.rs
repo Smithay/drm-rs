@@ -27,10 +27,6 @@ impl Card {
     fn open_global() -> Self {
         Self::open("/dev/dri/card0")
     }
-
-    fn open_control() -> Self {
-        Self::open("/dev/dri/controlD64")
-    }
 }
 
 fn print_busid(fd: RawFd) {

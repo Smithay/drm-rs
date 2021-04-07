@@ -25,8 +25,8 @@
 //!
 //! # Usage
 //!
-//! To begin using modesetting functionality, the [Device trait](Device.t.html)
-//! must be implemented on top of the [basic Device trait](../Device.t.html).
+//! To begin using modesetting functionality, the [Device] trait
+//! must be implemented on top of the basic [super::Device] trait.
 
 use drm_ffi as ffi;
 use drm_ffi::result::SystemError;
@@ -50,12 +50,19 @@ use std::os::unix::io::RawFd;
 use std::time::Duration;
 
 use core::num::NonZeroU32;
+
+/// Raw handle for a drm resource
 pub type RawResourceHandle = NonZeroU32;
 
+/// Handle for a drm resource
 pub trait ResourceHandle : From<RawResourceHandle> + Into<RawResourceHandle> + Into<u32> + Copy + Sized {
+    /// Associated encoded object type
     const FFI_TYPE: u32;
 }
 
+/// Convert from a raw drm object value to a typed Handle
+///
+/// Note: This does no verification on the validity of the original value
 pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
     RawResourceHandle::new(raw).map(|n| T::from(n))
 }
@@ -63,7 +70,7 @@ pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
 /// This trait should be implemented by any object that acts as a DRM device and
 /// provides modesetting functionality.
 ///
-/// Like the parent [Device](../Device.t.html) trait, this crate does not
+/// Like the parent [super::Device] trait, this crate does not
 /// provide a concrete object for this trait.
 ///
 /// # Example
@@ -386,7 +393,6 @@ pub trait Device: super::Device {
             )?;
 
         let val_len = val_slice.len();
-        let enum_len = enum_slice.len();
 
         let val_type = {
             use self::property::ValueType;
@@ -464,6 +470,7 @@ pub trait Device: super::Device {
         Ok(())
     }
 
+    /// Create a property blob value from a given Mode
     fn create_property_blob(&self, mode: Mode) -> Result<property::Value<'static>, SystemError> {
         let mut raw_mode: ffi::drm_mode_modeinfo = mode.into();
         let data = unsafe {
@@ -480,6 +487,7 @@ pub trait Device: super::Device {
         Ok(property::Value::Blob(blob.blob_id.into()))
     }
 
+    /// Destroy a given property blob value
     fn destroy_property_blob(&self, blob: u64) -> Result<(), SystemError> {
         ffi::mode::destroy_property_blob(self.as_raw_fd(), blob as u32)?;
 
@@ -637,6 +645,8 @@ pub trait Device: super::Device {
     /// Sets a hardware-cursor on the given crtc with the image of a given buffer
     ///
     /// A buffer argument of `None` will clear the cursor.
+    #[deprecated(note = "Usage of deprecated ioctl set_cursor: use a cursor plane instead")]
+    #[allow(deprecated)]
     fn set_cursor<B>(&self, crtc: crtc::Handle, buffer: Option<&B>) -> Result<(), SystemError>
     where
         B: buffer::Buffer + ?Sized,
@@ -656,6 +666,8 @@ pub trait Device: super::Device {
     /// and a hotspot marking the click point of the cursor.
     ///
     /// A buffer argument of `None` will clear the cursor.
+    #[deprecated(note = "Usage of deprecated ioctl set_cursor2: use a cursor plane instead")]
+    #[allow(deprecated)]
     fn set_cursor2<B>(&self, crtc: crtc::Handle, buffer: Option<&B>, hotspot: (i32, i32)) -> Result<(), SystemError>
     where
         B: buffer::Buffer + ?Sized,
@@ -672,12 +684,15 @@ pub trait Device: super::Device {
     }
 
     /// Moves a set cursor on a given crtc
+    #[deprecated(note = "Usage of deprecated ioctl move_cursor: use a cursor plane instead")]
+    #[allow(deprecated)]
     fn move_cursor(&self, crtc: crtc::Handle, pos: (i32, i32)) -> Result<(), SystemError> {
         drm_ffi::mode::move_cursor(self.as_raw_fd(), crtc.into(), pos.0, pos.1)?;
 
         Ok(())
     }
 
+    /// Request an atomic commit with given flags and property-value pair for a list of objects.
     fn atomic_commit(&self, flags: &[AtomicCommitFlags], mut req: atomic::AtomicModeReq) -> Result<(), SystemError> {
         use std::mem::transmute as tm;
 
@@ -832,8 +847,8 @@ impl Iterator for Events {
     }
 }
 
-/// The set of [ResourceHandles](ResourceHandle.t.html) that a
-/// [Device](Device.t.html) exposes. Excluding Plane resources.
+/// The set of [ResourceHandles] that a
+/// [Device] exposes. Excluding Plane resources.
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct ResourceHandles {
     fbs: [Option<framebuffer::Handle>; 32],
@@ -849,30 +864,31 @@ pub struct ResourceHandles {
 }
 
 impl ResourceHandles {
-    /// Returns the set of [connector::Handles](connector/Handle.t.html)
+    /// Returns the set of [connector::Handle]
     pub fn connectors(&self) -> &[connector::Handle] {
         let buf_len = std::cmp::min(self.connectors.len(), self.conn_len);
         unsafe { mem::transmute(&self.connectors[..buf_len]) }
     }
 
-    /// Returns the set of [encoder::Handles](encoder/Handle.t.html)
+    /// Returns the set of [encoder::Handle]
     pub fn encoders(&self) -> &[encoder::Handle] {
         let buf_len = std::cmp::min(self.encoders.len(), self.enc_len);
         unsafe { mem::transmute(&self.encoders[..buf_len]) }
     }
 
-    /// Returns the set of [crtc::Handles](crtc/Handle.t.html)
+    /// Returns the set of [crtc::Handle]
     pub fn crtcs(&self) -> &[crtc::Handle] {
         let buf_len = std::cmp::min(self.crtcs.len(), self.crtc_len);
         unsafe { mem::transmute(&self.crtcs[..buf_len]) }
     }
 
-    /// Returns the set of [framebuffer::Handles](framebuffer/Handle.t.html)
+    /// Returns the set of [framebuffer::Handle]
     pub fn framebuffers(&self) -> &[framebuffer::Handle] {
         let buf_len = std::cmp::min(self.fbs.len(), self.fb_len);
         unsafe { mem::transmute(&self.fbs[..buf_len]) }
     }
 
+    /// Apply a filter the all crtcs of these resources, resulting in a list of crtcs allowed.
     pub fn filter_crtcs(&self, filter: CrtcListFilter) -> Vec<crtc::Handle> {
         self.crtcs
             .iter()
@@ -896,8 +912,8 @@ impl std::fmt::Debug for ResourceHandles {
     }
 }
 
-/// The set of [plane::Handles](plane/Handle.t.html) that a
-/// [Device](Device.t.html) exposes.
+/// The set of [plane::Handle] that a
+/// [Device] exposes.
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct PlaneResourceHandles {
     planes: [Option<plane::Handle>; 32],
@@ -905,7 +921,7 @@ pub struct PlaneResourceHandles {
 }
 
 impl PlaneResourceHandles {
-    /// Returns the set of [plane::Handles](plane/Handle.t.html)
+    /// Returns the set of [plane::Handle]
     pub fn planes(&self) -> &[plane::Handle] {
         let buf_len = std::cmp::min(self.planes.len(), self.plane_len);
         unsafe { mem::transmute(&self.planes[..buf_len]) }
@@ -1004,11 +1020,15 @@ impl std::fmt::Debug for Mode {
     }
 }
 
+/// Type of a plane
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PlaneType {
+    /// Overlay plane
     Overlay = ffi::DRM_PLANE_TYPE_OVERLAY,
+    /// Primary plane
     Primary = ffi::DRM_PLANE_TYPE_PRIMARY,
+    /// Cursor plane
     Cursor = ffi::DRM_PLANE_TYPE_CURSOR,
 }
 
@@ -1021,7 +1041,7 @@ pub struct PropertyValueSet {
 }
 
 impl PropertyValueSet {
-    /// Returns a pair representing a set of [property::Handles](property/Handle.t.html) and their raw values
+    /// Returns a pair representing a set of [property::Handle] and their raw values
     pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawValue]) {
         unsafe {
             mem::transmute((&self.prop_ids[..self.len], &self.prop_vals[..self.len]))
@@ -1033,9 +1053,16 @@ type ClipRect = ffi::drm_sys::drm_clip_rect;
 
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+/// Flags for an atomic commit
 pub enum AtomicCommitFlags {
+    /// Test only validity of the request, do not actually apply the requested changes.
     TestOnly = ffi::drm_sys::DRM_MODE_ATOMIC_TEST_ONLY,
+    /// Do not block on the request and return early.
     Nonblock =  ffi::drm_sys::DRM_MODE_ATOMIC_NONBLOCK,
+    /// Allow the changes to trigger a modeset, if necessary.
+    ///
+    /// Changes requiring a modeset are rejected otherwise.
     AllowModeset = ffi::drm_sys::DRM_MODE_ATOMIC_ALLOW_MODESET,
+    /// Generate a page flip event, when the changes are applied.
     PageFlipEvent = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT,
 }

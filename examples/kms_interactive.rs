@@ -11,7 +11,10 @@ pub fn main() {
 
     // Enable all possible client capabilities
     for &cap in capabilities::CLIENT_CAP_ENUMS {
-        card.set_client_capability(cap, true);
+        if let Err(_) = card.set_client_capability(cap, true) {
+            eprintln!("Unable to activate capability: {:?}", cap);
+            return;
+        }
     }
 
     run_repl(&card);
@@ -32,12 +35,12 @@ fn run_repl(card: &Card) {
         let mut db = card.create_dumb_buffer(image.dimensions(), fmt, 32).unwrap();
 
         // Create a Framebuffer to represent it
-        let fb = card.add_framebuffer(&db, 1, 32).unwrap();
+        let _fb = card.add_framebuffer(&db, 1, 32).unwrap();
 
         // Load the image into the buffer
         {
             let mut mapping = card.map_dumb_buffer(&mut db).unwrap();
-            let mut buffer = mapping.as_mut();
+            let buffer = mapping.as_mut();
             for (img_px, map_px) in image.pixels().zip(buffer.chunks_exact_mut(4)) {
                 // Assuming little endian, it's BGRA
                 map_px[0] = img_px[0]; // Blue
@@ -76,7 +79,9 @@ fn run_repl(card: &Card) {
                 let handle: drm::control::framebuffer::Handle = unsafe {
                     std::mem::transmute(handle)
                 };
-                card.destroy_framebuffer(handle);
+                if let Err(err) = card.destroy_framebuffer(handle) {
+                    println!("Unable to destroy framebuffer ({:?}): {}", handle, err);
+                }
             },
             // Print out all resources
             ["GetResources"] => {

@@ -5,12 +5,10 @@ mod utils;
 use utils::*;
 
 use drm::control::Device as ControlDevice;
-use drm::Device as BasicDevice;
 
 use drm::buffer::DrmFourcc;
 
-use drm::control::ResourceHandle;
-use drm::control::{connector, crtc, dumbbuffer, framebuffer};
+use drm::control::{connector, crtc};
 
 pub fn main() {
     let card = Card::open_global();
@@ -53,7 +51,7 @@ pub fn main() {
     // Map it and grey it out.
     {
         let mut map = card.map_dumb_buffer(&mut db).expect("Could not map dumbbuffer");
-        for mut b in map.as_mut() {
+        for b in map.as_mut() {
             *b = 128;
         }
     }
