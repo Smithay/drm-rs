@@ -24,7 +24,7 @@
 //! like a regular one. This allows better control and security, and is the
 //! recommended method of sharing buffers.
 
-pub use drm_fourcc::{DrmFourcc, UnrecognizedFourcc, DrmModifier, DrmVendor, UnrecognizedVendor};
+pub use drm_fourcc::{DrmFourcc, DrmModifier, DrmVendor, UnrecognizedFourcc, UnrecognizedVendor};
 
 /// A handle to a GEM buffer.
 ///
@@ -37,15 +37,15 @@ pub use drm_fourcc::{DrmFourcc, UnrecognizedFourcc, DrmModifier, DrmVendor, Unre
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(::control::RawResourceHandle);
 
-impl Into<::control::RawResourceHandle> for Handle {
-    fn into(self) -> ::control::RawResourceHandle {
-        self.0
+impl From<Handle> for ::control::RawResourceHandle {
+    fn from(handle: Handle) -> Self {
+        handle.0
     }
 }
 
-impl Into<u32> for Handle {
-    fn into(self) -> u32 {
-        self.0.into()
+impl From<Handle> for u32 {
+    fn from(handle: Handle) -> Self {
+        handle.0.into()
     }
 }
 
@@ -57,9 +57,7 @@ impl From<::control::RawResourceHandle> for Handle {
 
 impl std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_tuple("buffer::Handle")
-            .field(&self.0)
-            .finish()
+        f.debug_tuple("buffer::Handle").field(&self.0).finish()
     }
 }
 
@@ -74,17 +72,15 @@ impl std::fmt::Debug for Handle {
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Name(u32);
 
-impl Into<u32> for Name {
-    fn into(self) -> u32 {
-        self.0.into()
+impl From<Name> for u32 {
+    fn from(name: Name) -> u32 {
+        name.0
     }
 }
 
 impl std::fmt::Debug for Name {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_tuple("buffer::Name")
-            .field(&self.0)
-            .finish()
+        f.debug_tuple("buffer::Name").field(&self.0).finish()
     }
 }
 

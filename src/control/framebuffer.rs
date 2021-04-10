@@ -10,15 +10,15 @@ use drm_ffi as ffi;
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::RawResourceHandle);
 
-impl Into<control::RawResourceHandle> for Handle {
-    fn into(self) -> control::RawResourceHandle {
-        self.0
+impl From<Handle> for control::RawResourceHandle {
+    fn from(handle: Handle) -> Self {
+        handle.0
     }
 }
 
-impl Into<u32> for Handle {
-    fn into(self) -> u32 {
-        self.0.into()
+impl From<Handle> for u32 {
+    fn from(handle: Handle) -> Self {
+        handle.0.into()
     }
 }
 
@@ -34,9 +34,7 @@ impl control::ResourceHandle for Handle {
 
 impl std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_tuple("framebuffer::Handle")
-            .field(&self.0)
-            .finish()
+        f.debug_tuple("framebuffer::Handle").field(&self.0).finish()
     }
 }
 

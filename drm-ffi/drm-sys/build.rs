@@ -16,9 +16,11 @@ mod use_bindgen {
         let config = CodegenConfig::all();
 
         Builder::default()
-            .clang_args(lib.include_paths.into_iter().map(| path | {
-                "-I".to_string() + &path.into_os_string().into_string().unwrap()
-            }))
+            .clang_args(
+                lib.include_paths
+                    .into_iter()
+                    .map(|path| "-I".to_string() + &path.into_os_string().into_string().unwrap()),
+            )
             .header_contents("bindings.h", contents)
             .ctypes_prefix("libc")
             .with_codegen_config(config)
@@ -38,27 +40,19 @@ mod use_bindgen {
     const TMP_BIND_PREFIX: &str = "__BINDGEN_TMP_";
     const TMP_BIND_PREFIX_REG: &str = "_BINDGEN_TMP_.*";
 
-    const INCLUDES: &'static [&str] = &[
-        "drm.h",
-        "drm_mode.h"
-    ];
+    const INCLUDES: &'static [&str] = &["drm.h", "drm_mode.h"];
 
-    const MACROS: &'static [&str] = &[
-        "DRM_MODE_PROP_SIGNED_RANGE",
-        "DRM_MODE_PROP_OBJECT"
-    ];
+    const MACROS: &'static [&str] = &["DRM_MODE_PROP_SIGNED_RANGE", "DRM_MODE_PROP_OBJECT"];
 
     // Applies a formatting function over a slice of strings,
     // concatenating them on separate lines into a single String
     fn apply_formatting<I, F>(iter: I, f: F) -> String
-        where
+    where
         I: Iterator,
         I::Item: AsRef<str>,
-        F: Fn(&str) -> String
+        F: Fn(&str) -> String,
     {
-        iter.fold(String::new(), | acc, x | {
-            acc + &f(x.as_ref()) + "\n"
-        })
+        iter.fold(String::new(), |acc, x| acc + &f(x.as_ref()) + "\n")
     }
 
     // Create a name for a temporary value
@@ -90,20 +84,19 @@ mod use_bindgen {
     // Required for some macros that won't get generated
     fn rebind_macro(name: &str) -> String {
         let tmp_name = tmp_val(name);
-        format!("{}\n{}\n{}\n{}",
-                decl_const("unsigned int", &tmp_name, name),
-                undefine_macro(name),
-                decl_const("unsigned int", name, &tmp_name),
-                define_macro(name, name)
+        format!(
+            "{}\n{}\n{}\n{}",
+            decl_const("unsigned int", &tmp_name, name),
+            undefine_macro(name),
+            decl_const("unsigned int", name, &tmp_name),
+            define_macro(name, name)
         )
     }
 
     // Fully create the header
     fn create_header() -> String {
-        apply_formatting(INCLUDES.iter(), include) +
-            &apply_formatting(MACROS.iter(), rebind_macro)
+        apply_formatting(INCLUDES.iter(), include) + &apply_formatting(MACROS.iter(), rebind_macro)
     }
-
 
     pub fn generate_bindings() {
         let bindings = create_builder(&create_header())
@@ -128,14 +121,67 @@ mod use_bindgen {
         let out_path = String::from(var("OUT_DIR").unwrap());
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
 
-        bindings.write_to_file(bind_file).expect("Could not write bindings");
+        bindings
+            .write_to_file(bind_file)
+            .expect("Could not write bindings");
+    }
+
+    #[cfg(feature = "update_bindings")]
+    pub fn update_bindings() {
+        use std::{fs, io::Write};
+
+        let out_path = String::from(var("OUT_DIR").unwrap());
+        let bind_file = PathBuf::from(out_path).join("bindings.rs");
+        let dest_dir = PathBuf::from("src")
+            .join("platforms")
+            .join(var("CARGO_CFG_TARGET_OS").unwrap())
+            .join(var("CARGO_CFG_TARGET_ARCH").unwrap());
+        let dest_file = dest_dir.join("bindings.rs");
+
+        fs::create_dir_all(&dest_dir).unwrap();
+        fs::copy(&bind_file, &dest_file).unwrap();
+
+        if let Ok(github_env) = var("GITHUB_ENV") {
+            let mut env_file = fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(github_env)
+                .unwrap();
+            writeln!(env_file, "DRM_SYS_BINDINGS_FILE={}", dest_file.display()).unwrap();
+        }
     }
 }
 
 #[cfg(feature = "use_bindgen")]
 pub fn main() {
     use_bindgen::generate_bindings();
+
+    #[cfg(feature = "update_bindings")]
+    use_bindgen::update_bindings();
 }
 
 #[cfg(not(feature = "use_bindgen"))]
-pub fn main() {}
+pub fn main() {
+    use std::{env::var, path::Path};
+
+    let target_os = var("CARGO_CFG_TARGET_OS").unwrap();
+    let target_arch = var("CARGO_CFG_TARGET_ARCH").unwrap();
+
+    let bindings_file = Path::new("src")
+        .join("platforms")
+        .join(&target_os)
+        .join(&target_arch)
+        .join("bindings.rs");
+
+    if bindings_file.is_file() {
+        println!(
+            "cargo:rustc-env=DRM_SYS_BINDINGS_PATH={}/{}",
+            target_os, target_arch
+        );
+    } else {
+        panic!(
+            "No prebuilt bindings for target OS `{}` and/or architecture `{}`. Try `use_bindgen` feature.",
+            target_os, target_arch
+        );
+    }
+}

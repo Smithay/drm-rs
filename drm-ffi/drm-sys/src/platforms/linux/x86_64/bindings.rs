@@ -143,7 +143,6 @@ pub const DRM_MODE_CONNECTOR_VIRTUAL: u32 = 15;
 pub const DRM_MODE_CONNECTOR_DSI: u32 = 16;
 pub const DRM_MODE_CONNECTOR_DPI: u32 = 17;
 pub const DRM_MODE_CONNECTOR_WRITEBACK: u32 = 18;
-pub const DRM_MODE_CONNECTOR_SPI: u32 = 19;
 pub const DRM_MODE_PROP_PENDING: u32 = 1;
 pub const DRM_MODE_PROP_RANGE: u32 = 2;
 pub const DRM_MODE_PROP_IMMUTABLE: u32 = 4;
@@ -885,17 +884,12 @@ pub mod drm_mode_subconnector {
     pub type Type = libc::c_uint;
     pub const DRM_MODE_SUBCONNECTOR_Automatic: Type = 0;
     pub const DRM_MODE_SUBCONNECTOR_Unknown: Type = 0;
-    pub const DRM_MODE_SUBCONNECTOR_VGA: Type = 1;
     pub const DRM_MODE_SUBCONNECTOR_DVID: Type = 3;
     pub const DRM_MODE_SUBCONNECTOR_DVIA: Type = 4;
     pub const DRM_MODE_SUBCONNECTOR_Composite: Type = 5;
     pub const DRM_MODE_SUBCONNECTOR_SVIDEO: Type = 6;
     pub const DRM_MODE_SUBCONNECTOR_Component: Type = 8;
     pub const DRM_MODE_SUBCONNECTOR_SCART: Type = 9;
-    pub const DRM_MODE_SUBCONNECTOR_DisplayPort: Type = 10;
-    pub const DRM_MODE_SUBCONNECTOR_HDMIA: Type = 11;
-    pub const DRM_MODE_SUBCONNECTOR_Native: Type = 15;
-    pub const DRM_MODE_SUBCONNECTOR_Wireless: Type = 18;
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -1049,12 +1043,6 @@ pub struct drm_color_lut {
     pub green: __u16,
     pub blue: __u16,
     pub reserved: __u16,
-}
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct hdr_metadata_infoframe__bindgen_ty_1 {
-    pub x: __u16,
-    pub y: __u16,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]

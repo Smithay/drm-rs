@@ -15,10 +15,7 @@ pub struct SmallOsString {
 
 impl SmallOsString {
     pub fn from_u8_buffer(data: [u8; 32], len: usize) -> Self {
-        Self {
-            data: data,
-            len: len,
-        }
+        Self { data, len }
     }
 
     pub fn from_i8_buffer(data: [i8; 32], len: usize) -> Self {
@@ -59,19 +56,19 @@ impl fmt::Display for SmallOsString {
             match ::std::str::from_utf8(input) {
                 Ok(valid) => {
                     write!(f, "{}", valid)?;
-                    break
+                    break;
                 }
                 Err(error) => {
                     let (valid, after_valid) = input.split_at(error.valid_up_to());
                     unsafe {
                         write!(f, "{}", ::std::str::from_utf8_unchecked(valid))?;
                     }
-                    write!(f, "{}", "\u{FFFD}")?;
+                    write!(f, "\u{FFFD}")?;
 
                     if let Some(invalid_sequence_length) = error.error_len() {
                         input = &after_valid[invalid_sequence_length..]
                     } else {
-                        break
+                        break;
                     }
                 }
             }

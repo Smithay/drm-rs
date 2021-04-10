@@ -18,8 +18,8 @@ pub(crate) mod utils;
 use result::SystemError as Error;
 pub mod gem;
 pub mod ioctl;
-pub mod result;
 pub mod mode;
+pub mod result;
 
 use nix::libc::*;
 use std::os::unix::io::RawFd;

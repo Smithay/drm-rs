@@ -11,15 +11,21 @@ pub struct AtomicModeReq {
     pub(super) values: Vec<control::property::RawValue>,
 }
 
-impl AtomicModeReq {
-    /// Create a new and empty atomic commit request
-    pub fn new() -> AtomicModeReq {
+impl Default for AtomicModeReq {
+    fn default() -> Self {
         AtomicModeReq {
             objects: Vec::new(),
             count_props_per_object: Vec::new(),
             props: Vec::new(),
             values: Vec::new(),
         }
+    }
+}
+
+impl AtomicModeReq {
+    /// Create a new and empty atomic commit request
+    pub fn new() -> AtomicModeReq {
+        Self::default()
     }
 
     /// Add a property and value pair for a given raw resource to the request
@@ -31,33 +37,33 @@ impl AtomicModeReq {
     ) {
         // add object if missing (also to count_props_per_object)
         let (idx, prop_count) = match self.objects.binary_search(&obj_id) {
-            Ok(idx) => {
-                (idx, self.count_props_per_object[idx])
-            },
+            Ok(idx) => (idx, self.count_props_per_object[idx]),
             Err(new_idx) => {
                 self.objects.insert(new_idx, obj_id);
                 self.count_props_per_object.insert(new_idx, 0);
                 (new_idx, 0)
-            },
+            }
         };
 
         // get start of our objects props
-        let prop_slice_start = self.count_props_per_object.iter().take(idx).fold(0, |acc, x| acc + x) as usize;
+        let prop_slice_start = self.count_props_per_object.iter().take(idx).sum::<u32>() as usize;
         // get end
         let prop_slice_end = prop_slice_start + prop_count as usize;
 
         // search for existing prop entry
-        match self.props[prop_slice_start..prop_slice_end].binary_search_by_key(&Into::<u32>::into(prop_id), |x| (*x).into()) {
+        match self.props[prop_slice_start..prop_slice_end]
+            .binary_search_by_key(&Into::<u32>::into(prop_id), |x| (*x).into())
+        {
             // prop exists, override
             Ok(prop_idx) => {
                 self.values[prop_slice_start + prop_idx] = value;
-            },
+            }
             Err(prop_idx) => {
                 // increase prop count
                 self.count_props_per_object[idx] += 1;
                 // insert prop, insert value
                 self.props.insert(prop_slice_start + prop_idx, prop_id);
-                self.values.insert(prop_slice_start + prop_idx, value); 
+                self.values.insert(prop_slice_start + prop_idx, value);
             }
         }
     }
@@ -69,7 +75,7 @@ impl AtomicModeReq {
         property: control::property::Handle,
         value: control::property::Value,
     ) where
-        H: control::ResourceHandle
+        H: control::ResourceHandle,
     {
         self.add_raw_property(handle.into(), property, value.into())
     }

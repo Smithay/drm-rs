@@ -14,15 +14,15 @@ use drm_ffi as ffi;
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::RawResourceHandle);
 
-impl Into<control::RawResourceHandle> for Handle {
-    fn into(self) -> control::RawResourceHandle {
-        self.0
+impl From<Handle> for control::RawResourceHandle {
+    fn from(handle: Handle) -> Self {
+        handle.0
     }
 }
 
-impl Into<u32> for Handle {
-    fn into(self) -> u32 {
-        self.0.into()
+impl From<Handle> for u32 {
+    fn from(handle: Handle) -> Self {
+        handle.0.into()
     }
 }
 
@@ -38,9 +38,7 @@ impl control::ResourceHandle for Handle {
 
 impl std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_tuple("connector::Handle")
-            .field(&self.0)
-            .finish()
+        f.debug_tuple("connector::Handle").field(&self.0).finish()
     }
 }
 
@@ -92,7 +90,7 @@ impl Info {
     }
 
     /// Returns a list of modes this connector reports as supported.
-    pub fn modes(&self) ->  &[control::Mode] {
+    pub fn modes(&self) -> &[control::Mode] {
         &self.modes
     }
 
@@ -104,6 +102,7 @@ impl Info {
 
 /// A physical interface type.
 #[allow(missing_docs)]
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum Interface {
     Unknown,
@@ -152,9 +151,9 @@ impl From<u32> for Interface {
     }
 }
 
-impl Into<u32> for Interface {
-    fn into(self) -> u32 {
-        match self {
+impl From<Interface> for u32 {
+    fn from(interface: Interface) -> Self {
+        match interface {
             Interface::Unknown => ffi::DRM_MODE_CONNECTOR_Unknown,
             Interface::VGA => ffi::DRM_MODE_CONNECTOR_VGA,
             Interface::DVII => ffi::DRM_MODE_CONNECTOR_DVII,
@@ -198,11 +197,11 @@ impl From<u32> for State {
     }
 }
 
-impl Into<u32> for State {
-    fn into(self) -> u32 {
+impl From<State> for u32 {
+    fn from(state: State) -> Self {
         // These variables are not defined in drm_mode.h for some reason.
         // They were copied from libdrm's xf86DrmMode.h
-        match self {
+        match state {
             State::Connected => 1,
             State::Disconnected => 2,
             State::Unknown => 3,

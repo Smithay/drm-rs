@@ -143,7 +143,11 @@ pub fn rm_fb(fd: RawFd, mut id: u32) -> Result<(), Error> {
 }
 
 /// Mark a framebuffer as dirty.
-pub fn dirty_fb(fd: RawFd, id: u32, clips: &[drm_clip_rect]) -> Result<drm_mode_fb_dirty_cmd, Error> {
+pub fn dirty_fb(
+    fd: RawFd,
+    id: u32,
+    clips: &[drm_clip_rect],
+) -> Result<drm_mode_fb_dirty_cmd, Error> {
     let mut dirty = drm_mode_fb_dirty_cmd {
         fb_id: id,
         clips_ptr: clips.as_ptr() as _,
@@ -260,7 +264,13 @@ pub fn set_gamma(
 /// The buffer must be allocated using the buffer manager of the driver (GEM or TTM). It is not
 /// allowed to be a dumb buffer.
 #[deprecated = "use a cursor plane instead"]
-pub fn set_cursor(fd: RawFd, id: u32, buf_id: u32, w: u32, h: u32) -> Result<drm_mode_cursor, Error> {
+pub fn set_cursor(
+    fd: RawFd,
+    id: u32,
+    buf_id: u32,
+    w: u32,
+    h: u32,
+) -> Result<drm_mode_cursor, Error> {
     let mut cursor = drm_mode_cursor {
         flags: DRM_MODE_CURSOR_BO,
         crtc_id: id,
@@ -339,7 +349,6 @@ pub fn get_connector(
     mut modes: Option<&mut Vec<drm_mode_modeinfo>>,
     encoders: Option<&mut &mut [u32]>,
 ) -> Result<drm_mode_get_connector, Error> {
-
     let modes_count = if modes.is_some() {
         let mut info = drm_mode_get_connector {
             connector_id: id,
@@ -349,10 +358,12 @@ pub fn get_connector(
         unsafe {
             ioctl::mode::get_connector(fd, &mut info)?;
         }
- 
+
         info.count_modes
-    } else { 0 };
- 
+    } else {
+        0
+    };
+
     let mut info = drm_mode_get_connector {
         connector_id: id,
         props_ptr: map_ptr!(&props),
@@ -362,7 +373,7 @@ pub fn get_connector(
                 modes.clear();
                 modes.reserve_exact(modes_count as usize);
                 modes.as_ptr() as _
-            },
+            }
             None => 0 as _,
         },
         encoders_ptr: map_ptr!(&encoders),
@@ -510,7 +521,11 @@ pub fn set_connector_property(
 }
 
 /// Get the value of a property blob
-pub fn get_property_blob(fd: RawFd, id: u32, data: Option<&mut &mut [u64]>) -> Result<drm_mode_get_blob, Error> {
+pub fn get_property_blob(
+    fd: RawFd,
+    id: u32,
+    data: Option<&mut &mut [u64]>,
+) -> Result<drm_mode_get_blob, Error> {
     let mut blob = drm_mode_get_blob {
         blob_id: id,
         length: map_len!(&data),

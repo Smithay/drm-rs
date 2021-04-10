@@ -191,8 +191,7 @@ pub type __s32 = libc::c_int;
 pub type __u32 = libc::c_uint;
 pub type __s64 = libc::c_longlong;
 pub type __u64 = libc::c_ulonglong;
-pub type __kernel_ulong_t = libc::c_ulong;
-pub type __kernel_size_t = __kernel_ulong_t;
+pub type __kernel_size_t = libc::c_uint;
 pub type drm_handle_t = libc::c_uint;
 pub type drm_context_t = libc::c_uint;
 pub type drm_drawable_t = libc::c_uint;
@@ -611,7 +610,7 @@ impl Default for drm_wait_vblank_reply {
 pub union drm_wait_vblank {
     pub request: drm_wait_vblank_request,
     pub reply: drm_wait_vblank_reply,
-    _bindgen_union_align: [u64; 3usize],
+    _bindgen_union_align: [u32; 4usize],
 }
 impl Default for drm_wait_vblank {
     fn default() -> Self {

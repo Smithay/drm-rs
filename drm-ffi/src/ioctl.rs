@@ -100,7 +100,12 @@ pub(crate) mod mode {
     /// Modesetting resources
     ioctl_readwrite!(get_resources, DRM_IOCTL_BASE, 0xA0, drm_mode_card_res);
 
-    ioctl_readwrite!(get_plane_resources, DRM_IOCTL_BASE, 0xB5, drm_mode_get_plane_res);
+    ioctl_readwrite!(
+        get_plane_resources,
+        DRM_IOCTL_BASE,
+        0xB5,
+        drm_mode_get_plane_res
+    );
 
     /// Connector related functions
     ioctl_readwrite!(get_connector, DRM_IOCTL_BASE, 0xA7, drm_mode_get_connector);
@@ -143,11 +148,26 @@ pub(crate) mod mode {
     /// Property related functions
     ioctl_readwrite!(get_property, DRM_IOCTL_BASE, 0xAA, drm_mode_get_property);
 
-    ioctl_readwrite!(connector_set_property, DRM_IOCTL_BASE, 0xAB, drm_mode_connector_set_property);
+    ioctl_readwrite!(
+        connector_set_property,
+        DRM_IOCTL_BASE,
+        0xAB,
+        drm_mode_connector_set_property
+    );
 
-    ioctl_readwrite!(obj_get_properties, DRM_IOCTL_BASE, 0xB9, drm_mode_obj_get_properties);
+    ioctl_readwrite!(
+        obj_get_properties,
+        DRM_IOCTL_BASE,
+        0xB9,
+        drm_mode_obj_get_properties
+    );
 
-    ioctl_readwrite!(obj_set_property, DRM_IOCTL_BASE, 0xBA, drm_mode_obj_set_property);
+    ioctl_readwrite!(
+        obj_set_property,
+        DRM_IOCTL_BASE,
+        0xBA,
+        drm_mode_obj_set_property
+    );
 
     /// Property blobs
     ioctl_readwrite!(get_blob, DRM_IOCTL_BASE, 0xAC, drm_mode_get_blob);
@@ -159,7 +179,12 @@ pub(crate) mod mode {
     ioctl_readwrite!(destroy_blob, DRM_IOCTL_BASE, 0xBE, drm_mode_destroy_blob);
 
     /// Atomic modesetting related functions
-    ioctl_readwrite!(crtc_page_flip, DRM_IOCTL_BASE, 0xB0, drm_mode_crtc_page_flip);
+    ioctl_readwrite!(
+        crtc_page_flip,
+        DRM_IOCTL_BASE,
+        0xB0,
+        drm_mode_crtc_page_flip
+    );
 
     ioctl_readwrite!(dirty_fb, DRM_IOCTL_BASE, 0xB1, drm_mode_fb_dirty_cmd);
 

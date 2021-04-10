@@ -31,13 +31,13 @@ extern crate core;
 
 extern crate drm_ffi;
 
-extern crate nix;
 extern crate drm_fourcc;
+extern crate nix;
 
 pub(crate) mod util;
 
-pub mod control;
 pub mod buffer;
+pub mod control;
 
 use std::os::unix::io::AsRawFd;
 
@@ -204,11 +204,7 @@ pub trait Device: AsRawFd {
         let date = SmallOsString::from_i8_buffer(date, date_len);
         let desc = SmallOsString::from_i8_buffer(desc, desc_len);
 
-        let driver = Driver {
-            name: name,
-            date: date,
-            desc: desc,
-        };
+        let driver = Driver { name, date, desc };
 
         Ok(driver)
     }
