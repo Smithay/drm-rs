@@ -18,3 +18,9 @@ rustyline = "^8.0.0"
 
 [features]
 use_bindgen = ["drm-ffi/use_bindgen"]
+
+[workspace]
+members = [
+    "drm-ffi",
+    "drm-ffi/drm-sys",
+]
