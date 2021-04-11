@@ -47,10 +47,10 @@ pub mod auth {
 
     /// Authorize another process' 'Magic Authentication Token'.
     pub fn auth_magic_token(fd: RawFd, auth: u32) -> Result<drm_auth, Error> {
-        let mut token = drm_auth { magic: auth };
+        let token = drm_auth { magic: auth };
 
         unsafe {
-            ioctl::auth_token(fd, &mut token)?;
+            ioctl::auth_token(fd, &token)?;
         }
 
         Ok(token)
@@ -81,8 +81,8 @@ pub mod auth {
 /// If the buffer is too big, this will coerce the buffer to the proper size.
 pub fn get_bus_id(fd: RawFd, buf: Option<&mut &mut [u8]>) -> Result<drm_unique, Error> {
     let mut busid = drm_unique {
-        unique: map_ptr!(&buf),
         unique_len: map_len!(&buf),
+        unique: map_ptr!(&buf),
     };
 
     unsafe {
@@ -118,7 +118,7 @@ pub fn get_interrupt_from_bus_id(
 /// Get client information given a client's ID.
 pub fn get_client(fd: RawFd, idx: c_int) -> Result<drm_client, Error> {
     let mut client = drm_client {
-        idx: idx,
+        idx,
         ..Default::default()
     };
 
@@ -145,13 +145,13 @@ pub fn get_capability(fd: RawFd, cty: u64) -> Result<drm_get_cap, Error> {
 
 /// Attempt to enable/disable a client's capability.
 pub fn set_capability(fd: RawFd, cty: u64, val: bool) -> Result<drm_set_client_cap, Error> {
-    let mut cap = drm_set_client_cap {
+    let cap = drm_set_client_cap {
         capability: cty,
         value: val as u64,
     };
 
     unsafe {
-        ioctl::set_cap(fd, &mut cap)?;
+        ioctl::set_cap(fd, &cap)?;
     }
 
     Ok(cap)
@@ -168,12 +168,12 @@ pub fn get_version(
     desc_buf: Option<&mut &mut [i8]>,
 ) -> Result<drm_version, Error> {
     let mut version = drm_version {
-        name: map_ptr!(&name_buf),
         name_len: map_len!(&name_buf),
-        date: map_ptr!(&date_buf),
+        name: map_ptr!(&name_buf),
         date_len: map_len!(&date_buf),
-        desc: map_ptr!(&desc_buf),
+        date: map_ptr!(&date_buf),
         desc_len: map_len!(&desc_buf),
+        desc: map_ptr!(&desc_buf),
         ..Default::default()
     };
 

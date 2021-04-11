@@ -18,7 +18,7 @@ fn print_properties<T: drm::control::ResourceHandle>(card: &Card, handle: T) {
         println!("Mutable: {}", info.mutable());
         println!("Atomic: {}", info.atomic());
         println!("Value: {:?}", info.value_type().convert_value(val));
-        println!("");
+        println!();
     }
 }
 
@@ -27,8 +27,8 @@ pub fn main() {
 
     // Enable all possible client capabilities
     for &cap in capabilities::CLIENT_CAP_ENUMS {
-        if let Err(_) = card.set_client_capability(cap, true) {
-            eprintln!("Unable to activate capability: {:?}", cap);
+        if let Err(e) = card.set_client_capability(cap, true) {
+            eprintln!("Unable to activate capability {:?}: {}", cap, e);
             return;
         }
     }

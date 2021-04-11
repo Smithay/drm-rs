@@ -26,7 +26,7 @@ fn find_prop_id<T: ResourceHandle>(
             let info = card.get_property(*id).unwrap();
             info.name().to_str().map(|x| x == name).unwrap_or(false)
         })
-        .map(|x| *x)
+        .cloned()
 }
 
 pub fn main() {
@@ -55,21 +55,16 @@ pub fn main() {
     // Filter each connector until we find one that's connected.
     let con = coninfo
         .iter()
-        .filter(|&i| i.state() == connector::State::Connected)
-        .next()
+        .find(|&i| i.state() == connector::State::Connected)
         .expect("No connected connectors");
 
     // Get the first (usually best) mode
-    let &mode = con
-        .modes()
-        .iter()
-        .next()
-        .expect("No modes found on connector");
+    let &mode = con.modes().get(0).expect("No modes found on connector");
 
     let (disp_width, disp_height) = mode.size();
 
     // Find a crtc and FB
-    let crtc = crtcinfo.iter().next().expect("No crtcs found");
+    let crtc = crtcinfo.get(0).expect("No crtcs found");
 
     // Select the pixel format
     let fmt = DrmFourcc::Rgba8888;
@@ -103,17 +98,16 @@ pub fn main() {
     ) = planes
         .planes()
         .iter()
-        .map(|x| *x)
-        .filter(|plane| {
-            card.get_plane(*plane)
+        .filter(|&&plane| {
+            card.get_plane(plane)
                 .map(|plane_info| {
                     let compatible_crtcs = res.filter_crtcs(plane_info.possible_crtcs());
                     compatible_crtcs.contains(&crtc.handle())
                 })
                 .unwrap_or(false)
         })
-        .partition(|plane| {
-            if let Ok(props) = card.get_properties(*plane) {
+        .partition(|&&plane| {
+            if let Ok(props) = card.get_properties(plane) {
                 let (ids, vals) = props.as_props_and_values();
                 for (&id, &val) in ids.iter().zip(vals.iter()) {
                     if let Ok(info) = card.get_property(id) {
