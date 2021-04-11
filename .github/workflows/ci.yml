@@ -88,7 +88,7 @@ jobs:
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all --all-features --all-targets -- -D warnings
+          args: --all --all-features --all-targets -- -D warnings -A clippy::redundant_static_lifetimes
 
   check-minimal:
     runs-on: ubuntu-latest
