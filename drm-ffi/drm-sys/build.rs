@@ -40,9 +40,9 @@ mod use_bindgen {
     const TMP_BIND_PREFIX: &str = "__BINDGEN_TMP_";
     const TMP_BIND_PREFIX_REG: &str = "_BINDGEN_TMP_.*";
 
-    const INCLUDES: &'static [&str] = &["drm.h", "drm_mode.h"];
+    const INCLUDES: &[&str] = &["drm.h", "drm_mode.h"];
 
-    const MACROS: &'static [&str] = &["DRM_MODE_PROP_SIGNED_RANGE", "DRM_MODE_PROP_OBJECT"];
+    const MACROS: &[&str] = &["DRM_MODE_PROP_SIGNED_RANGE", "DRM_MODE_PROP_OBJECT"];
 
     // Applies a formatting function over a slice of strings,
     // concatenating them on separate lines into a single String
@@ -118,7 +118,7 @@ mod use_bindgen {
             .generate()
             .expect("Unable to generate libdrm bindings");
 
-        let out_path = String::from(var("OUT_DIR").unwrap());
+        let out_path = var("OUT_DIR").unwrap();
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
 
         bindings
@@ -130,7 +130,7 @@ mod use_bindgen {
     pub fn update_bindings() {
         use std::{fs, io::Write};
 
-        let out_path = String::from(var("OUT_DIR").unwrap());
+        let out_path = var("OUT_DIR").unwrap();
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
         let dest_dir = PathBuf::from("src")
             .join("platforms")
