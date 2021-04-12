@@ -21,7 +21,7 @@
 //!
 //! ## Usage
 //!
-//! To begin using this crate, the [Device] trait must be
+//! To begin using this crate, the [`Device`] trait must be
 //! implemented. See the trait's [example section](trait@Device#example) for
 //! details on how to implement it.
 //!
@@ -66,22 +66,23 @@ use util::*;
 /// use std::os::unix::io::AsRawFd;
 ///
 /// #[derive(Debug)]
-/// // A simple wrapper for a device node.
+/// /// A simple wrapper for a device node.
 /// struct Card(File);
 ///
-/// // Implementing `AsRawFd` is a prerequisite to implementing the traits found
-/// // in this crate. Here, we are just calling `as_raw_fd()` on the inner File.
+/// /// Implementing [`AsRawFd`] is a prerequisite to implementing the traits found
+/// /// in this crate. Here, we are just calling [`File::as_raw_fd()`] on the inner
+/// /// [`File`].
 /// impl AsRawFd for Card {
 ///     fn as_raw_fd(&self) -> RawFd {
 ///         self.0.as_raw_fd()
 ///     }
 /// }
 ///
-/// /// With `AsRawFd` implemented, we can now implement `drm::Device`.
+/// /// With [`AsRawFd`] implemented, we can now implement [`drm::Device`].
 /// impl Device for Card {}
 ///
-/// // Simple helper method for opening a `Card`.
 /// impl Card {
+///     /// Simple helper method for opening a [`Card`].
 ///     fn open() -> Self {
 ///         let mut options = OpenOptions::new();
 ///         options.read(true);
@@ -114,21 +115,21 @@ pub trait Device: AsRawFd {
         Ok(())
     }
 
-    /// Generates an [AuthToken] for this process.
+    /// Generates an [`AuthToken`] for this process.
     #[deprecated(note = "Consider opening a render node instead.")]
     fn generate_auth_token(&self) -> Result<AuthToken, SystemError> {
         let token = drm_ffi::auth::get_magic_token(self.as_raw_fd())?;
         Ok(AuthToken(token.magic))
     }
 
-    /// Authenticates an [AuthToken] from another process.
+    /// Authenticates an [`AuthToken`] from another process.
     fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), SystemError> {
         drm_ffi::auth::auth_magic_token(self.as_raw_fd(), token.0)?;
         Ok(())
     }
 
     /// Requests the driver to expose or hide certain capabilities. See
-    /// [ClientCapability] for more information.
+    /// [`ClientCapability`] for more information.
     fn set_client_capability(
         &self,
         cap: ClientCapability,
@@ -138,7 +139,7 @@ pub trait Device: AsRawFd {
         Ok(())
     }
 
-    /// Gets the [BusID] of this device.
+    /// Gets the [`BusID`] of this device.
     fn get_bus_id(&self) -> Result<BusID, SystemError> {
         let mut buffer = [0u8; 32];
 
@@ -156,7 +157,7 @@ pub trait Device: AsRawFd {
         Ok(bus_id)
     }
 
-    /// Check to see if our [AuthToken] has been authenticated
+    /// Check to see if our [`AuthToken`] has been authenticated
     /// by the DRM Master
     fn authenticated(&self) -> Result<bool, SystemError> {
         let client = drm_ffi::get_client(self.as_raw_fd(), 0)?;
@@ -169,8 +170,8 @@ pub trait Device: AsRawFd {
         Ok(cap.value)
     }
 
-    /// Possible errors:
-    ///   - EFAULT: Kernel could not copy fields into userspace
+    /// # Possible errors:
+    ///   - [`SystemError::MemoryFault`]: Kernel could not copy fields into userspace
     #[allow(missing_docs)]
     fn get_driver(&self) -> Result<Driver, SystemError> {
         let mut name = [0i8; 32];
@@ -271,7 +272,7 @@ pub enum DriverCapability {
     DumbPreferredDepth = drm_ffi::DRM_CAP_DUMB_PREFERRED_DEPTH as u64,
     /// Unknown
     DumbPreferShadow = drm_ffi::DRM_CAP_DUMB_PREFER_SHADOW as u64,
-    /// PRIME handles are support
+    /// PRIME handles are supported
     Prime = drm_ffi::DRM_CAP_PRIME as u64,
     /// Unknown
     MonotonicTimestamp = drm_ffi::DRM_CAP_TIMESTAMP_MONOTONIC as u64,
@@ -281,7 +282,7 @@ pub enum DriverCapability {
     CursorWidth = drm_ffi::DRM_CAP_CURSOR_WIDTH as u64,
     /// Height of cursor buffers
     CursorHeight = drm_ffi::DRM_CAP_CURSOR_HEIGHT as u64,
-    /// You can create framebuffers with modifiers
+    /// Create framebuffers with modifiers
     AddFB2Modifiers = drm_ffi::DRM_CAP_ADDFB2_MODIFIERS as u64,
     /// Unknown
     PageFlipTarget = drm_ffi::DRM_CAP_PAGE_FLIP_TARGET as u64,

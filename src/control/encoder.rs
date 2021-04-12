@@ -65,6 +65,9 @@ impl Info {
     }
 
     /// Returns a filter for the possible CRTCs that can use this encoder.
+    ///
+    /// Use with [`control::ResourceHandles::filter_crtcs`]
+    /// to receive a list of crtcs.
     pub fn possible_crtcs(&self) -> control::CrtcListFilter {
         control::CrtcListFilter(self.pos_crtcs)
     }

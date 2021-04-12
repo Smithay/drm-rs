@@ -82,7 +82,7 @@ impl Info {
     }
 }
 
-/// A `ValueType` describes the types of value that a property uses.
+/// Describes the types of value that a property uses.
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum ValueType {
@@ -117,7 +117,7 @@ pub enum ValueType {
 }
 
 impl ValueType {
-    /// Given a raw value, convert it into a specific `Value`
+    /// Given a [`RawValue`], convert it into a specific [`Value`]
     pub fn convert_value(&self, value: RawValue) -> Value {
         use std::mem::transmute as tm;
 
@@ -204,13 +204,13 @@ impl<'a> From<Value<'a>> for RawValue {
     }
 }
 
-/// A single value of an `ValueType::Enum`
+/// A single value of [`ValueType::Enum`] type
 #[repr(transparent)]
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct EnumValue(ffi::drm_mode_property_enum);
 
 impl EnumValue {
-    /// Returns the `RawValue` of this value
+    /// Returns the [`RawValue`] of this value
     pub fn value(&self) -> RawValue {
         self.0.value
     }
@@ -230,7 +230,7 @@ impl std::fmt::Debug for EnumValue {
     }
 }
 
-/// A set of `EnumValue`s for a single property
+/// A set of [`EnumValue`]s for a single property
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct EnumValues {
     pub(crate) values: [u64; 24],
@@ -239,14 +239,14 @@ pub struct EnumValues {
 }
 
 impl EnumValues {
-    /// Returns a tuple containing slices to the `RawValue`s and the `EnumValue`s
+    /// Returns a tuple containing slices to the [`RawValue`]s and the [`EnumValue`]s
     pub fn values(&self) -> (&[RawValue], &[EnumValue]) {
         (&self.values[..self.length], &self.enums[..self.length])
     }
 
-    /// Returns an `EnumValue` for a `RawValue`
+    /// Returns an [`EnumValue`] for a [`RawValue`]
     ///
-    /// Note: This is a dumb translation, not every RawValue is part of en Enum
+    /// Note: This is a dumb translation, not every [`RawValue`] is part of en Enum
     pub fn get_value_from_raw_value(&self, value: RawValue) -> &EnumValue {
         let (_, enums) = self.values();
         &enums[value as usize]

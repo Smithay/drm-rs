@@ -7,10 +7,10 @@ use nix::Error as NixError;
 use std::error::Error;
 use std::fmt;
 
-/// Errors from system calls will always be in the form  NixError::Sys(errno).
+/// Errors from system calls will always be in the form [`NixError::Sys(errno)`].
 ///
-/// This helper function unwraps a NixError into an Errno in places we know
-/// other types of errors can not occur.
+/// This helper function unwraps a [`nix::Error`] into an [`Errno`] in places we
+/// know other types of errors can not occur.
 fn unwrap_errno(err: NixError) -> Errno {
     match err {
         NixError::Sys(errno) => errno,
@@ -45,7 +45,7 @@ pub enum SystemError {
 
     /// Unknown system error.
     Unknown {
-        /// Unknown nix::Errno returned by the system call.
+        /// Unknown [`nix::errno::Errno`] returned by the system call.
         errno: Errno,
     },
 }

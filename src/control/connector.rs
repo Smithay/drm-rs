@@ -1,6 +1,6 @@
 //! # Connector
 //!
-//! Respresents the physical output, such as a DisplayPort or VGA connector.
+//! Represents the physical output, such as a DisplayPort or VGA connector.
 //!
 //! A Connector is the physical connection between the display controller and
 //! a display. These objects keep track of connection information and state,
