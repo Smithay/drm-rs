@@ -55,15 +55,15 @@ impl fmt::Display for SmallOsString {
         loop {
             match ::std::str::from_utf8(input) {
                 Ok(valid) => {
-                    write!(f, "{}", valid)?;
+                    f.write_str(valid)?;
                     break;
                 }
                 Err(error) => {
                     let (valid, after_valid) = input.split_at(error.valid_up_to());
                     unsafe {
-                        write!(f, "{}", ::std::str::from_utf8_unchecked(valid))?;
+                        f.write_str(::std::str::from_utf8_unchecked(valid))?;
                     }
-                    write!(f, "\u{FFFD}")?;
+                    f.write_str("\u{FFFD}")?;
 
                     if let Some(invalid_sequence_length) = error.error_len() {
                         input = &after_valid[invalid_sequence_length..]
