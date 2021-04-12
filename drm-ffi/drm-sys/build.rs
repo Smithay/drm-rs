@@ -33,7 +33,7 @@ mod use_bindgen {
             .derive_default(true)
             .derive_hash(true)
             .derive_eq(true)
-            .whitelist_recursively(true)
+            .allowlist_recursively(true)
             .use_core()
     }
 
@@ -100,10 +100,10 @@ mod use_bindgen {
 
     pub fn generate_bindings() {
         let bindings = create_builder(&create_header())
-            .blacklist_type(TMP_BIND_PREFIX_REG)
-            .blacklist_type("drm_control_DRM_ADD_COMMAND")
-            .whitelist_type("DRM_.*|drm_.*")
-            .whitelist_var("DRM_.*|drm_.*")
+            .blocklist_type(TMP_BIND_PREFIX_REG)
+            .blocklist_type("drm_control_DRM_ADD_COMMAND")
+            .allowlist_type("DRM_.*|drm_.*")
+            .allowlist_var("DRM_.*|drm_.*")
             .constified_enum_module("drm_control_.*")
             .constified_enum_module("drm_buf_desc_.*")
             .constified_enum_module("drm_map_type")
