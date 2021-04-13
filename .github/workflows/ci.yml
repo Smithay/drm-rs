@@ -84,7 +84,8 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-build-rust_nightly-check-${{ hashFiles('**/Cargo.toml') }}
-      - uses: actions-rs/clippy-check@v1
+      - name: Clippy
+        uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all --all-features
@@ -112,7 +113,8 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-build-rust_nightly-check-minimal-${{ hashFiles('**/Cargo.toml') }}
-      - uses: actions-rs/cargo@v1
+      - name: Check
+        uses: actions-rs/cargo@v1
         with:
           command: check
           args: --all --all-features -Z minimal-versions
