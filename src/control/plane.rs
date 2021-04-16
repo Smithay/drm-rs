@@ -9,7 +9,7 @@
 //! * Primary - A CRTC's built-in plane. When attaching a framebuffer to a CRTC,
 //! it is actually being attached to this kind of plane.
 //!
-//! * Overlay - Can be overlayed on top of a primary plane, utilizing extremely
+//! * Overlay - Can be overlaid on top of a primary plane, utilizing extremely
 //! fast hardware compositing.
 //!
 //! * Cursor - Similar to an overlay plane, these are typically used to display
@@ -75,7 +75,7 @@ impl Info {
 
     /// Returns a filter for supported crtcs of this plane.
     ///
-    /// Use with [control::ResourceHandles::filter_crtcs]
+    /// Use with [`control::ResourceHandles::filter_crtcs`]
     /// to receive a list of crtcs.
     pub fn possible_crtcs(&self) -> control::CrtcListFilter {
         control::CrtcListFilter(self.pos_crtcs)

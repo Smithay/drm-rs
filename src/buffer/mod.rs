@@ -1,4 +1,4 @@
-//! Memory management and buffer functionality that the DRM sybsystem exposes.
+//! Memory management and buffer functionality that the DRM subsystem exposes.
 //!
 //! # Summary
 //!
@@ -17,7 +17,7 @@
 //!
 //! 1. Using `Flink` to globally publish a handle using a 32-bit 'name'. This
 //! requires either holding the DRM Master lock or having the process'
-//! [AuthToken](struct@crate::AuthToken) authenticated. However, any process can
+//! [`AuthToken`](struct@crate::AuthToken) authenticated. However, any process can
 //! open these handles if they know (or even guess) the global name.
 //!
 //! 2. Converting the GEM handle into a PRIME file descriptor, and passing it
@@ -26,7 +26,7 @@
 
 pub use drm_fourcc::{DrmFourcc, DrmModifier, DrmVendor, UnrecognizedFourcc, UnrecognizedVendor};
 
-/// A handle to a GEM buffer.
+/// A handle to a GEM buffer
 ///
 /// # Notes
 ///

@@ -15,7 +15,7 @@
 //! * CRTC - Scanout engines that read pixel data from a Plane and sends it to
 //! a Connector. Each CRTC has at least one Primary Plane.
 //!
-//! * Connector - Respresents the physical output, such as a DisplayPort or
+//! * Connector - Represents the physical output, such as a DisplayPort or
 //! VGA connector.
 //!
 //! * Encoder - Encodes pixel data from a CRTC into something a Connector can
@@ -25,8 +25,8 @@
 //!
 //! # Usage
 //!
-//! To begin using modesetting functionality, the [Device] trait
-//! must be implemented on top of the basic [super::Device] trait.
+//! To begin using modesetting functionality, the [`Device`] trait
+//! must be implemented on top of the basic [`super::Device`] trait.
 
 use drm_ffi as ffi;
 use drm_ffi::result::SystemError;
@@ -72,14 +72,14 @@ pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
 /// This trait should be implemented by any object that acts as a DRM device and
 /// provides modesetting functionality.
 ///
-/// Like the parent [super::Device] trait, this crate does not
+/// Like the parent [`super::Device`] trait, this crate does not
 /// provide a concrete object for this trait.
 ///
 /// # Example
 /// ```ignore
 /// use drm::control::Device as ControlDevice;
 ///
-/// // Assuming the `Card` wrapper already implements drm::Device
+/// /// Assuming the [`Card`] wrapper already implements [`drm::Device`]
 /// impl ControlDevice for Card {}
 /// ```
 pub trait Device: super::Device {
@@ -492,7 +492,7 @@ pub trait Device: super::Device {
         Ok(())
     }
 
-    /// Returns the set of `Mode`s that a particular connector supports.
+    /// Returns the set of [`Mode`]s that a particular connector supports.
     fn get_modes(&self, handle: connector::Handle) -> Result<Vec<Mode>, SystemError> {
         let mut modes = Vec::new();
 
@@ -660,7 +660,7 @@ pub trait Device: super::Device {
 
     /// Sets a hardware-cursor on the given crtc with the image of a given buffer
     ///
-    /// A buffer argument of `None` will clear the cursor.
+    /// A buffer argument of [`None`] will clear the cursor.
     #[deprecated(note = "Usage of deprecated ioctl set_cursor: use a cursor plane instead")]
     #[allow(deprecated)]
     fn set_cursor<B>(&self, crtc: crtc::Handle, buffer: Option<&B>) -> Result<(), SystemError>
@@ -681,7 +681,7 @@ pub trait Device: super::Device {
     /// Sets a hardware-cursor on the given crtc with the image of a given buffer
     /// and a hotspot marking the click point of the cursor.
     ///
-    /// A buffer argument of `None` will clear the cursor.
+    /// A buffer argument of [`None`] will clear the cursor.
     #[deprecated(note = "Usage of deprecated ioctl set_cursor2: use a cursor plane instead")]
     #[allow(deprecated)]
     fn set_cursor2<B>(
@@ -809,7 +809,7 @@ pub enum PageFlipTarget {
     Relative = ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_RELATIVE,
 }
 
-/// Iterator over `Event`s of a device. Create via `receive_events`.
+/// Iterator over [`Event`]s of a device. Create via [`Device::receive_events()`].
 pub struct Events {
     event_buf: [u8; 1024],
     amount: usize,
@@ -894,8 +894,8 @@ impl Iterator for Events {
     }
 }
 
-/// The set of [ResourceHandles] that a
-/// [Device] exposes. Excluding Plane resources.
+/// The set of [`ResourceHandles`] that a
+/// [`Device`] exposes. Excluding Plane resources.
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct ResourceHandles {
     fbs: [Option<framebuffer::Handle>; 32],
@@ -911,25 +911,25 @@ pub struct ResourceHandles {
 }
 
 impl ResourceHandles {
-    /// Returns the set of [connector::Handle]
+    /// Returns the set of [`connector::Handle`]
     pub fn connectors(&self) -> &[connector::Handle] {
         let buf_len = std::cmp::min(self.connectors.len(), self.conn_len);
         unsafe { &*(&self.connectors[..buf_len] as *const _ as *const [connector::Handle]) }
     }
 
-    /// Returns the set of [encoder::Handle]
+    /// Returns the set of [`encoder::Handle`]
     pub fn encoders(&self) -> &[encoder::Handle] {
         let buf_len = std::cmp::min(self.encoders.len(), self.enc_len);
         unsafe { &*(&self.encoders[..buf_len] as *const _ as *const [encoder::Handle]) }
     }
 
-    /// Returns the set of [crtc::Handle]
+    /// Returns the set of [`crtc::Handle`]
     pub fn crtcs(&self) -> &[crtc::Handle] {
         let buf_len = std::cmp::min(self.crtcs.len(), self.crtc_len);
         unsafe { &*(&self.crtcs[..buf_len] as *const _ as *const [crtc::Handle]) }
     }
 
-    /// Returns the set of [framebuffer::Handle]
+    /// Returns the set of [`framebuffer::Handle`]
     pub fn framebuffers(&self) -> &[framebuffer::Handle] {
         let buf_len = std::cmp::min(self.fbs.len(), self.fb_len);
         unsafe { &*(&self.fbs[..buf_len] as *const _ as *const [framebuffer::Handle]) }
@@ -959,8 +959,8 @@ impl std::fmt::Debug for ResourceHandles {
     }
 }
 
-/// The set of [plane::Handle] that a
-/// [Device] exposes.
+/// The set of [`plane::Handle`] that a
+/// [`Device`] exposes.
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct PlaneResourceHandles {
     planes: [Option<plane::Handle>; 32],
@@ -968,7 +968,7 @@ pub struct PlaneResourceHandles {
 }
 
 impl PlaneResourceHandles {
-    /// Returns the set of [plane::Handle]
+    /// Returns the set of [`plane::Handle`]
     pub fn planes(&self) -> &[plane::Handle] {
         let buf_len = std::cmp::min(self.planes.len(), self.plane_len);
         unsafe { &*(&self.planes[..buf_len] as *const _ as *const [plane::Handle]) }
@@ -984,7 +984,7 @@ impl std::fmt::Debug for PlaneResourceHandles {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// A filter that can be used with a ResourceHandles to determine the set of
+/// A filter that can be used with a [`ResourceHandles`] to determine the set of
 /// Crtcs that can attach to a specific encoder.
 pub struct CrtcListFilter(u32);
 
@@ -1088,7 +1088,7 @@ pub struct PropertyValueSet {
 }
 
 impl PropertyValueSet {
-    /// Returns a pair representing a set of [property::Handle] and their raw values
+    /// Returns a pair representing a set of [`property::Handle`] and their raw values
     pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawValue]) {
         unsafe {
             (

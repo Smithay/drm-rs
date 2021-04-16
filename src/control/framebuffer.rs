@@ -5,7 +5,7 @@
 use control;
 use drm_ffi as ffi;
 
-/// A handle to an framebuffer
+/// A handle to a framebuffer
 #[repr(transparent)]
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::RawResourceHandle);

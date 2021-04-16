@@ -7,7 +7,7 @@
 use buffer;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-/// Slow, but generic `Buffer` implementation
+/// Slow, but generic [`buffer::Buffer`] implementation
 pub struct DumbBuffer {
     pub(crate) size: (u32, u32),
     pub(crate) length: usize,
@@ -16,7 +16,7 @@ pub struct DumbBuffer {
     pub(crate) handle: buffer::Handle,
 }
 
-/// Mapping of a dumbbuffer
+/// Mapping of a [`DumbBuffer`]
 pub struct DumbMapping<'a> {
     pub(crate) _phantom: core::marker::PhantomData<&'a ()>,
     pub(crate) map: &'a mut [u8],
