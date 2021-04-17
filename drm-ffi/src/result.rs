@@ -75,7 +75,7 @@ impl From<Errno> for SystemError {
             Errno::EINVAL => SystemError::InvalidArgument,
             Errno::ENOTTY => SystemError::InvalidFileDescriptor,
             Errno::EACCES => SystemError::PermissionDenied,
-            _ => SystemError::Unknown { errno: errno },
+            _ => SystemError::Unknown { errno },
         }
     }
 }

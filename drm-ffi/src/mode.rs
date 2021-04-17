@@ -2,6 +2,8 @@
 //! Bindings to the DRM's modesetting capabilities.
 //!
 
+#![allow(clippy::too_many_arguments)]
+
 use drm_sys::*;
 use ioctl;
 
@@ -62,9 +64,9 @@ pub fn get_plane_resources(
 }
 
 /// Get info about a framebuffer.
-pub fn get_framebuffer(fd: RawFd, id: u32) -> Result<drm_mode_fb_cmd, Error> {
+pub fn get_framebuffer(fd: RawFd, fb_id: u32) -> Result<drm_mode_fb_cmd, Error> {
     let mut info = drm_mode_fb_cmd {
-        fb_id: id,
+        fb_id,
         ..Default::default()
     };
 
@@ -78,20 +80,20 @@ pub fn get_framebuffer(fd: RawFd, id: u32) -> Result<drm_mode_fb_cmd, Error> {
 /// Add a new framebuffer.
 pub fn add_fb(
     fd: RawFd,
-    w: u32,
-    h: u32,
+    width: u32,
+    height: u32,
     pitch: u32,
     bpp: u32,
     depth: u32,
     handle: u32,
 ) -> Result<drm_mode_fb_cmd, Error> {
     let mut fb = drm_mode_fb_cmd {
-        width: w,
-        height: h,
-        pitch: pitch,
-        bpp: bpp,
-        depth: depth,
-        handle: handle,
+        width,
+        height,
+        pitch,
+        bpp,
+        depth,
+        handle,
         ..Default::default()
     };
 
@@ -105,8 +107,8 @@ pub fn add_fb(
 /// Add a new framebuffer (with modifiers)
 pub fn add_fb2(
     fd: RawFd,
-    w: u32,
-    h: u32,
+    width: u32,
+    height: u32,
     fmt: u32,
     handles: &[u32; 4],
     pitches: &[u32; 4],
@@ -115,10 +117,10 @@ pub fn add_fb2(
     flags: u32,
 ) -> Result<drm_mode_fb_cmd2, Error> {
     let mut fb = drm_mode_fb_cmd2 {
-        width: w,
-        height: h,
+        width,
+        height,
         pixel_format: fmt,
-        flags: flags,
+        flags,
         handles: *handles,
         pitches: *pitches,
         offsets: *offsets,
@@ -145,13 +147,13 @@ pub fn rm_fb(fd: RawFd, mut id: u32) -> Result<(), Error> {
 /// Mark a framebuffer as dirty.
 pub fn dirty_fb(
     fd: RawFd,
-    id: u32,
+    fb_id: u32,
     clips: &[drm_clip_rect],
 ) -> Result<drm_mode_fb_dirty_cmd, Error> {
     let mut dirty = drm_mode_fb_dirty_cmd {
-        fb_id: id,
-        clips_ptr: clips.as_ptr() as _,
+        fb_id,
         num_clips: clips.len() as _,
+        clips_ptr: clips.as_ptr() as _,
         ..Default::default()
     };
 
@@ -163,9 +165,9 @@ pub fn dirty_fb(
 }
 
 /// Get info about a CRTC
-pub fn get_crtc(fd: RawFd, id: u32) -> Result<drm_mode_crtc, Error> {
+pub fn get_crtc(fd: RawFd, crtc_id: u32) -> Result<drm_mode_crtc, Error> {
     let mut info = drm_mode_crtc {
-        crtc_id: id,
+        crtc_id,
         ..Default::default()
     };
 
@@ -179,7 +181,7 @@ pub fn get_crtc(fd: RawFd, id: u32) -> Result<drm_mode_crtc, Error> {
 /// Set CRTC state
 pub fn set_crtc(
     fd: RawFd,
-    id: u32,
+    crtc_id: u32,
     fb_id: u32,
     x: u32,
     y: u32,
@@ -187,19 +189,19 @@ pub fn set_crtc(
     mode: Option<drm_mode_modeinfo>,
 ) -> Result<drm_mode_crtc, Error> {
     let mut crtc = drm_mode_crtc {
-        x: x,
-        y: y,
-        crtc_id: id,
-        fb_id: fb_id,
         set_connectors_ptr: conns.as_ptr() as _,
         count_connectors: conns.len() as _,
-        mode: match mode {
-            Some(m) => m,
-            None => Default::default(),
-        },
+        crtc_id,
+        fb_id,
+        x,
+        y,
         mode_valid: match mode {
             Some(_) => 1,
             None => 0,
+        },
+        mode: match mode {
+            Some(m) => m,
+            None => Default::default(),
         },
         ..Default::default()
     };
@@ -214,14 +216,14 @@ pub fn set_crtc(
 /// Get CRTC gamma ramp
 pub fn get_gamma(
     fd: RawFd,
-    id: u32,
+    crtc_id: u32,
     size: usize,
     red: &mut [u16],
     green: &mut [u16],
     blue: &mut [u16],
 ) -> Result<drm_mode_crtc_lut, Error> {
     let mut lut = drm_mode_crtc_lut {
-        crtc_id: id,
+        crtc_id,
         gamma_size: size as _,
         red: red.as_ptr() as _,
         green: green.as_ptr() as _,
@@ -238,14 +240,14 @@ pub fn get_gamma(
 /// Set CRTC gamma ramp
 pub fn set_gamma(
     fd: RawFd,
-    id: u32,
+    crtc_id: u32,
     size: usize,
     red: &[u16],
     green: &[u16],
     blue: &[u16],
 ) -> Result<drm_mode_crtc_lut, Error> {
     let mut lut = drm_mode_crtc_lut {
-        crtc_id: id,
+        crtc_id,
         gamma_size: size as _,
         red: red.as_ptr() as _,
         green: green.as_ptr() as _,
@@ -266,16 +268,16 @@ pub fn set_gamma(
 #[deprecated = "use a cursor plane instead"]
 pub fn set_cursor(
     fd: RawFd,
-    id: u32,
+    crtc_id: u32,
     buf_id: u32,
-    w: u32,
-    h: u32,
+    width: u32,
+    height: u32,
 ) -> Result<drm_mode_cursor, Error> {
     let mut cursor = drm_mode_cursor {
         flags: DRM_MODE_CURSOR_BO,
-        crtc_id: id,
-        width: w,
-        height: h,
+        crtc_id,
+        width,
+        height,
         handle: buf_id,
         ..Default::default()
     };
@@ -297,18 +299,18 @@ pub fn set_cursor(
 #[deprecated = "use a cursor plane instead"]
 pub fn set_cursor2(
     fd: RawFd,
-    id: u32,
+    crtc_id: u32,
     buf_id: u32,
-    w: u32,
-    h: u32,
+    width: u32,
+    height: u32,
     hot_x: i32,
     hot_y: i32,
 ) -> Result<drm_mode_cursor2, Error> {
     let mut cursor = drm_mode_cursor2 {
         flags: DRM_MODE_CURSOR_BO,
-        crtc_id: id,
-        width: w,
-        height: h,
+        crtc_id,
+        width,
+        height,
         handle: buf_id,
         hot_x,
         hot_y,
@@ -324,12 +326,12 @@ pub fn set_cursor2(
 
 /// Move cursor
 #[deprecated = "use a cursor plane instead"]
-pub fn move_cursor(fd: RawFd, id: u32, x: i32, y: i32) -> Result<drm_mode_cursor, Error> {
+pub fn move_cursor(fd: RawFd, crtc_id: u32, x: i32, y: i32) -> Result<drm_mode_cursor, Error> {
     let mut cursor = drm_mode_cursor {
         flags: DRM_MODE_CURSOR_MOVE,
-        crtc_id: id,
-        x: x,
-        y: y,
+        crtc_id,
+        x,
+        y,
         ..Default::default()
     };
 
@@ -343,7 +345,7 @@ pub fn move_cursor(fd: RawFd, id: u32, x: i32, y: i32) -> Result<drm_mode_cursor
 /// Get info about a connector
 pub fn get_connector(
     fd: RawFd,
-    id: u32,
+    connector_id: u32,
     props: Option<&mut &mut [u32]>,
     prop_values: Option<&mut &mut [u64]>,
     mut modes: Option<&mut Vec<drm_mode_modeinfo>>,
@@ -351,7 +353,7 @@ pub fn get_connector(
 ) -> Result<drm_mode_get_connector, Error> {
     let modes_count = if modes.is_some() {
         let mut info = drm_mode_get_connector {
-            connector_id: id,
+            connector_id,
             ..Default::default()
         };
 
@@ -365,21 +367,21 @@ pub fn get_connector(
     };
 
     let mut info = drm_mode_get_connector {
-        connector_id: id,
-        props_ptr: map_ptr!(&props),
-        prop_values_ptr: map_ptr!(&prop_values),
+        encoders_ptr: map_ptr!(&encoders),
         modes_ptr: match modes.as_mut() {
             Some(modes) => {
                 modes.clear();
                 modes.reserve_exact(modes_count as usize);
                 modes.as_ptr() as _
             }
-            None => 0 as _,
+            None => 0u64,
         },
-        encoders_ptr: map_ptr!(&encoders),
-        count_props: map_len!(&props),
+        props_ptr: map_ptr!(&props),
+        prop_values_ptr: map_ptr!(&prop_values),
         count_modes: modes_count,
+        count_props: map_len!(&props),
         count_encoders: map_len!(&encoders),
+        connector_id,
         ..Default::default()
     };
 
@@ -401,9 +403,9 @@ pub fn get_connector(
 }
 
 /// Get info about an encoder
-pub fn get_encoder(fd: RawFd, id: u32) -> Result<drm_mode_get_encoder, Error> {
+pub fn get_encoder(fd: RawFd, encoder_id: u32) -> Result<drm_mode_get_encoder, Error> {
     let mut info = drm_mode_get_encoder {
-        encoder_id: id,
+        encoder_id,
         ..Default::default()
     };
 
@@ -417,13 +419,13 @@ pub fn get_encoder(fd: RawFd, id: u32) -> Result<drm_mode_get_encoder, Error> {
 /// Get info about a plane.
 pub fn get_plane(
     fd: RawFd,
-    id: u32,
+    plane_id: u32,
     formats: Option<&mut &mut [u32]>,
 ) -> Result<drm_mode_get_plane, Error> {
     let mut info = drm_mode_get_plane {
-        plane_id: id,
-        format_type_ptr: map_ptr!(&formats),
+        plane_id,
         count_format_types: map_len!(&formats),
+        format_type_ptr: map_ptr!(&formats),
         ..Default::default()
     };
 
@@ -453,18 +455,18 @@ pub fn set_plane(
     src_h: u32,
 ) -> Result<drm_mode_set_plane, Error> {
     let mut plane = drm_mode_set_plane {
-        plane_id: plane_id,
-        crtc_id: crtc_id,
-        fb_id: fb_id,
-        flags: flags,
-        crtc_x: crtc_x,
-        crtc_y: crtc_y,
-        crtc_w: crtc_w,
-        crtc_h: crtc_h,
-        src_x: src_x,
-        src_y: src_y,
-        src_w: src_w,
-        src_h: src_h,
+        plane_id,
+        crtc_id,
+        fb_id,
+        flags,
+        crtc_x,
+        crtc_y,
+        crtc_w,
+        crtc_h,
+        src_x,
+        src_y,
+        src_h,
+        src_w,
     };
 
     unsafe {
@@ -477,14 +479,14 @@ pub fn set_plane(
 /// Get property
 pub fn get_property(
     fd: RawFd,
-    id: u32,
+    prop_id: u32,
     values: Option<&mut &mut [u64]>,
     enums: Option<&mut &mut [drm_mode_property_enum]>,
 ) -> Result<drm_mode_get_property, Error> {
     let mut prop = drm_mode_get_property {
         values_ptr: map_ptr!(&values),
         enum_blob_ptr: map_ptr!(&enums),
-        prop_id: id,
+        prop_id,
         count_values: map_len!(&values),
         count_enum_blobs: map_len!(&enums),
         ..Default::default()
@@ -503,14 +505,14 @@ pub fn get_property(
 /// Set property
 pub fn set_connector_property(
     fd: RawFd,
-    conn_id: u32,
+    connector_id: u32,
     prop_id: u32,
     value: u64,
 ) -> Result<drm_mode_connector_set_property, Error> {
     let mut prop = drm_mode_connector_set_property {
-        value: value,
-        prop_id: prop_id,
-        connector_id: conn_id,
+        value,
+        prop_id,
+        connector_id,
     };
 
     unsafe {
@@ -523,11 +525,11 @@ pub fn set_connector_property(
 /// Get the value of a property blob
 pub fn get_property_blob(
     fd: RawFd,
-    id: u32,
+    blob_id: u32,
     data: Option<&mut &mut [u64]>,
 ) -> Result<drm_mode_get_blob, Error> {
     let mut blob = drm_mode_get_blob {
-        blob_id: id,
+        blob_id,
         length: map_len!(&data),
         data: map_ptr!(&data),
     };
@@ -544,8 +546,8 @@ pub fn get_property_blob(
 /// Create a property blob
 pub fn create_property_blob(fd: RawFd, data: &mut [u64]) -> Result<drm_mode_create_blob, Error> {
     let mut blob = drm_mode_create_blob {
-        length: data.len() as _,
         data: data.as_ptr() as _,
+        length: data.len() as _,
         ..Default::default()
     };
 
@@ -570,7 +572,7 @@ pub fn destroy_property_blob(fd: RawFd, id: u32) -> Result<drm_mode_destroy_blob
 /// Get properties from an object
 pub fn get_properties(
     fd: RawFd,
-    id: u32,
+    obj_id: u32,
     obj_type: u32,
     props: Option<&mut &mut [u32]>,
     values: Option<&mut &mut [u64]>,
@@ -579,8 +581,8 @@ pub fn get_properties(
         props_ptr: map_ptr!(&props),
         prop_values_ptr: map_ptr!(&values),
         count_props: map_len!(&props),
-        obj_id: id,
-        obj_type: obj_type,
+        obj_id,
+        obj_type,
     };
 
     unsafe {
@@ -602,10 +604,10 @@ pub fn set_property(
     value: u64,
 ) -> Result<(), Error> {
     let mut prop = drm_mode_obj_set_property {
-        value: value,
-        prop_id: prop_id,
-        obj_id: obj_id,
-        obj_type: obj_type,
+        value,
+        prop_id,
+        obj_id,
+        obj_type,
     };
 
     unsafe {
@@ -624,9 +626,9 @@ pub fn page_flip(
     sequence: u32,
 ) -> Result<(), Error> {
     let mut flip = drm_mode_crtc_page_flip {
-        crtc_id: crtc_id,
-        fb_id: fb_id,
-        flags: flags,
+        crtc_id,
+        fb_id,
+        flags,
         reserved: sequence,
         user_data: crtc_id as _,
     };
@@ -648,7 +650,7 @@ pub fn atomic_commit(
     values: &mut [u64],
 ) -> Result<(), Error> {
     let mut atomic = drm_mode_atomic {
-        flags: flags,
+        flags,
         count_objs: objs.len() as _,
         objs_ptr: objs.as_ptr() as _,
         count_props_ptr: prop_counts.as_ptr() as _,
@@ -677,16 +679,16 @@ pub mod dumbbuffer {
     /// Create a dumb buffer
     pub fn create(
         fd: RawFd,
-        w: u32,
-        h: u32,
+        width: u32,
+        height: u32,
         bpp: u32,
         flags: u32,
     ) -> Result<drm_mode_create_dumb, Error> {
         let mut db = drm_mode_create_dumb {
-            height: h,
-            width: w,
-            bpp: bpp,
-            flags: flags,
+            height,
+            width,
+            bpp,
+            flags,
             ..Default::default()
         };
 
@@ -699,7 +701,7 @@ pub mod dumbbuffer {
 
     /// Destroy a dumb buffer
     pub fn destroy(fd: RawFd, handle: u32) -> Result<drm_mode_destroy_dumb, Error> {
-        let mut db = drm_mode_destroy_dumb { handle: handle };
+        let mut db = drm_mode_destroy_dumb { handle };
 
         unsafe {
             ioctl::mode::destroy_dumb(fd, &mut db)?;
@@ -711,9 +713,9 @@ pub mod dumbbuffer {
     /// Map a dump buffer and prep it for an mmap
     pub fn map(fd: RawFd, handle: u32, pad: u32, offset: u64) -> Result<drm_mode_map_dumb, Error> {
         let mut map = drm_mode_map_dumb {
-            handle: handle,
-            pad: pad,
-            offset: offset,
+            handle,
+            pad,
+            offset,
         };
 
         unsafe {

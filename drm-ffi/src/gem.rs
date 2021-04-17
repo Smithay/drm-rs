@@ -12,7 +12,7 @@ use std::os::unix::io::RawFd;
 /// Open a GEM object given it's 32-bit name, returning the handle.
 pub fn open(fd: RawFd, name: u32) -> Result<drm_gem_open, Error> {
     let mut gem = drm_gem_open {
-        name: name,
+        name,
         ..Default::default()
     };
 
@@ -25,13 +25,13 @@ pub fn open(fd: RawFd, name: u32) -> Result<drm_gem_open, Error> {
 
 /// Closes a GEM object given it's handle.
 pub fn close(fd: RawFd, handle: u32) -> Result<drm_gem_close, Error> {
-    let mut gem = drm_gem_close {
-        handle: handle,
+    let gem = drm_gem_close {
+        handle,
         ..Default::default()
     };
 
     unsafe {
-        ioctl::gem::close(fd, &mut gem)?;
+        ioctl::gem::close(fd, &gem)?;
     }
 
     Ok(gem)
@@ -40,8 +40,8 @@ pub fn close(fd: RawFd, handle: u32) -> Result<drm_gem_close, Error> {
 /// Converts a GEM object's handle to a PRIME file descriptor.
 pub fn handle_to_fd(fd: RawFd, handle: u32, flags: u32) -> Result<drm_prime_handle, Error> {
     let mut prime = drm_prime_handle {
-        handle: handle,
-        flags: flags,
+        handle,
+        flags,
         ..Default::default()
     };
 

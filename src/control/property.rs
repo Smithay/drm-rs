@@ -84,6 +84,7 @@ impl Info {
 
 /// Describes the types of value that a property uses.
 #[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum ValueType {
     /// A catch-all for any unknown types

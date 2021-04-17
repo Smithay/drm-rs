@@ -33,16 +33,16 @@ mod use_bindgen {
             .derive_default(true)
             .derive_hash(true)
             .derive_eq(true)
-            .whitelist_recursively(true)
+            .allowlist_recursively(true)
             .use_core()
     }
 
     const TMP_BIND_PREFIX: &str = "__BINDGEN_TMP_";
     const TMP_BIND_PREFIX_REG: &str = "_BINDGEN_TMP_.*";
 
-    const INCLUDES: &'static [&str] = &["drm.h", "drm_mode.h"];
+    const INCLUDES: &[&str] = &["drm.h", "drm_mode.h"];
 
-    const MACROS: &'static [&str] = &["DRM_MODE_PROP_SIGNED_RANGE", "DRM_MODE_PROP_OBJECT"];
+    const MACROS: &[&str] = &["DRM_MODE_PROP_SIGNED_RANGE", "DRM_MODE_PROP_OBJECT"];
 
     // Applies a formatting function over a slice of strings,
     // concatenating them on separate lines into a single String
@@ -100,10 +100,10 @@ mod use_bindgen {
 
     pub fn generate_bindings() {
         let bindings = create_builder(&create_header())
-            .blacklist_type(TMP_BIND_PREFIX_REG)
-            .blacklist_type("drm_control_DRM_ADD_COMMAND")
-            .whitelist_type("DRM_.*|drm_.*")
-            .whitelist_var("DRM_.*|drm_.*")
+            .blocklist_type(TMP_BIND_PREFIX_REG)
+            .blocklist_type("drm_control_DRM_ADD_COMMAND")
+            .allowlist_type("DRM_.*|drm_.*")
+            .allowlist_var("DRM_.*|drm_.*")
             .constified_enum_module("drm_control_.*")
             .constified_enum_module("drm_buf_desc_.*")
             .constified_enum_module("drm_map_type")
@@ -118,7 +118,7 @@ mod use_bindgen {
             .generate()
             .expect("Unable to generate libdrm bindings");
 
-        let out_path = String::from(var("OUT_DIR").unwrap());
+        let out_path = var("OUT_DIR").unwrap();
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
 
         bindings
@@ -130,7 +130,7 @@ mod use_bindgen {
     pub fn update_bindings() {
         use std::{fs, io::Write};
 
-        let out_path = String::from(var("OUT_DIR").unwrap());
+        let out_path = var("OUT_DIR").unwrap();
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
         let dest_dir = PathBuf::from("src")
             .join("platforms")

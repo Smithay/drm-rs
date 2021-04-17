@@ -31,21 +31,16 @@ pub fn main() {
     // Filter each connector until we find one that's connected.
     let con = coninfo
         .iter()
-        .filter(|&i| i.state() == connector::State::Connected)
-        .next()
+        .find(|&i| i.state() == connector::State::Connected)
         .expect("No connected connectors");
 
     // Get the first (usually best) mode
-    let &mode = con
-        .modes()
-        .iter()
-        .next()
-        .expect("No modes found on connector");
+    let &mode = con.modes().get(0).expect("No modes found on connector");
 
     let (disp_width, disp_height) = mode.size();
 
     // Find a crtc and FB
-    let crtc = crtcinfo.iter().next().expect("No crtcs found");
+    let crtc = crtcinfo.get(0).expect("No crtcs found");
 
     // Select the pixel format
     let fmt = DrmFourcc::Rgba8888;

@@ -226,6 +226,7 @@ pub trait Device: AsRawFd {
 pub struct AuthToken(u32);
 
 /// Bus ID of a device.
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct BusID(SmallOsString);
 
@@ -261,6 +262,7 @@ impl Driver {
 }
 
 /// Used to check which capabilities your graphics driver has.
+#[allow(clippy::upper_case_acronyms)]
 #[repr(u64)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum DriverCapability {
