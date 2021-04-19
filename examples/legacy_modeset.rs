@@ -64,7 +64,7 @@ pub fn main() {
 
     // Create an FB:
     let fb = card
-        .add_framebuffer(&db, 1, 32)
+        .add_framebuffer(&db, 32, 32)
         .expect("Could not create FB");
 
     println!("{:#?}", mode);
