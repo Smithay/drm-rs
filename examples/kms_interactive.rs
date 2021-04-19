@@ -37,7 +37,7 @@ fn run_repl(card: &Card) {
             .unwrap();
 
         // Create a Framebuffer to represent it
-        let _fb = card.add_framebuffer(&db, 1, 32).unwrap();
+        let _fb = card.add_framebuffer(&db, 32, 32).unwrap();
 
         // Load the image into the buffer
         {
