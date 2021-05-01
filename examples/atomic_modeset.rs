@@ -133,7 +133,7 @@ pub fn main() {
         property::Value::CRTC(Some(crtc.handle())),
     );
     let blob = card
-        .create_property_blob(mode)
+        .create_property_blob(&mode)
         .expect("Failed to create blob");
     atomic_req.add_property(
         crtc.handle(),

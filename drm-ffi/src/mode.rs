@@ -526,7 +526,7 @@ pub fn set_connector_property(
 pub fn get_property_blob(
     fd: RawFd,
     blob_id: u32,
-    data: Option<&mut &mut [u64]>,
+    data: Option<&mut &mut [u8]>,
 ) -> Result<drm_mode_get_blob, Error> {
     let mut blob = drm_mode_get_blob {
         blob_id,
@@ -544,7 +544,7 @@ pub fn get_property_blob(
 }
 
 /// Create a property blob
-pub fn create_property_blob(fd: RawFd, data: &mut [u64]) -> Result<drm_mode_create_blob, Error> {
+pub fn create_property_blob(fd: RawFd, data: &mut [u8]) -> Result<drm_mode_create_blob, Error> {
     let mut blob = drm_mode_create_blob {
         data: data.as_ptr() as _,
         length: data.len() as _,
