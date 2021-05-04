@@ -1,9 +1,5 @@
 # drm-rs
 
-__This library is currently a work in progress.__
-
-__A nightly compiler is required__
-
 A safe interface to the Direct Rendering Manager.
 
 ## Direct Rendering Manager
@@ -63,8 +59,17 @@ fn main() {
 
 ### Control (modesetting)
 
-**WIP** - See `drm::control::Device`
+See [`drm::control::Device`](https://docs.rs/drm/*/drm/control/trait.Device.html)
+as well as our mode-setting examples: [`atomic_modeset`](https://github.com/Smithay/drm-rs/blob/develop/examples/atomic_modeset.rs)
+and [`legacy_modeset`](https://github.com/Smithay/drm-rs/blob/develop/examples/legacy_modeset.rs)
 
 ### Rendering
 
-**WIP**
+Rendering is done by [creating](https://docs.rs/drm/*/drm/control/trait.Device.html#method.add_framebuffer) and
+[attaching](https://docs.rs/drm/*/drm/control/trait.Device.html#method.page_flip) [framebuffers](https://docs.rs/drm/*/drm/control/framebuffer/index.html)
+to [crtcs](https://docs.rs/drm/*/drm/control/crtcs/index.html).
+
+A framebuffer is created from anything implementing [`Buffer`](https://docs.rs/drm/*/drm/buffer/trait.Buffer.html) like the always
+available, but very limited, [`DumbBuffer`](https://docs.rs/drm/*/drm/control/dumbbuffer/struct.DumbBuffer.html).
+
+For faster hardware-backed buffers, checkout [gbm.rs](https://github.com/Smithay/gbm.rs).
