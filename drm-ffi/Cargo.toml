@@ -7,7 +7,7 @@ license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
-drm-sys = { path = "drm-sys" }
+drm-sys = { path = "drm-sys", version = "0.1.0" }
 nix = "^0.20.0"
 
 [features]
