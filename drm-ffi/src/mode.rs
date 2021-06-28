@@ -5,7 +5,6 @@
 #![allow(clippy::too_many_arguments)]
 
 use drm_sys::*;
-use ioctl;
 
 use result::SystemError as Error;
 use std::os::unix::io::RawFd;
@@ -33,7 +32,7 @@ pub fn get_resources(
     };
 
     unsafe {
-        ioctl::mode::get_resources(fd, &mut res)?;
+        crate::ioctl::mode::get_resources(fd, &mut res)?;
     }
 
     map_shrink!(fbs, res.count_fbs as usize);
@@ -55,7 +54,7 @@ pub fn get_plane_resources(
     };
 
     unsafe {
-        ioctl::mode::get_plane_resources(fd, &mut res)?;
+        crate::ioctl::mode::get_plane_resources(fd, &mut res)?;
     }
 
     map_shrink!(planes, res.count_planes as usize);
@@ -71,7 +70,7 @@ pub fn get_framebuffer(fd: RawFd, fb_id: u32) -> Result<drm_mode_fb_cmd, Error> 
     };
 
     unsafe {
-        ioctl::mode::get_fb(fd, &mut info)?;
+        crate::ioctl::mode::get_fb(fd, &mut info)?;
     }
 
     Ok(info)
@@ -98,7 +97,7 @@ pub fn add_fb(
     };
 
     unsafe {
-        ioctl::mode::add_fb(fd, &mut fb)?;
+        crate::ioctl::mode::add_fb(fd, &mut fb)?;
     }
 
     Ok(fb)
@@ -129,7 +128,7 @@ pub fn add_fb2(
     };
 
     unsafe {
-        ioctl::mode::add_fb2(fd, &mut fb)?;
+        crate::ioctl::mode::add_fb2(fd, &mut fb)?;
     }
 
     Ok(fb)
@@ -138,7 +137,7 @@ pub fn add_fb2(
 /// Remove a framebuffer.
 pub fn rm_fb(fd: RawFd, mut id: u32) -> Result<(), Error> {
     unsafe {
-        ioctl::mode::rm_fb(fd, &mut id)?;
+        crate::ioctl::mode::rm_fb(fd, &mut id)?;
     }
 
     Ok(())
@@ -158,7 +157,7 @@ pub fn dirty_fb(
     };
 
     unsafe {
-        ioctl::mode::dirty_fb(fd, &mut dirty)?;
+        crate::ioctl::mode::dirty_fb(fd, &mut dirty)?;
     }
 
     Ok(dirty)
@@ -172,7 +171,7 @@ pub fn get_crtc(fd: RawFd, crtc_id: u32) -> Result<drm_mode_crtc, Error> {
     };
 
     unsafe {
-        ioctl::mode::get_crtc(fd, &mut info)?;
+        crate::ioctl::mode::get_crtc(fd, &mut info)?;
     }
 
     Ok(info)
@@ -207,7 +206,7 @@ pub fn set_crtc(
     };
 
     unsafe {
-        ioctl::mode::set_crtc(fd, &mut crtc)?;
+        crate::ioctl::mode::set_crtc(fd, &mut crtc)?;
     }
 
     Ok(crtc)
@@ -231,7 +230,7 @@ pub fn get_gamma(
     };
 
     unsafe {
-        ioctl::mode::get_gamma(fd, &mut lut)?;
+        crate::ioctl::mode::get_gamma(fd, &mut lut)?;
     }
 
     Ok(lut)
@@ -255,7 +254,7 @@ pub fn set_gamma(
     };
 
     unsafe {
-        ioctl::mode::set_gamma(fd, &mut lut)?;
+        crate::ioctl::mode::set_gamma(fd, &mut lut)?;
     }
 
     Ok(lut)
@@ -283,7 +282,7 @@ pub fn set_cursor(
     };
 
     unsafe {
-        ioctl::mode::cursor(fd, &mut cursor)?;
+        crate::ioctl::mode::cursor(fd, &mut cursor)?;
     }
 
     Ok(cursor)
@@ -318,7 +317,7 @@ pub fn set_cursor2(
     };
 
     unsafe {
-        ioctl::mode::cursor2(fd, &mut cursor)?;
+        crate::ioctl::mode::cursor2(fd, &mut cursor)?;
     }
 
     Ok(cursor)
@@ -336,7 +335,7 @@ pub fn move_cursor(fd: RawFd, crtc_id: u32, x: i32, y: i32) -> Result<drm_mode_c
     };
 
     unsafe {
-        ioctl::mode::cursor(fd, &mut cursor)?;
+        crate::ioctl::mode::cursor(fd, &mut cursor)?;
     }
 
     Ok(cursor)
@@ -358,7 +357,7 @@ pub fn get_connector(
         };
 
         unsafe {
-            ioctl::mode::get_connector(fd, &mut info)?;
+            crate::ioctl::mode::get_connector(fd, &mut info)?;
         }
 
         info.count_modes
@@ -386,7 +385,7 @@ pub fn get_connector(
     };
 
     unsafe {
-        ioctl::mode::get_connector(fd, &mut info)?;
+        crate::ioctl::mode::get_connector(fd, &mut info)?;
     }
 
     if let Some(modes) = modes {
@@ -410,7 +409,7 @@ pub fn get_encoder(fd: RawFd, encoder_id: u32) -> Result<drm_mode_get_encoder, E
     };
 
     unsafe {
-        ioctl::mode::get_encoder(fd, &mut info)?;
+        crate::ioctl::mode::get_encoder(fd, &mut info)?;
     }
 
     Ok(info)
@@ -430,7 +429,7 @@ pub fn get_plane(
     };
 
     unsafe {
-        ioctl::mode::get_plane(fd, &mut info)?;
+        crate::ioctl::mode::get_plane(fd, &mut info)?;
     }
 
     map_shrink!(formats, info.count_format_types as usize);
@@ -470,7 +469,7 @@ pub fn set_plane(
     };
 
     unsafe {
-        ioctl::mode::set_plane(fd, &mut plane)?;
+        crate::ioctl::mode::set_plane(fd, &mut plane)?;
     }
 
     Ok(plane)
@@ -493,7 +492,7 @@ pub fn get_property(
     };
 
     unsafe {
-        ioctl::mode::get_property(fd, &mut prop)?;
+        crate::ioctl::mode::get_property(fd, &mut prop)?;
     }
 
     map_shrink!(values, prop.count_values as usize);
@@ -516,7 +515,7 @@ pub fn set_connector_property(
     };
 
     unsafe {
-        ioctl::mode::connector_set_property(fd, &mut prop)?;
+        crate::ioctl::mode::connector_set_property(fd, &mut prop)?;
     }
 
     Ok(prop)
@@ -535,7 +534,7 @@ pub fn get_property_blob(
     };
 
     unsafe {
-        ioctl::mode::get_blob(fd, &mut blob)?;
+        crate::ioctl::mode::get_blob(fd, &mut blob)?;
     }
 
     map_shrink!(data, blob.length as usize);
@@ -552,7 +551,7 @@ pub fn create_property_blob(fd: RawFd, data: &mut [u8]) -> Result<drm_mode_creat
     };
 
     unsafe {
-        ioctl::mode::create_blob(fd, &mut blob)?;
+        crate::ioctl::mode::create_blob(fd, &mut blob)?;
     }
 
     Ok(blob)
@@ -563,7 +562,7 @@ pub fn destroy_property_blob(fd: RawFd, id: u32) -> Result<drm_mode_destroy_blob
     let mut blob = drm_mode_destroy_blob { blob_id: id };
 
     unsafe {
-        ioctl::mode::destroy_blob(fd, &mut blob)?;
+        crate::ioctl::mode::destroy_blob(fd, &mut blob)?;
     }
 
     Ok(blob)
@@ -586,7 +585,7 @@ pub fn get_properties(
     };
 
     unsafe {
-        ioctl::mode::obj_get_properties(fd, &mut info)?;
+        crate::ioctl::mode::obj_get_properties(fd, &mut info)?;
     }
 
     map_shrink!(props, info.count_props as usize);
@@ -611,7 +610,7 @@ pub fn set_property(
     };
 
     unsafe {
-        ioctl::mode::obj_set_property(fd, &mut prop)?;
+        crate::ioctl::mode::obj_set_property(fd, &mut prop)?;
     }
 
     Ok(())
@@ -634,7 +633,7 @@ pub fn page_flip(
     };
 
     unsafe {
-        ioctl::mode::crtc_page_flip(fd, &mut flip)?;
+        crate::ioctl::mode::crtc_page_flip(fd, &mut flip)?;
     }
 
     Ok(())
@@ -660,7 +659,7 @@ pub fn atomic_commit(
     };
 
     unsafe {
-        ioctl::mode::atomic(fd, &mut atomic)?;
+        crate::ioctl::mode::atomic(fd, &mut atomic)?;
     }
 
     Ok(())
@@ -671,7 +670,6 @@ pub fn atomic_commit(
 ///
 pub mod dumbbuffer {
     use drm_sys::*;
-    use ioctl;
 
     use result::SystemError as Error;
     use std::os::unix::io::RawFd;
@@ -693,7 +691,7 @@ pub mod dumbbuffer {
         };
 
         unsafe {
-            ioctl::mode::create_dumb(fd, &mut db)?;
+            crate::ioctl::mode::create_dumb(fd, &mut db)?;
         }
 
         Ok(db)
@@ -704,7 +702,7 @@ pub mod dumbbuffer {
         let mut db = drm_mode_destroy_dumb { handle };
 
         unsafe {
-            ioctl::mode::destroy_dumb(fd, &mut db)?;
+            crate::ioctl::mode::destroy_dumb(fd, &mut db)?;
         }
 
         Ok(db)
@@ -719,7 +717,7 @@ pub mod dumbbuffer {
         };
 
         unsafe {
-            ioctl::mode::map_dumb(fd, &mut map)?;
+            crate::ioctl::mode::map_dumb(fd, &mut map)?;
         }
 
         Ok(map)
