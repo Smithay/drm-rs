@@ -343,7 +343,7 @@ pub struct __max_align_t {
 #[test]
 fn bindgen_test_layout___max_align_t() {
     assert_eq!(
-        ::std::mem::size_of::<__max_align_t>(),
+        ::core::mem::size_of::<__max_align_t>(),
         32usize,
         concat!("Size of: ", stringify!(__max_align_t))
     );
@@ -385,12 +385,12 @@ pub union __mbstate_t {
 #[test]
 fn bindgen_test_layout___mbstate_t() {
     assert_eq!(
-        ::std::mem::size_of::<__mbstate_t>(),
+        ::core::mem::size_of::<__mbstate_t>(),
         128usize,
         concat!("Size of: ", stringify!(__mbstate_t))
     );
     assert_eq!(
-        ::std::mem::align_of::<__mbstate_t>(),
+        ::core::mem::align_of::<__mbstate_t>(),
         8usize,
         concat!("Alignment of ", stringify!(__mbstate_t))
     );
@@ -422,7 +422,7 @@ impl Clone for __mbstate_t {
 }
 impl Default for __mbstate_t {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub type __rman_res_t = __uintmax_t;
@@ -500,7 +500,7 @@ pub struct pthread_barrierattr {
 pub type pthread_barrierattr_t = *mut pthread_barrierattr;
 pub type pthread_spinlock_t = *mut pthread_spinlock;
 pub type pthread_addr_t = *mut libc::c_void;
-pub type pthread_startroutine_t = ::std::option::Option<
+pub type pthread_startroutine_t = ::core::option::Option<
     unsafe extern "C" fn(arg1: *mut libc::c_void) -> *mut libc::c_void,
 >;
 #[repr(C)]
@@ -512,12 +512,12 @@ pub struct pthread_once {
 #[test]
 fn bindgen_test_layout_pthread_once() {
     assert_eq!(
-        ::std::mem::size_of::<pthread_once>(),
+        ::core::mem::size_of::<pthread_once>(),
         16usize,
         concat!("Size of: ", stringify!(pthread_once))
     );
     assert_eq!(
-        ::std::mem::align_of::<pthread_once>(),
+        ::core::mem::align_of::<pthread_once>(),
         8usize,
         concat!("Alignment of ", stringify!(pthread_once))
     );
@@ -549,7 +549,7 @@ impl Clone for pthread_once {
 }
 impl Default for pthread_once {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub type u_char = libc::c_uchar;
@@ -628,12 +628,12 @@ pub struct __sigset {
 #[test]
 fn bindgen_test_layout___sigset() {
     assert_eq!(
-        ::std::mem::size_of::<__sigset>(),
+        ::core::mem::size_of::<__sigset>(),
         16usize,
         concat!("Size of: ", stringify!(__sigset))
     );
     assert_eq!(
-        ::std::mem::align_of::<__sigset>(),
+        ::core::mem::align_of::<__sigset>(),
         4usize,
         concat!("Alignment of ", stringify!(__sigset))
     );
@@ -663,12 +663,12 @@ pub struct timeval {
 #[test]
 fn bindgen_test_layout_timeval() {
     assert_eq!(
-        ::std::mem::size_of::<timeval>(),
+        ::core::mem::size_of::<timeval>(),
         16usize,
         concat!("Size of: ", stringify!(timeval))
     );
     assert_eq!(
-        ::std::mem::align_of::<timeval>(),
+        ::core::mem::align_of::<timeval>(),
         8usize,
         concat!("Alignment of ", stringify!(timeval))
     );
@@ -707,12 +707,12 @@ pub struct timespec {
 #[test]
 fn bindgen_test_layout_timespec() {
     assert_eq!(
-        ::std::mem::size_of::<timespec>(),
+        ::core::mem::size_of::<timespec>(),
         16usize,
         concat!("Size of: ", stringify!(timespec))
     );
     assert_eq!(
-        ::std::mem::align_of::<timespec>(),
+        ::core::mem::align_of::<timespec>(),
         8usize,
         concat!("Alignment of ", stringify!(timespec))
     );
@@ -751,12 +751,12 @@ pub struct itimerspec {
 #[test]
 fn bindgen_test_layout_itimerspec() {
     assert_eq!(
-        ::std::mem::size_of::<itimerspec>(),
+        ::core::mem::size_of::<itimerspec>(),
         32usize,
         concat!("Size of: ", stringify!(itimerspec))
     );
     assert_eq!(
-        ::std::mem::align_of::<itimerspec>(),
+        ::core::mem::align_of::<itimerspec>(),
         8usize,
         concat!("Alignment of ", stringify!(itimerspec))
     );
@@ -797,12 +797,12 @@ pub struct fd_set {
 #[test]
 fn bindgen_test_layout_fd_set() {
     assert_eq!(
-        ::std::mem::size_of::<fd_set>(),
+        ::core::mem::size_of::<fd_set>(),
         128usize,
         concat!("Size of: ", stringify!(fd_set))
     );
     assert_eq!(
-        ::std::mem::align_of::<fd_set>(),
+        ::core::mem::align_of::<fd_set>(),
         8usize,
         concat!("Alignment of ", stringify!(fd_set))
     );
@@ -891,12 +891,12 @@ pub struct drm_clip_rect {
 #[test]
 fn bindgen_test_layout_drm_clip_rect() {
     assert_eq!(
-        ::std::mem::size_of::<drm_clip_rect>(),
+        ::core::mem::size_of::<drm_clip_rect>(),
         8usize,
         concat!("Size of: ", stringify!(drm_clip_rect))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_clip_rect>(),
+        ::core::mem::align_of::<drm_clip_rect>(),
         2usize,
         concat!("Alignment of ", stringify!(drm_clip_rect))
     );
@@ -956,12 +956,12 @@ pub struct drm_drawable_info {
 #[test]
 fn bindgen_test_layout_drm_drawable_info() {
     assert_eq!(
-        ::std::mem::size_of::<drm_drawable_info>(),
+        ::core::mem::size_of::<drm_drawable_info>(),
         16usize,
         concat!("Size of: ", stringify!(drm_drawable_info))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_drawable_info>(),
+        ::core::mem::align_of::<drm_drawable_info>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_drawable_info))
     );
@@ -993,7 +993,7 @@ impl Clone for drm_drawable_info {
 }
 impl Default for drm_drawable_info {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// Texture region,
@@ -1009,12 +1009,12 @@ pub struct drm_tex_region {
 #[test]
 fn bindgen_test_layout_drm_tex_region() {
     assert_eq!(
-        ::std::mem::size_of::<drm_tex_region>(),
+        ::core::mem::size_of::<drm_tex_region>(),
         8usize,
         concat!("Size of: ", stringify!(drm_tex_region))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_tex_region>(),
+        ::core::mem::align_of::<drm_tex_region>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_tex_region))
     );
@@ -1090,12 +1090,12 @@ pub struct drm_hw_lock {
 #[test]
 fn bindgen_test_layout_drm_hw_lock() {
     assert_eq!(
-        ::std::mem::size_of::<drm_hw_lock>(),
+        ::core::mem::size_of::<drm_hw_lock>(),
         64usize,
         concat!("Size of: ", stringify!(drm_hw_lock))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_hw_lock>(),
+        ::core::mem::align_of::<drm_hw_lock>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_hw_lock))
     );
@@ -1127,7 +1127,7 @@ impl Clone for drm_hw_lock {
 }
 impl Default for drm_hw_lock {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_VERSION ioctl argument type.
@@ -1158,12 +1158,12 @@ pub struct drm_version {
 #[test]
 fn bindgen_test_layout_drm_version() {
     assert_eq!(
-        ::std::mem::size_of::<drm_version>(),
+        ::core::mem::size_of::<drm_version>(),
         64usize,
         concat!("Size of: ", stringify!(drm_version))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_version>(),
+        ::core::mem::align_of::<drm_version>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_version))
     );
@@ -1265,7 +1265,7 @@ impl Clone for drm_version {
 }
 impl Default for drm_version {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_GET_UNIQUE ioctl argument type.
@@ -1282,12 +1282,12 @@ pub struct drm_unique {
 #[test]
 fn bindgen_test_layout_drm_unique() {
     assert_eq!(
-        ::std::mem::size_of::<drm_unique>(),
+        ::core::mem::size_of::<drm_unique>(),
         16usize,
         concat!("Size of: ", stringify!(drm_unique))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_unique>(),
+        ::core::mem::align_of::<drm_unique>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_unique))
     );
@@ -1319,7 +1319,7 @@ impl Clone for drm_unique {
 }
 impl Default for drm_unique {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -1332,12 +1332,12 @@ pub struct drm_list {
 #[test]
 fn bindgen_test_layout_drm_list() {
     assert_eq!(
-        ::std::mem::size_of::<drm_list>(),
+        ::core::mem::size_of::<drm_list>(),
         16usize,
         concat!("Size of: ", stringify!(drm_list))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_list>(),
+        ::core::mem::align_of::<drm_list>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_list))
     );
@@ -1369,7 +1369,7 @@ impl Clone for drm_list {
 }
 impl Default for drm_list {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -1380,12 +1380,12 @@ pub struct drm_block {
 #[test]
 fn bindgen_test_layout_drm_block() {
     assert_eq!(
-        ::std::mem::size_of::<drm_block>(),
+        ::core::mem::size_of::<drm_block>(),
         4usize,
         concat!("Size of: ", stringify!(drm_block))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_block>(),
+        ::core::mem::align_of::<drm_block>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_block))
     );
@@ -1422,12 +1422,12 @@ pub type drm_control__bindgen_ty_1 = libc::c_uint;
 #[test]
 fn bindgen_test_layout_drm_control() {
     assert_eq!(
-        ::std::mem::size_of::<drm_control>(),
+        ::core::mem::size_of::<drm_control>(),
         8usize,
         concat!("Size of: ", stringify!(drm_control))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_control>(),
+        ::core::mem::align_of::<drm_control>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_control))
     );
@@ -1459,7 +1459,7 @@ impl Clone for drm_control {
 }
 impl Default for drm_control {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub const drm_map_type__DRM_FRAME_BUFFER: drm_map_type = 0;
@@ -1489,12 +1489,12 @@ pub struct drm_ctx_priv_map {
 #[test]
 fn bindgen_test_layout_drm_ctx_priv_map() {
     assert_eq!(
-        ::std::mem::size_of::<drm_ctx_priv_map>(),
+        ::core::mem::size_of::<drm_ctx_priv_map>(),
         16usize,
         concat!("Size of: ", stringify!(drm_ctx_priv_map))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_ctx_priv_map>(),
+        ::core::mem::align_of::<drm_ctx_priv_map>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_ctx_priv_map))
     );
@@ -1526,7 +1526,7 @@ impl Clone for drm_ctx_priv_map {
 }
 impl Default for drm_ctx_priv_map {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_GET_MAP, DRM_IOCTL_ADD_MAP and DRM_IOCTL_RM_MAP ioctls
@@ -1553,12 +1553,12 @@ pub struct drm_map {
 #[test]
 fn bindgen_test_layout_drm_map() {
     assert_eq!(
-        ::std::mem::size_of::<drm_map>(),
+        ::core::mem::size_of::<drm_map>(),
         40usize,
         concat!("Size of: ", stringify!(drm_map))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_map>(),
+        ::core::mem::align_of::<drm_map>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_map))
     );
@@ -1630,7 +1630,7 @@ impl Clone for drm_map {
 }
 impl Default for drm_map {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_GET_CLIENT ioctl argument type.
@@ -1653,12 +1653,12 @@ pub struct drm_client {
 #[test]
 fn bindgen_test_layout_drm_client() {
     assert_eq!(
-        ::std::mem::size_of::<drm_client>(),
+        ::core::mem::size_of::<drm_client>(),
         40usize,
         concat!("Size of: ", stringify!(drm_client))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_client>(),
+        ::core::mem::align_of::<drm_client>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_client))
     );
@@ -1760,12 +1760,12 @@ pub struct drm_stats__bindgen_ty_1 {
 #[test]
 fn bindgen_test_layout_drm_stats__bindgen_ty_1() {
     assert_eq!(
-        ::std::mem::size_of::<drm_stats__bindgen_ty_1>(),
+        ::core::mem::size_of::<drm_stats__bindgen_ty_1>(),
         16usize,
         concat!("Size of: ", stringify!(drm_stats__bindgen_ty_1))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_stats__bindgen_ty_1>(),
+        ::core::mem::align_of::<drm_stats__bindgen_ty_1>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_stats__bindgen_ty_1))
     );
@@ -1797,18 +1797,18 @@ impl Clone for drm_stats__bindgen_ty_1 {
 }
 impl Default for drm_stats__bindgen_ty_1 {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[test]
 fn bindgen_test_layout_drm_stats() {
     assert_eq!(
-        ::std::mem::size_of::<drm_stats>(),
+        ::core::mem::size_of::<drm_stats>(),
         248usize,
         concat!("Size of: ", stringify!(drm_stats))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_stats>(),
+        ::core::mem::align_of::<drm_stats>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_stats))
     );
@@ -1840,7 +1840,7 @@ impl Clone for drm_stats {
 }
 impl Default for drm_stats {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub const drm_lock_flags__DRM_LOCK_READY: drm_lock_flags = 1;
@@ -1862,12 +1862,12 @@ pub struct drm_lock {
 #[test]
 fn bindgen_test_layout_drm_lock() {
     assert_eq!(
-        ::std::mem::size_of::<drm_lock>(),
+        ::core::mem::size_of::<drm_lock>(),
         8usize,
         concat!("Size of: ", stringify!(drm_lock))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_lock>(),
+        ::core::mem::align_of::<drm_lock>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_lock))
     );
@@ -1899,7 +1899,7 @@ impl Clone for drm_lock {
 }
 impl Default for drm_lock {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub const drm_dma_flags__DRM_DMA_BLOCK: drm_dma_flags = 1;
@@ -1938,12 +1938,12 @@ pub type drm_buf_desc__bindgen_ty_1 = libc::c_uint;
 #[test]
 fn bindgen_test_layout_drm_buf_desc() {
     assert_eq!(
-        ::std::mem::size_of::<drm_buf_desc>(),
+        ::core::mem::size_of::<drm_buf_desc>(),
         32usize,
         concat!("Size of: ", stringify!(drm_buf_desc))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_buf_desc>(),
+        ::core::mem::align_of::<drm_buf_desc>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_buf_desc))
     );
@@ -2015,7 +2015,7 @@ impl Clone for drm_buf_desc {
 }
 impl Default for drm_buf_desc {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_INFO_BUFS ioctl argument type.
@@ -2029,12 +2029,12 @@ pub struct drm_buf_info {
 #[test]
 fn bindgen_test_layout_drm_buf_info() {
     assert_eq!(
-        ::std::mem::size_of::<drm_buf_info>(),
+        ::core::mem::size_of::<drm_buf_info>(),
         16usize,
         concat!("Size of: ", stringify!(drm_buf_info))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_buf_info>(),
+        ::core::mem::align_of::<drm_buf_info>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_buf_info))
     );
@@ -2066,7 +2066,7 @@ impl Clone for drm_buf_info {
 }
 impl Default for drm_buf_info {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_FREE_BUFS ioctl argument type.
@@ -2079,12 +2079,12 @@ pub struct drm_buf_free {
 #[test]
 fn bindgen_test_layout_drm_buf_free() {
     assert_eq!(
-        ::std::mem::size_of::<drm_buf_free>(),
+        ::core::mem::size_of::<drm_buf_free>(),
         16usize,
         concat!("Size of: ", stringify!(drm_buf_free))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_buf_free>(),
+        ::core::mem::align_of::<drm_buf_free>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_buf_free))
     );
@@ -2116,7 +2116,7 @@ impl Clone for drm_buf_free {
 }
 impl Default for drm_buf_free {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// Buffer information
@@ -2137,12 +2137,12 @@ pub struct drm_buf_pub {
 #[test]
 fn bindgen_test_layout_drm_buf_pub() {
     assert_eq!(
-        ::std::mem::size_of::<drm_buf_pub>(),
+        ::core::mem::size_of::<drm_buf_pub>(),
         24usize,
         concat!("Size of: ", stringify!(drm_buf_pub))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_buf_pub>(),
+        ::core::mem::align_of::<drm_buf_pub>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_buf_pub))
     );
@@ -2194,7 +2194,7 @@ impl Clone for drm_buf_pub {
 }
 impl Default for drm_buf_pub {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_MAP_BUFS ioctl argument type.
@@ -2211,12 +2211,12 @@ pub struct drm_buf_map {
 #[test]
 fn bindgen_test_layout_drm_buf_map() {
     assert_eq!(
-        ::std::mem::size_of::<drm_buf_map>(),
+        ::core::mem::size_of::<drm_buf_map>(),
         24usize,
         concat!("Size of: ", stringify!(drm_buf_map))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_buf_map>(),
+        ::core::mem::align_of::<drm_buf_map>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_buf_map))
     );
@@ -2258,7 +2258,7 @@ impl Clone for drm_buf_map {
 }
 impl Default for drm_buf_map {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_DMA ioctl argument type.
@@ -2292,12 +2292,12 @@ pub struct drm_dma {
 #[test]
 fn bindgen_test_layout_drm_dma() {
     assert_eq!(
-        ::std::mem::size_of::<drm_dma>(),
+        ::core::mem::size_of::<drm_dma>(),
         64usize,
         concat!("Size of: ", stringify!(drm_dma))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_dma>(),
+        ::core::mem::align_of::<drm_dma>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_dma))
     );
@@ -2409,7 +2409,7 @@ impl Clone for drm_dma {
 }
 impl Default for drm_dma {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 pub const drm_ctx_flags__DRM_CONTEXT_PRESERVED: drm_ctx_flags = 1;
@@ -2427,12 +2427,12 @@ pub struct drm_ctx {
 #[test]
 fn bindgen_test_layout_drm_ctx() {
     assert_eq!(
-        ::std::mem::size_of::<drm_ctx>(),
+        ::core::mem::size_of::<drm_ctx>(),
         8usize,
         concat!("Size of: ", stringify!(drm_ctx))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_ctx>(),
+        ::core::mem::align_of::<drm_ctx>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_ctx))
     );
@@ -2464,7 +2464,7 @@ impl Clone for drm_ctx {
 }
 impl Default for drm_ctx {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_RES_CTX ioctl argument type.
@@ -2477,12 +2477,12 @@ pub struct drm_ctx_res {
 #[test]
 fn bindgen_test_layout_drm_ctx_res() {
     assert_eq!(
-        ::std::mem::size_of::<drm_ctx_res>(),
+        ::core::mem::size_of::<drm_ctx_res>(),
         16usize,
         concat!("Size of: ", stringify!(drm_ctx_res))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_ctx_res>(),
+        ::core::mem::align_of::<drm_ctx_res>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_ctx_res))
     );
@@ -2514,7 +2514,7 @@ impl Clone for drm_ctx_res {
 }
 impl Default for drm_ctx_res {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_ADD_DRAW and DRM_IOCTL_RM_DRAW ioctl argument type.
@@ -2526,12 +2526,12 @@ pub struct drm_draw {
 #[test]
 fn bindgen_test_layout_drm_draw() {
     assert_eq!(
-        ::std::mem::size_of::<drm_draw>(),
+        ::core::mem::size_of::<drm_draw>(),
         4usize,
         concat!("Size of: ", stringify!(drm_draw))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_draw>(),
+        ::core::mem::align_of::<drm_draw>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_draw))
     );
@@ -2564,12 +2564,12 @@ pub struct drm_update_draw {
 #[test]
 fn bindgen_test_layout_drm_update_draw() {
     assert_eq!(
-        ::std::mem::size_of::<drm_update_draw>(),
+        ::core::mem::size_of::<drm_update_draw>(),
         24usize,
         concat!("Size of: ", stringify!(drm_update_draw))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_update_draw>(),
+        ::core::mem::align_of::<drm_update_draw>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_update_draw))
     );
@@ -2628,12 +2628,12 @@ pub struct drm_auth {
 #[test]
 fn bindgen_test_layout_drm_auth() {
     assert_eq!(
-        ::std::mem::size_of::<drm_auth>(),
+        ::core::mem::size_of::<drm_auth>(),
         4usize,
         concat!("Size of: ", stringify!(drm_auth))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_auth>(),
+        ::core::mem::align_of::<drm_auth>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_auth))
     );
@@ -2671,12 +2671,12 @@ pub struct drm_irq_busid {
 #[test]
 fn bindgen_test_layout_drm_irq_busid() {
     assert_eq!(
-        ::std::mem::size_of::<drm_irq_busid>(),
+        ::core::mem::size_of::<drm_irq_busid>(),
         16usize,
         concat!("Size of: ", stringify!(drm_irq_busid))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_irq_busid>(),
+        ::core::mem::align_of::<drm_irq_busid>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_irq_busid))
     );
@@ -2745,12 +2745,12 @@ pub struct drm_wait_vblank_request {
 #[test]
 fn bindgen_test_layout_drm_wait_vblank_request() {
     assert_eq!(
-        ::std::mem::size_of::<drm_wait_vblank_request>(),
+        ::core::mem::size_of::<drm_wait_vblank_request>(),
         16usize,
         concat!("Size of: ", stringify!(drm_wait_vblank_request))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_wait_vblank_request>(),
+        ::core::mem::align_of::<drm_wait_vblank_request>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_wait_vblank_request))
     );
@@ -2792,7 +2792,7 @@ impl Clone for drm_wait_vblank_request {
 }
 impl Default for drm_wait_vblank_request {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 #[repr(C)]
@@ -2806,12 +2806,12 @@ pub struct drm_wait_vblank_reply {
 #[test]
 fn bindgen_test_layout_drm_wait_vblank_reply() {
     assert_eq!(
-        ::std::mem::size_of::<drm_wait_vblank_reply>(),
+        ::core::mem::size_of::<drm_wait_vblank_reply>(),
         24usize,
         concat!("Size of: ", stringify!(drm_wait_vblank_reply))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_wait_vblank_reply>(),
+        ::core::mem::align_of::<drm_wait_vblank_reply>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_wait_vblank_reply))
     );
@@ -2863,7 +2863,7 @@ impl Clone for drm_wait_vblank_reply {
 }
 impl Default for drm_wait_vblank_reply {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_WAIT_VBLANK ioctl argument type.
@@ -2879,12 +2879,12 @@ pub union drm_wait_vblank {
 #[test]
 fn bindgen_test_layout_drm_wait_vblank() {
     assert_eq!(
-        ::std::mem::size_of::<drm_wait_vblank>(),
+        ::core::mem::size_of::<drm_wait_vblank>(),
         24usize,
         concat!("Size of: ", stringify!(drm_wait_vblank))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_wait_vblank>(),
+        ::core::mem::align_of::<drm_wait_vblank>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_wait_vblank))
     );
@@ -2916,7 +2916,7 @@ impl Clone for drm_wait_vblank {
 }
 impl Default for drm_wait_vblank {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
 /// DRM_IOCTL_MODESET_CTL ioctl argument type
@@ -2931,12 +2931,12 @@ pub struct drm_modeset_ctl {
 #[test]
 fn bindgen_test_layout_drm_modeset_ctl() {
     assert_eq!(
-        ::std::mem::size_of::<drm_modeset_ctl>(),
+        ::core::mem::size_of::<drm_modeset_ctl>(),
         8usize,
         concat!("Size of: ", stringify!(drm_modeset_ctl))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_modeset_ctl>(),
+        ::core::mem::align_of::<drm_modeset_ctl>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_modeset_ctl))
     );
@@ -2978,12 +2978,12 @@ pub struct drm_agp_mode {
 #[test]
 fn bindgen_test_layout_drm_agp_mode() {
     assert_eq!(
-        ::std::mem::size_of::<drm_agp_mode>(),
+        ::core::mem::size_of::<drm_agp_mode>(),
         8usize,
         concat!("Size of: ", stringify!(drm_agp_mode))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_agp_mode>(),
+        ::core::mem::align_of::<drm_agp_mode>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_agp_mode))
     );
@@ -3021,12 +3021,12 @@ pub struct drm_agp_buffer {
 #[test]
 fn bindgen_test_layout_drm_agp_buffer() {
     assert_eq!(
-        ::std::mem::size_of::<drm_agp_buffer>(),
+        ::core::mem::size_of::<drm_agp_buffer>(),
         32usize,
         concat!("Size of: ", stringify!(drm_agp_buffer))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_agp_buffer>(),
+        ::core::mem::align_of::<drm_agp_buffer>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_agp_buffer))
     );
@@ -3090,12 +3090,12 @@ pub struct drm_agp_binding {
 #[test]
 fn bindgen_test_layout_drm_agp_binding() {
     assert_eq!(
-        ::std::mem::size_of::<drm_agp_binding>(),
+        ::core::mem::size_of::<drm_agp_binding>(),
         16usize,
         concat!("Size of: ", stringify!(drm_agp_binding))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_agp_binding>(),
+        ::core::mem::align_of::<drm_agp_binding>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_agp_binding))
     );
@@ -3146,12 +3146,12 @@ pub struct drm_agp_info {
 #[test]
 fn bindgen_test_layout_drm_agp_info() {
     assert_eq!(
-        ::std::mem::size_of::<drm_agp_info>(),
+        ::core::mem::size_of::<drm_agp_info>(),
         56usize,
         concat!("Size of: ", stringify!(drm_agp_info))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_agp_info>(),
+        ::core::mem::align_of::<drm_agp_info>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_agp_info))
     );
@@ -3263,12 +3263,12 @@ pub struct drm_scatter_gather {
 #[test]
 fn bindgen_test_layout_drm_scatter_gather() {
     assert_eq!(
-        ::std::mem::size_of::<drm_scatter_gather>(),
+        ::core::mem::size_of::<drm_scatter_gather>(),
         16usize,
         concat!("Size of: ", stringify!(drm_scatter_gather))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_scatter_gather>(),
+        ::core::mem::align_of::<drm_scatter_gather>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_scatter_gather))
     );
@@ -3310,12 +3310,12 @@ pub struct drm_set_version {
 #[test]
 fn bindgen_test_layout_drm_set_version() {
     assert_eq!(
-        ::std::mem::size_of::<drm_set_version>(),
+        ::core::mem::size_of::<drm_set_version>(),
         16usize,
         concat!("Size of: ", stringify!(drm_set_version))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_set_version>(),
+        ::core::mem::align_of::<drm_set_version>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_set_version))
     );
@@ -3376,12 +3376,12 @@ pub struct drm_gem_close {
 #[test]
 fn bindgen_test_layout_drm_gem_close() {
     assert_eq!(
-        ::std::mem::size_of::<drm_gem_close>(),
+        ::core::mem::size_of::<drm_gem_close>(),
         8usize,
         concat!("Size of: ", stringify!(drm_gem_close))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_gem_close>(),
+        ::core::mem::align_of::<drm_gem_close>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_gem_close))
     );
@@ -3423,12 +3423,12 @@ pub struct drm_gem_flink {
 #[test]
 fn bindgen_test_layout_drm_gem_flink() {
     assert_eq!(
-        ::std::mem::size_of::<drm_gem_flink>(),
+        ::core::mem::size_of::<drm_gem_flink>(),
         8usize,
         concat!("Size of: ", stringify!(drm_gem_flink))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_gem_flink>(),
+        ::core::mem::align_of::<drm_gem_flink>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_gem_flink))
     );
@@ -3472,12 +3472,12 @@ pub struct drm_gem_open {
 #[test]
 fn bindgen_test_layout_drm_gem_open() {
     assert_eq!(
-        ::std::mem::size_of::<drm_gem_open>(),
+        ::core::mem::size_of::<drm_gem_open>(),
         16usize,
         concat!("Size of: ", stringify!(drm_gem_open))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_gem_open>(),
+        ::core::mem::align_of::<drm_gem_open>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_gem_open))
     );
@@ -3527,12 +3527,12 @@ pub struct drm_get_cap {
 #[test]
 fn bindgen_test_layout_drm_get_cap() {
     assert_eq!(
-        ::std::mem::size_of::<drm_get_cap>(),
+        ::core::mem::size_of::<drm_get_cap>(),
         16usize,
         concat!("Size of: ", stringify!(drm_get_cap))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_get_cap>(),
+        ::core::mem::align_of::<drm_get_cap>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_get_cap))
     );
@@ -3572,12 +3572,12 @@ pub struct drm_set_client_cap {
 #[test]
 fn bindgen_test_layout_drm_set_client_cap() {
     assert_eq!(
-        ::std::mem::size_of::<drm_set_client_cap>(),
+        ::core::mem::size_of::<drm_set_client_cap>(),
         16usize,
         concat!("Size of: ", stringify!(drm_set_client_cap))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_set_client_cap>(),
+        ::core::mem::align_of::<drm_set_client_cap>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_set_client_cap))
     );
@@ -3619,12 +3619,12 @@ pub struct drm_prime_handle {
 #[test]
 fn bindgen_test_layout_drm_prime_handle() {
     assert_eq!(
-        ::std::mem::size_of::<drm_prime_handle>(),
+        ::core::mem::size_of::<drm_prime_handle>(),
         12usize,
         concat!("Size of: ", stringify!(drm_prime_handle))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_prime_handle>(),
+        ::core::mem::align_of::<drm_prime_handle>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_prime_handle))
     );
@@ -3673,12 +3673,12 @@ pub struct drm_syncobj_create {
 #[test]
 fn bindgen_test_layout_drm_syncobj_create() {
     assert_eq!(
-        ::std::mem::size_of::<drm_syncobj_create>(),
+        ::core::mem::size_of::<drm_syncobj_create>(),
         8usize,
         concat!("Size of: ", stringify!(drm_syncobj_create))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_syncobj_create>(),
+        ::core::mem::align_of::<drm_syncobj_create>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_syncobj_create))
     );
@@ -3717,12 +3717,12 @@ pub struct drm_syncobj_destroy {
 #[test]
 fn bindgen_test_layout_drm_syncobj_destroy() {
     assert_eq!(
-        ::std::mem::size_of::<drm_syncobj_destroy>(),
+        ::core::mem::size_of::<drm_syncobj_destroy>(),
         8usize,
         concat!("Size of: ", stringify!(drm_syncobj_destroy))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_syncobj_destroy>(),
+        ::core::mem::align_of::<drm_syncobj_destroy>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_syncobj_destroy))
     );
@@ -3763,12 +3763,12 @@ pub struct drm_syncobj_handle {
 #[test]
 fn bindgen_test_layout_drm_syncobj_handle() {
     assert_eq!(
-        ::std::mem::size_of::<drm_syncobj_handle>(),
+        ::core::mem::size_of::<drm_syncobj_handle>(),
         16usize,
         concat!("Size of: ", stringify!(drm_syncobj_handle))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_syncobj_handle>(),
+        ::core::mem::align_of::<drm_syncobj_handle>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_syncobj_handle))
     );
@@ -3831,12 +3831,12 @@ pub struct drm_syncobj_wait {
 #[test]
 fn bindgen_test_layout_drm_syncobj_wait() {
     assert_eq!(
-        ::std::mem::size_of::<drm_syncobj_wait>(),
+        ::core::mem::size_of::<drm_syncobj_wait>(),
         32usize,
         concat!("Size of: ", stringify!(drm_syncobj_wait))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_syncobj_wait>(),
+        ::core::mem::align_of::<drm_syncobj_wait>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_syncobj_wait))
     );
@@ -3916,12 +3916,12 @@ pub struct drm_syncobj_array {
 #[test]
 fn bindgen_test_layout_drm_syncobj_array() {
     assert_eq!(
-        ::std::mem::size_of::<drm_syncobj_array>(),
+        ::core::mem::size_of::<drm_syncobj_array>(),
         16usize,
         concat!("Size of: ", stringify!(drm_syncobj_array))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_syncobj_array>(),
+        ::core::mem::align_of::<drm_syncobj_array>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_syncobj_array))
     );
@@ -3983,12 +3983,12 @@ pub struct drm_mode_modeinfo {
 #[test]
 fn bindgen_test_layout_drm_mode_modeinfo() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_modeinfo>(),
+        ::core::mem::size_of::<drm_mode_modeinfo>(),
         68usize,
         concat!("Size of: ", stringify!(drm_mode_modeinfo))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_modeinfo>(),
+        ::core::mem::align_of::<drm_mode_modeinfo>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_mode_modeinfo))
     );
@@ -4167,12 +4167,12 @@ pub struct drm_mode_card_res {
 #[test]
 fn bindgen_test_layout_drm_mode_card_res() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_card_res>(),
+        ::core::mem::size_of::<drm_mode_card_res>(),
         64usize,
         concat!("Size of: ", stringify!(drm_mode_card_res))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_card_res>(),
+        ::core::mem::align_of::<drm_mode_card_res>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_card_res))
     );
@@ -4322,12 +4322,12 @@ pub struct drm_mode_crtc {
 #[test]
 fn bindgen_test_layout_drm_mode_crtc() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_crtc>(),
+        ::core::mem::size_of::<drm_mode_crtc>(),
         104usize,
         concat!("Size of: ", stringify!(drm_mode_crtc))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_crtc>(),
+        ::core::mem::align_of::<drm_mode_crtc>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_crtc))
     );
@@ -4446,12 +4446,12 @@ pub struct drm_mode_set_plane {
 #[test]
 fn bindgen_test_layout_drm_mode_set_plane() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_set_plane>(),
+        ::core::mem::size_of::<drm_mode_set_plane>(),
         48usize,
         concat!("Size of: ", stringify!(drm_mode_set_plane))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_set_plane>(),
+        ::core::mem::align_of::<drm_mode_set_plane>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_mode_set_plane))
     );
@@ -4595,12 +4595,12 @@ pub struct drm_mode_get_plane {
 #[test]
 fn bindgen_test_layout_drm_mode_get_plane() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_get_plane>(),
+        ::core::mem::size_of::<drm_mode_get_plane>(),
         32usize,
         concat!("Size of: ", stringify!(drm_mode_get_plane))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_get_plane>(),
+        ::core::mem::align_of::<drm_mode_get_plane>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_get_plane))
     );
@@ -4689,12 +4689,12 @@ pub struct drm_mode_get_plane_res {
 #[test]
 fn bindgen_test_layout_drm_mode_get_plane_res() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_get_plane_res>(),
+        ::core::mem::size_of::<drm_mode_get_plane_res>(),
         16usize,
         concat!("Size of: ", stringify!(drm_mode_get_plane_res))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_get_plane_res>(),
+        ::core::mem::align_of::<drm_mode_get_plane_res>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_get_plane_res))
     );
@@ -4737,12 +4737,12 @@ pub struct drm_mode_get_encoder {
 #[test]
 fn bindgen_test_layout_drm_mode_get_encoder() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_get_encoder>(),
+        ::core::mem::size_of::<drm_mode_get_encoder>(),
         20usize,
         concat!("Size of: ", stringify!(drm_mode_get_encoder))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_get_encoder>(),
+        ::core::mem::align_of::<drm_mode_get_encoder>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_mode_get_encoder))
     );
@@ -4838,12 +4838,12 @@ pub struct drm_mode_get_connector {
 #[test]
 fn bindgen_test_layout_drm_mode_get_connector() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_get_connector>(),
+        ::core::mem::size_of::<drm_mode_get_connector>(),
         80usize,
         concat!("Size of: ", stringify!(drm_mode_get_connector))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_get_connector>(),
+        ::core::mem::align_of::<drm_mode_get_connector>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_get_connector))
     );
@@ -5022,12 +5022,12 @@ pub struct drm_mode_property_enum {
 #[test]
 fn bindgen_test_layout_drm_mode_property_enum() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_property_enum>(),
+        ::core::mem::size_of::<drm_mode_property_enum>(),
         40usize,
         concat!("Size of: ", stringify!(drm_mode_property_enum))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_property_enum>(),
+        ::core::mem::align_of::<drm_mode_property_enum>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_property_enum))
     );
@@ -5071,12 +5071,12 @@ pub struct drm_mode_get_property {
 #[test]
 fn bindgen_test_layout_drm_mode_get_property() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_get_property>(),
+        ::core::mem::size_of::<drm_mode_get_property>(),
         64usize,
         concat!("Size of: ", stringify!(drm_mode_get_property))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_get_property>(),
+        ::core::mem::align_of::<drm_mode_get_property>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_get_property))
     );
@@ -5166,12 +5166,12 @@ pub struct drm_mode_connector_set_property {
 #[test]
 fn bindgen_test_layout_drm_mode_connector_set_property() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_connector_set_property>(),
+        ::core::mem::size_of::<drm_mode_connector_set_property>(),
         16usize,
         concat!("Size of: ", stringify!(drm_mode_connector_set_property))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_connector_set_property>(),
+        ::core::mem::align_of::<drm_mode_connector_set_property>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_connector_set_property))
     );
@@ -5225,12 +5225,12 @@ pub struct drm_mode_obj_get_properties {
 #[test]
 fn bindgen_test_layout_drm_mode_obj_get_properties() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_obj_get_properties>(),
+        ::core::mem::size_of::<drm_mode_obj_get_properties>(),
         32usize,
         concat!("Size of: ", stringify!(drm_mode_obj_get_properties))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_obj_get_properties>(),
+        ::core::mem::align_of::<drm_mode_obj_get_properties>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_obj_get_properties))
     );
@@ -5303,12 +5303,12 @@ pub struct drm_mode_obj_set_property {
 #[test]
 fn bindgen_test_layout_drm_mode_obj_set_property() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_obj_set_property>(),
+        ::core::mem::size_of::<drm_mode_obj_set_property>(),
         24usize,
         concat!("Size of: ", stringify!(drm_mode_obj_set_property))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_obj_set_property>(),
+        ::core::mem::align_of::<drm_mode_obj_set_property>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_obj_set_property))
     );
@@ -5368,12 +5368,12 @@ pub struct drm_mode_get_blob {
 #[test]
 fn bindgen_test_layout_drm_mode_get_blob() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_get_blob>(),
+        ::core::mem::size_of::<drm_mode_get_blob>(),
         16usize,
         concat!("Size of: ", stringify!(drm_mode_get_blob))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_get_blob>(),
+        ::core::mem::align_of::<drm_mode_get_blob>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_get_blob))
     );
@@ -5427,12 +5427,12 @@ pub struct drm_mode_fb_cmd {
 #[test]
 fn bindgen_test_layout_drm_mode_fb_cmd() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_fb_cmd>(),
+        ::core::mem::size_of::<drm_mode_fb_cmd>(),
         28usize,
         concat!("Size of: ", stringify!(drm_mode_fb_cmd))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_fb_cmd>(),
+        ::core::mem::align_of::<drm_mode_fb_cmd>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_mode_fb_cmd))
     );
@@ -5528,12 +5528,12 @@ pub struct drm_mode_fb_cmd2 {
 #[test]
 fn bindgen_test_layout_drm_mode_fb_cmd2() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_fb_cmd2>(),
+        ::core::mem::size_of::<drm_mode_fb_cmd2>(),
         104usize,
         concat!("Size of: ", stringify!(drm_mode_fb_cmd2))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_fb_cmd2>(),
+        ::core::mem::align_of::<drm_mode_fb_cmd2>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_fb_cmd2))
     );
@@ -5645,12 +5645,12 @@ pub struct drm_mode_fb_dirty_cmd {
 #[test]
 fn bindgen_test_layout_drm_mode_fb_dirty_cmd() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_fb_dirty_cmd>(),
+        ::core::mem::size_of::<drm_mode_fb_dirty_cmd>(),
         24usize,
         concat!("Size of: ", stringify!(drm_mode_fb_dirty_cmd))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_fb_dirty_cmd>(),
+        ::core::mem::align_of::<drm_mode_fb_dirty_cmd>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_fb_dirty_cmd))
     );
@@ -5719,12 +5719,12 @@ pub struct drm_mode_mode_cmd {
 #[test]
 fn bindgen_test_layout_drm_mode_mode_cmd() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_mode_cmd>(),
+        ::core::mem::size_of::<drm_mode_mode_cmd>(),
         72usize,
         concat!("Size of: ", stringify!(drm_mode_mode_cmd))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_mode_cmd>(),
+        ::core::mem::align_of::<drm_mode_mode_cmd>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_mode_mode_cmd))
     );
@@ -5768,12 +5768,12 @@ pub struct drm_mode_cursor {
 #[test]
 fn bindgen_test_layout_drm_mode_cursor() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_cursor>(),
+        ::core::mem::size_of::<drm_mode_cursor>(),
         28usize,
         concat!("Size of: ", stringify!(drm_mode_cursor))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_cursor>(),
+        ::core::mem::align_of::<drm_mode_cursor>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_mode_cursor))
     );
@@ -5869,12 +5869,12 @@ pub struct drm_mode_cursor2 {
 #[test]
 fn bindgen_test_layout_drm_mode_cursor2() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_cursor2>(),
+        ::core::mem::size_of::<drm_mode_cursor2>(),
         36usize,
         concat!("Size of: ", stringify!(drm_mode_cursor2))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_cursor2>(),
+        ::core::mem::align_of::<drm_mode_cursor2>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_mode_cursor2))
     );
@@ -5986,12 +5986,12 @@ pub struct drm_mode_crtc_lut {
 #[test]
 fn bindgen_test_layout_drm_mode_crtc_lut() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_crtc_lut>(),
+        ::core::mem::size_of::<drm_mode_crtc_lut>(),
         32usize,
         concat!("Size of: ", stringify!(drm_mode_crtc_lut))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_crtc_lut>(),
+        ::core::mem::align_of::<drm_mode_crtc_lut>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_crtc_lut))
     );
@@ -6059,12 +6059,12 @@ pub struct drm_color_ctm {
 #[test]
 fn bindgen_test_layout_drm_color_ctm() {
     assert_eq!(
-        ::std::mem::size_of::<drm_color_ctm>(),
+        ::core::mem::size_of::<drm_color_ctm>(),
         72usize,
         concat!("Size of: ", stringify!(drm_color_ctm))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_color_ctm>(),
+        ::core::mem::align_of::<drm_color_ctm>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_color_ctm))
     );
@@ -6095,12 +6095,12 @@ pub struct drm_color_lut {
 #[test]
 fn bindgen_test_layout_drm_color_lut() {
     assert_eq!(
-        ::std::mem::size_of::<drm_color_lut>(),
+        ::core::mem::size_of::<drm_color_lut>(),
         8usize,
         concat!("Size of: ", stringify!(drm_color_lut))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_color_lut>(),
+        ::core::mem::align_of::<drm_color_lut>(),
         2usize,
         concat!("Alignment of ", stringify!(drm_color_lut))
     );
@@ -6162,12 +6162,12 @@ pub struct drm_mode_crtc_page_flip {
 #[test]
 fn bindgen_test_layout_drm_mode_crtc_page_flip() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_crtc_page_flip>(),
+        ::core::mem::size_of::<drm_mode_crtc_page_flip>(),
         24usize,
         concat!("Size of: ", stringify!(drm_mode_crtc_page_flip))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_crtc_page_flip>(),
+        ::core::mem::align_of::<drm_mode_crtc_page_flip>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_crtc_page_flip))
     );
@@ -6239,12 +6239,12 @@ pub struct drm_mode_crtc_page_flip_target {
 #[test]
 fn bindgen_test_layout_drm_mode_crtc_page_flip_target() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_crtc_page_flip_target>(),
+        ::core::mem::size_of::<drm_mode_crtc_page_flip_target>(),
         24usize,
         concat!("Size of: ", stringify!(drm_mode_crtc_page_flip_target))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_crtc_page_flip_target>(),
+        ::core::mem::align_of::<drm_mode_crtc_page_flip_target>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_crtc_page_flip_target))
     );
@@ -6318,12 +6318,12 @@ pub struct drm_mode_create_dumb {
 #[test]
 fn bindgen_test_layout_drm_mode_create_dumb() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_create_dumb>(),
+        ::core::mem::size_of::<drm_mode_create_dumb>(),
         32usize,
         concat!("Size of: ", stringify!(drm_mode_create_dumb))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_create_dumb>(),
+        ::core::mem::align_of::<drm_mode_create_dumb>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_create_dumb))
     );
@@ -6417,12 +6417,12 @@ pub struct drm_mode_map_dumb {
 #[test]
 fn bindgen_test_layout_drm_mode_map_dumb() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_map_dumb>(),
+        ::core::mem::size_of::<drm_mode_map_dumb>(),
         16usize,
         concat!("Size of: ", stringify!(drm_mode_map_dumb))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_map_dumb>(),
+        ::core::mem::align_of::<drm_mode_map_dumb>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_map_dumb))
     );
@@ -6470,12 +6470,12 @@ pub struct drm_mode_destroy_dumb {
 #[test]
 fn bindgen_test_layout_drm_mode_destroy_dumb() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_destroy_dumb>(),
+        ::core::mem::size_of::<drm_mode_destroy_dumb>(),
         4usize,
         concat!("Size of: ", stringify!(drm_mode_destroy_dumb))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_destroy_dumb>(),
+        ::core::mem::align_of::<drm_mode_destroy_dumb>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_mode_destroy_dumb))
     );
@@ -6510,12 +6510,12 @@ pub struct drm_mode_atomic {
 #[test]
 fn bindgen_test_layout_drm_mode_atomic() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_atomic>(),
+        ::core::mem::size_of::<drm_mode_atomic>(),
         56usize,
         concat!("Size of: ", stringify!(drm_mode_atomic))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_atomic>(),
+        ::core::mem::align_of::<drm_mode_atomic>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_atomic))
     );
@@ -6618,12 +6618,12 @@ pub struct drm_format_modifier_blob {
 #[test]
 fn bindgen_test_layout_drm_format_modifier_blob() {
     assert_eq!(
-        ::std::mem::size_of::<drm_format_modifier_blob>(),
+        ::core::mem::size_of::<drm_format_modifier_blob>(),
         24usize,
         concat!("Size of: ", stringify!(drm_format_modifier_blob))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_format_modifier_blob>(),
+        ::core::mem::align_of::<drm_format_modifier_blob>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_format_modifier_blob))
     );
@@ -6704,12 +6704,12 @@ pub struct drm_format_modifier {
 #[test]
 fn bindgen_test_layout_drm_format_modifier() {
     assert_eq!(
-        ::std::mem::size_of::<drm_format_modifier>(),
+        ::core::mem::size_of::<drm_format_modifier>(),
         24usize,
         concat!("Size of: ", stringify!(drm_format_modifier))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_format_modifier>(),
+        ::core::mem::align_of::<drm_format_modifier>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_format_modifier))
     );
@@ -6774,12 +6774,12 @@ pub struct drm_mode_create_blob {
 #[test]
 fn bindgen_test_layout_drm_mode_create_blob() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_create_blob>(),
+        ::core::mem::size_of::<drm_mode_create_blob>(),
         16usize,
         concat!("Size of: ", stringify!(drm_mode_create_blob))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_create_blob>(),
+        ::core::mem::align_of::<drm_mode_create_blob>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_mode_create_blob))
     );
@@ -6828,12 +6828,12 @@ pub struct drm_mode_destroy_blob {
 #[test]
 fn bindgen_test_layout_drm_mode_destroy_blob() {
     assert_eq!(
-        ::std::mem::size_of::<drm_mode_destroy_blob>(),
+        ::core::mem::size_of::<drm_mode_destroy_blob>(),
         4usize,
         concat!("Size of: ", stringify!(drm_mode_destroy_blob))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_mode_destroy_blob>(),
+        ::core::mem::align_of::<drm_mode_destroy_blob>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_mode_destroy_blob))
     );
@@ -6872,12 +6872,12 @@ pub struct drm_event {
 #[test]
 fn bindgen_test_layout_drm_event() {
     assert_eq!(
-        ::std::mem::size_of::<drm_event>(),
+        ::core::mem::size_of::<drm_event>(),
         8usize,
         concat!("Size of: ", stringify!(drm_event))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_event>(),
+        ::core::mem::align_of::<drm_event>(),
         4usize,
         concat!("Alignment of ", stringify!(drm_event))
     );
@@ -6920,12 +6920,12 @@ pub struct drm_event_vblank {
 #[test]
 fn bindgen_test_layout_drm_event_vblank() {
     assert_eq!(
-        ::std::mem::size_of::<drm_event_vblank>(),
+        ::core::mem::size_of::<drm_event_vblank>(),
         32usize,
         concat!("Size of: ", stringify!(drm_event_vblank))
     );
     assert_eq!(
-        ::std::mem::align_of::<drm_event_vblank>(),
+        ::core::mem::align_of::<drm_event_vblank>(),
         8usize,
         concat!("Alignment of ", stringify!(drm_event_vblank))
     );
@@ -7051,12 +7051,12 @@ pub struct __va_list_tag {
 #[test]
 fn bindgen_test_layout___va_list_tag() {
     assert_eq!(
-        ::std::mem::size_of::<__va_list_tag>(),
+        ::core::mem::size_of::<__va_list_tag>(),
         24usize,
         concat!("Size of: ", stringify!(__va_list_tag))
     );
     assert_eq!(
-        ::std::mem::align_of::<__va_list_tag>(),
+        ::core::mem::align_of::<__va_list_tag>(),
         8usize,
         concat!("Alignment of ", stringify!(__va_list_tag))
     );
@@ -7108,6 +7108,6 @@ impl Clone for __va_list_tag {
 }
 impl Default for __va_list_tag {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { ::core::mem::zeroed() }
     }
 }
