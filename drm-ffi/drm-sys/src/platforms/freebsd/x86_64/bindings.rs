@@ -3962,7 +3962,7 @@ impl Clone for drm_syncobj_array {
     }
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy)]
+#[derive(Debug, Default, Copy, Eq, PartialEq, Hash)]
 pub struct drm_mode_modeinfo {
     pub clock: __u32,
     pub hdisplay: __u16,
@@ -5014,7 +5014,7 @@ impl Clone for drm_mode_get_connector {
     }
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy)]
+#[derive(Debug, Default, Copy, Eq, PartialEq, Hash)]
 pub struct drm_mode_property_enum {
     pub value: __u64,
     pub name: [libc::c_char; 32usize],
@@ -5058,7 +5058,7 @@ impl Clone for drm_mode_property_enum {
     }
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy)]
+#[derive(Debug, Default, Copy, Eq, PartialEq, Hash)]
 pub struct drm_mode_get_property {
     pub values_ptr: __u64,
     pub enum_blob_ptr: __u64,
