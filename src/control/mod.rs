@@ -318,7 +318,7 @@ pub trait Device: super::Device {
         handle: framebuffer::Handle,
         clips: &[ClipRect],
     ) -> Result<(), SystemError> {
-        ffi::mode::dirty_fb(self.as_raw_fd(), handle.into(), &clips)?;
+        ffi::mode::dirty_fb(self.as_raw_fd(), handle.into(), clips)?;
         Ok(())
     }
 
