@@ -15,5 +15,5 @@ use_bindgen = ["bindgen", "pkg-config"]
 update_bindings = ["use_bindgen"]
 
 [build-dependencies]
-bindgen = { version = "0.58", optional = true }
+bindgen = { version = "0.59", optional = true }
 pkg-config = { version = "0.3.19", optional = true }

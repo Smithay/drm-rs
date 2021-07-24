@@ -40,7 +40,7 @@ impl AsRef<OsStr> for SmallOsString {
 
 impl fmt::Debug for SmallOsString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let as_os_str: &OsStr = &self.as_ref();
+        let as_os_str: &OsStr = self.as_ref();
         f.debug_struct("SmallOsString")
             .field("data", &self.data)
             .field("len", &self.len)
