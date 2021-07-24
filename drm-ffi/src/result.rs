@@ -3,20 +3,8 @@
 //!
 
 use nix::errno::Errno;
-use nix::Error as NixError;
 use std::error::Error;
 use std::fmt;
-
-/// Errors from system calls will always be in the form [`NixError::Sys(errno)`].
-///
-/// This helper function unwraps a [`nix::Error`] into an [`Errno`] in places we
-/// know other types of errors can not occur.
-fn unwrap_errno(err: NixError) -> Errno {
-    match err {
-        NixError::Sys(errno) => errno,
-        _ => unreachable!(),
-    }
-}
 
 /// A general system error that can be returned by any DRM command.
 ///
@@ -77,11 +65,5 @@ impl From<Errno> for SystemError {
             Errno::EACCES => SystemError::PermissionDenied,
             _ => SystemError::Unknown { errno },
         }
-    }
-}
-
-impl From<NixError> for SystemError {
-    fn from(nerr: NixError) -> SystemError {
-        unwrap_errno(nerr).into()
     }
 }
