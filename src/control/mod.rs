@@ -1042,6 +1042,11 @@ impl Mode {
     pub fn vrefresh(&self) -> u32 {
         self.mode.vrefresh
     }
+
+    /// Returns the type flags bitmask of this mode
+    pub fn type_(&self) -> u32 {
+        self.mode.type_
+    }
 }
 
 impl From<ffi::drm_mode_modeinfo> for Mode {
@@ -1067,8 +1072,31 @@ impl std::fmt::Debug for Mode {
             .field("hskew", &self.hskew())
             .field("vscan", &self.vscan())
             .field("vrefresh", &self.vrefresh())
+            .field("type_", &self.type_())
             .finish()
     }
+}
+
+/// Display mode type flags
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ModeType {
+    /// Deprecated builtin mode type
+    Builtin = ffi::DRM_MODE_TYPE_BUILTIN,
+    /// Deprecated CLOCK_C mode type
+    ClockC = ffi::DRM_MODE_TYPE_CLOCK_C,
+    /// Deprecated CRTC_C mode type
+    CrtcC = ffi::DRM_MODE_TYPE_CRTC_C,
+    /// Preferred mode
+    Preferred = ffi::DRM_MODE_TYPE_PREFERRED,
+    /// Deprecated default mode
+    Default = ffi::DRM_MODE_TYPE_DEFAULT,
+    /// User defined mode type
+    UserDef = ffi::DRM_MODE_TYPE_USERDEF,
+    /// Mode is created by driver
+    Driver = ffi::DRM_MODE_TYPE_DRIVER,
+    /// Bitmask of all valid (non-deprecated) mode type flags
+    All = ffi::DRM_MODE_TYPE_ALL,
 }
 
 /// Type of a plane
