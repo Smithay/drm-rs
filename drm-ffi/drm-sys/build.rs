@@ -121,6 +121,8 @@ mod use_bindgen {
         let out_path = var("OUT_DIR").unwrap();
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
 
+        println!("cargo:rerun-if-changed={}", bind_file.display());
+
         bindings
             .write_to_file(bind_file)
             .expect("Could not write bindings");
@@ -137,6 +139,8 @@ mod use_bindgen {
             .join(var("CARGO_CFG_TARGET_OS").unwrap())
             .join(var("CARGO_CFG_TARGET_ARCH").unwrap());
         let dest_file = dest_dir.join("bindings.rs");
+
+        println!("cargo:rerun-if-changed={}", dest_file.display());
 
         fs::create_dir_all(&dest_dir).unwrap();
         fs::copy(&bind_file, &dest_file).unwrap();
