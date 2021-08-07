@@ -643,6 +643,7 @@ pub fn page_flip(
         crtc_id,
         fb_id,
         flags,
+        // Same struct as drm_mode_crtc_page_flip_target
         reserved: sequence,
         user_data: crtc_id as _,
     };
