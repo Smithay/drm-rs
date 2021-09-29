@@ -3,23 +3,12 @@
 use control;
 
 /// Helper struct to construct atomic commit requests
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct AtomicModeReq {
     pub(super) objects: Vec<control::RawResourceHandle>,
     pub(super) count_props_per_object: Vec<u32>,
     pub(super) props: Vec<control::property::Handle>,
     pub(super) values: Vec<control::property::RawValue>,
-}
-
-impl Default for AtomicModeReq {
-    fn default() -> Self {
-        AtomicModeReq {
-            objects: Vec::new(),
-            count_props_per_object: Vec::new(),
-            props: Vec::new(),
-            values: Vec::new(),
-        }
-    }
 }
 
 impl AtomicModeReq {
