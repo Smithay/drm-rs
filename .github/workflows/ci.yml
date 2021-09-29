@@ -64,7 +64,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - run: sudo apt-get install -y libdrm-dev
+      - run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libdrm-dev
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
@@ -94,7 +96,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - run: sudo apt-get install -y libdrm-dev
+      - run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libdrm-dev
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
