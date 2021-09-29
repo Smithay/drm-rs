@@ -104,6 +104,20 @@ pub fn add_fb(
     Ok(fb)
 }
 
+/// Get info about a framebuffer (with modifiers).
+pub fn get_framebuffer2(fd: RawFd, fb_id: u32) -> Result<drm_mode_fb_cmd2, Error> {
+    let mut info = drm_mode_fb_cmd2 {
+        fb_id,
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::get_fb2(fd, &mut info)?;
+    }
+
+    Ok(info)
+}
+
 /// Add a new framebuffer (with modifiers)
 pub fn add_fb2(
     fd: RawFd,
