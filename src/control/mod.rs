@@ -1042,6 +1042,11 @@ impl Mode {
     pub fn vrefresh(&self) -> u32 {
         self.mode.vrefresh
     }
+
+    /// Returns the flags for this mode
+    pub fn flags(&self) -> u32 {
+        self.mode.flags
+    }
 }
 
 impl From<ffi::drm_mode_modeinfo> for Mode {
@@ -1067,6 +1072,7 @@ impl std::fmt::Debug for Mode {
             .field("hskew", &self.hskew())
             .field("vscan", &self.vscan())
             .field("vrefresh", &self.vrefresh())
+            .field("flags", &self.flags())
             .finish()
     }
 }
