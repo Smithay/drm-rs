@@ -155,7 +155,7 @@ pub enum Value<'a> {
     /// Signed range value
     SignedRange(i64),
     /// Enum Value
-    Enum(&'a EnumValue),
+    Enum(Option<&'a EnumValue>),
     /// Bitmask value
     Bitmask(u64),
     /// Opaque (blob) value
@@ -186,7 +186,7 @@ impl<'a> From<Value<'a>> for RawValue {
             Value::Boolean(false) => 0,
             Value::UnsignedRange(x) => x,
             Value::SignedRange(x) => x as u64,
-            Value::Enum(val) => val.value(),
+            Value::Enum(val) => val.map_or(0, EnumValue::value),
             Value::Bitmask(x) => x,
             Value::Blob(x) => x,
             Value::Object(x) => unsafe { tm::<_, u32>(x).into() },
@@ -240,12 +240,17 @@ impl EnumValues {
         (&self.values[..self.length], &self.enums[..self.length])
     }
 
-    /// Returns an [`EnumValue`] for a [`RawValue`]
-    ///
-    /// Note: This is a dumb translation, not every [`RawValue`] is part of en Enum
-    pub fn get_value_from_raw_value(&self, value: RawValue) -> &EnumValue {
-        let (_, enums) = self.values();
-        &enums[value as usize]
+    /// Returns an [`EnumValue`] for a [`RawValue`], or [`None`] if `value` is
+    /// not part of this [`EnumValues`].
+    pub fn get_value_from_raw_value(&self, value: RawValue) -> Option<&EnumValue> {
+        let (values, enums) = self.values();
+        let index = if values.get(value as usize) == Some(&value) {
+            // Early-out: indices match values
+            value as usize
+        } else {
+            values.iter().position(|&v| v == value)?
+        };
+        Some(&enums[index])
     }
 }
 
