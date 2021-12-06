@@ -759,11 +759,11 @@ pub trait Device: super::Device {
         handle: crtc::Handle,
         framebuffer: framebuffer::Handle,
         flags: &[PageFlipFlags],
-        target: Option<PageFlipTarget>,
+        target_sequence: Option<(PageFlipTarget, u32)>,
     ) -> Result<(), SystemError> {
         let mut flags = flags.iter().fold(0, |val, flag| val | *flag as u32);
-        if target.is_some() {
-            flags |= ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET;
+        if let Some((target, _)) = target_sequence {
+            flags |= target as u32;
         }
 
         let _info = ffi::mode::page_flip(
@@ -771,7 +771,7 @@ pub trait Device: super::Device {
             handle.into(),
             framebuffer.into(),
             flags,
-            target.map(|x| x as _).unwrap_or(0),
+            target_sequence.map(|(_, sequence)| sequence).unwrap_or(0),
         )?;
 
         Ok(())
