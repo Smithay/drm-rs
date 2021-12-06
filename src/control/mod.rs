@@ -865,7 +865,7 @@ impl Iterator for Events {
                         frame: vblank_event.sequence,
                         duration: Duration::new(
                             vblank_event.tv_sec as u64,
-                            vblank_event.tv_usec * 100,
+                            vblank_event.tv_usec * 1000,
                         ),
                         crtc: unsafe { mem::transmute(vblank_event.user_data as u32) },
                     }))
