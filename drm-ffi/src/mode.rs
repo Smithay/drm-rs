@@ -213,10 +213,7 @@ pub fn set_crtc(
             Some(_) => 1,
             None => 0,
         },
-        mode: match mode {
-            Some(m) => m,
-            None => Default::default(),
-        },
+        mode: mode.unwrap_or_default(),
         ..Default::default()
     };
 

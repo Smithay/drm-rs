@@ -182,13 +182,8 @@ impl<'a> From<Value<'a>> for RawValue {
 
         match value {
             Value::Unknown(x) => x,
-            Value::Boolean(x) => {
-                if x {
-                    1
-                } else {
-                    0
-                }
-            }
+            Value::Boolean(true) => 1,
+            Value::Boolean(false) => 0,
             Value::UnsignedRange(x) => x,
             Value::SignedRange(x) => x as u64,
             Value::Enum(val) => val.value(),

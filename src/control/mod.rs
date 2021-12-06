@@ -866,7 +866,7 @@ impl Iterator for Events {
             let event = unsafe { &*(self.event_buf.as_ptr().add(self.i) as *const ffi::drm_event) };
             self.i += event.length as usize;
             match event.type_ {
-                x if x == ffi::DRM_EVENT_VBLANK => {
+                ffi::DRM_EVENT_VBLANK => {
                     let vblank_event =
                         unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
                     Some(Event::Vblank(VblankEvent {
@@ -878,7 +878,7 @@ impl Iterator for Events {
                         crtc: unsafe { mem::transmute(vblank_event.user_data as u32) },
                     }))
                 }
-                x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
+                ffi::DRM_EVENT_FLIP_COMPLETE => {
                     let vblank_event =
                         unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
                     Some(Event::PageFlip(PageFlipEvent {
