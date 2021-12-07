@@ -198,7 +198,7 @@ pub fn main() {
 
     // Set the crtc
     // On many setups, this requires root access.
-    card.atomic_commit(&[AtomicCommitFlags::AllowModeset], atomic_req)
+    card.atomic_commit(AtomicCommitFlags::ALLOW_MODESET, atomic_req)
         .expect("Failed to set mode");
 
     let five_seconds = ::std::time::Duration::from_millis(5000);

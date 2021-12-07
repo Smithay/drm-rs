@@ -8,6 +8,7 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>", "Victor Brekenfeld <crate
 exclude = [".gitignore", ".github"]
 
 [dependencies]
+bitflags = "1"
 drm-ffi = { path = "drm-ffi", version = "0.2.0" }
 drm-fourcc = "^2.0.0"
 nix = "^0.22.0"

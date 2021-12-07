@@ -394,13 +394,13 @@ pub trait Device: super::Device {
             Some(&mut enum_slice),
         )?;
 
+        let flags = ModePropFlags::from_bits_truncate(info.flags);
         let val_len = val_slice.len();
 
         let val_type = {
             use self::property::ValueType;
-            let flags = info.flags;
 
-            if flags & ffi::DRM_MODE_PROP_RANGE != 0 {
+            if flags.contains(ModePropFlags::RANGE) {
                 let min = values[0];
                 let max = values[1];
 
@@ -408,12 +408,12 @@ pub trait Device: super::Device {
                     (0, 1) => ValueType::Boolean,
                     (min, max) => ValueType::UnsignedRange(min, max),
                 }
-            } else if flags & ffi::DRM_MODE_PROP_SIGNED_RANGE != 0 {
+            } else if flags.contains(ModePropFlags::SIGNED_RANGE) {
                 let min = values[0];
                 let max = values[1];
 
                 ValueType::SignedRange(min as i64, max as i64)
-            } else if flags & ffi::DRM_MODE_PROP_ENUM != 0 {
+            } else if flags.contains(ModePropFlags::ENUM) {
                 let enum_values = self::property::EnumValues {
                     values,
                     enums: unsafe { mem::transmute(enums) },
@@ -421,11 +421,11 @@ pub trait Device: super::Device {
                 };
 
                 ValueType::Enum(enum_values)
-            } else if flags & ffi::DRM_MODE_PROP_BLOB != 0 {
+            } else if flags.contains(ModePropFlags::BLOB) {
                 ValueType::Blob
-            } else if flags & ffi::DRM_MODE_PROP_BITMASK != 0 {
+            } else if flags.contains(ModePropFlags::BITMASK) {
                 ValueType::Bitmask
-            } else if flags & ffi::DRM_MODE_PROP_OBJECT != 0 {
+            } else if flags.contains(ModePropFlags::OBJECT) {
                 match values[0] as u32 {
                     ffi::DRM_MODE_OBJECT_CRTC => ValueType::CRTC,
                     ffi::DRM_MODE_OBJECT_CONNECTOR => ValueType::Connector,
@@ -445,8 +445,8 @@ pub trait Device: super::Device {
         let property = property::Info {
             handle,
             val_type,
-            mutable: info.flags & ffi::DRM_MODE_PROP_IMMUTABLE == 0,
-            atomic: info.flags & ffi::DRM_MODE_PROP_ATOMIC == 0,
+            mutable: !flags.contains(ModePropFlags::IMMUTABLE),
+            atomic: flags.contains(ModePropFlags::ATOMIC),
             info,
         };
 
@@ -728,12 +728,12 @@ pub trait Device: super::Device {
     /// Request an atomic commit with given flags and property-value pair for a list of objects.
     fn atomic_commit(
         &self,
-        flags: &[AtomicCommitFlags],
+        flags: AtomicCommitFlags,
         mut req: atomic::AtomicModeReq,
     ) -> Result<(), SystemError> {
         drm_ffi::mode::atomic_commit(
             self.as_raw_fd(),
-            flags.iter().fold(0, |acc, x| acc | *x as u32),
+            flags.bits(),
             unsafe { &mut *(&mut *req.objects as *mut _ as *mut [u32]) },
             &mut *req.count_props_per_object,
             unsafe { &mut *(&mut *req.props as *mut _ as *mut [u32]) },
@@ -758,10 +758,10 @@ pub trait Device: super::Device {
         &self,
         handle: crtc::Handle,
         framebuffer: framebuffer::Handle,
-        flags: &[PageFlipFlags],
+        flags: PageFlipFlags,
         target_sequence: Option<(PageFlipTarget, u32)>,
     ) -> Result<(), SystemError> {
-        let mut flags = flags.iter().fold(0, |val, flag| val | *flag as u32);
+        let mut flags = flags.bits();
         if let Some((target, _)) = target_sequence {
             flags |= target as u32;
         }
@@ -793,19 +793,27 @@ pub trait Device: super::Device {
     }
 }
 
-#[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-/// Flags to alter the behaviour of a page flip
-pub enum PageFlipFlags {
-    /// Request a vblank event on page flip
-    PageFlipEvent = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT,
-    /// Request page flip as soon as possible, not waiting for vblank
-    PageFlipAsync = ffi::drm_sys::DRM_MODE_PAGE_FLIP_ASYNC,
+bitflags::bitflags! {
+    /// Flags to alter the behaviour of a page flip
+    ///
+    /// Limited to the values in [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_FLAGS`],
+    /// minus [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET`] bits which are
+    /// passed through [`PageFlipTarget`].
+    pub struct PageFlipFlags : u32 {
+        /// Request a vblank event on page flip
+        const EVENT = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT;
+        /// Request page flip as soon as possible, not waiting for vblank
+        const ASYNC = ffi::drm_sys::DRM_MODE_PAGE_FLIP_ASYNC;
+    }
 }
 
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// Target to alter the sequence of page flips
+///
+/// These are the [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_FLAGS`] bits
+/// of [`PageFlipFlags`] wrapped in a regular `enum` due to their
+/// mutual-exclusiveness.
 pub enum PageFlipTarget {
     /// Absolute Vblank Sequence
     Absolute = ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE,
@@ -858,7 +866,7 @@ impl Iterator for Events {
             let event = unsafe { &*(self.event_buf.as_ptr().add(self.i) as *const ffi::drm_event) };
             self.i += event.length as usize;
             match event.type_ {
-                x if x == ffi::DRM_EVENT_VBLANK => {
+                ffi::DRM_EVENT_VBLANK => {
                     let vblank_event =
                         unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
                     Some(Event::Vblank(VblankEvent {
@@ -870,7 +878,7 @@ impl Iterator for Events {
                         crtc: unsafe { mem::transmute(vblank_event.user_data as u32) },
                     }))
                 }
-                x if x == ffi::DRM_EVENT_FLIP_COMPLETE => {
+                ffi::DRM_EVENT_FLIP_COMPLETE => {
                     let vblank_event =
                         unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
                     Some(Event::PageFlip(PageFlipEvent {
@@ -1043,9 +1051,9 @@ impl Mode {
         self.mode.vrefresh
     }
 
-    /// Returns the [`ModeType`] flags bitmask of this mode
-    pub fn mode_type(&self) -> u32 {
-        self.mode.flags
+    /// Returns the bitmask of this mode
+    pub fn mode_type(&self) -> ModeTypeFlags {
+        ModeTypeFlags::from_bits_truncate(self.mode.flags)
     }
 }
 
@@ -1077,30 +1085,30 @@ impl std::fmt::Debug for Mode {
     }
 }
 
-/// Display mode type flags
-#[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ModeType {
-    /// Builtin mode type
-    #[deprecated]
-    Builtin = ffi::DRM_MODE_TYPE_BUILTIN,
-    /// CLOCK_C mode type
-    #[deprecated]
-    ClockC = ffi::DRM_MODE_TYPE_CLOCK_C,
-    /// CRTC_C mode type
-    #[deprecated]
-    CrtcC = ffi::DRM_MODE_TYPE_CRTC_C,
-    /// Preferred mode
-    Preferred = ffi::DRM_MODE_TYPE_PREFERRED,
-    /// Default mode
-    #[deprecated]
-    Default = ffi::DRM_MODE_TYPE_DEFAULT,
-    /// User defined mode type
-    UserDef = ffi::DRM_MODE_TYPE_USERDEF,
-    /// Mode created by driver
-    Driver = ffi::DRM_MODE_TYPE_DRIVER,
-    /// Bitmask of all valid (non-deprecated) mode type flags
-    All = ffi::DRM_MODE_TYPE_ALL,
+bitflags::bitflags! {
+    /// Display mode type flags
+    pub struct ModeTypeFlags : u32 {
+        /// Builtin mode type
+        #[deprecated]
+        const BUILTIN = ffi::DRM_MODE_TYPE_BUILTIN;
+        /// CLOCK_C mode type
+        #[deprecated]
+        const CLOCK_C = ffi::DRM_MODE_TYPE_CLOCK_C;
+        /// CRTC_C mode type
+        #[deprecated]
+        const CRTC_C = ffi::DRM_MODE_TYPE_CRTC_C;
+        /// Preferred mode
+        const PREFERRED = ffi::DRM_MODE_TYPE_PREFERRED;
+        /// Default mode
+        #[deprecated]
+        const DEFAULT = ffi::DRM_MODE_TYPE_DEFAULT;
+        /// User defined mode type
+        const USERDEF = ffi::DRM_MODE_TYPE_USERDEF;
+        /// Mode created by driver
+        const DRIVER = ffi::DRM_MODE_TYPE_DRIVER;
+        /// Bitmask of all valid (non-deprecated) mode type flags
+        const ALL = ffi::DRM_MODE_TYPE_ALL;
+    }
 }
 
 /// Type of a plane
@@ -1137,20 +1145,59 @@ impl PropertyValueSet {
 
 type ClipRect = ffi::drm_sys::drm_clip_rect;
 
-/// Commit flags for atomic mode setting
-#[allow(missing_docs)]
-#[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-/// Flags for an atomic commit
-pub enum AtomicCommitFlags {
-    /// Test only validity of the request, do not actually apply the requested changes.
-    TestOnly = ffi::drm_sys::DRM_MODE_ATOMIC_TEST_ONLY,
-    /// Do not block on the request and return early.
-    Nonblock = ffi::drm_sys::DRM_MODE_ATOMIC_NONBLOCK,
-    /// Allow the changes to trigger a modeset, if necessary.
+bitflags::bitflags! {
+    /// Commit flags for atomic mode setting
     ///
-    /// Changes requiring a modeset are rejected otherwise.
-    AllowModeset = ffi::drm_sys::DRM_MODE_ATOMIC_ALLOW_MODESET,
-    /// Generate a page flip event, when the changes are applied.
-    PageFlipEvent = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT,
+    /// Limited to the values in [`ffi::drm_sys::DRM_MODE_ATOMIC_FLAGS`].
+    pub struct AtomicCommitFlags : u32 {
+        /// Generate a page flip event, when the changes are applied
+        const PAGE_FLIP_EVENT = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT;
+        /// Request page flip when the changes are applied, not waiting for vblank
+        const PAGE_FLIP_ASYNC = ffi::drm_sys::DRM_MODE_PAGE_FLIP_ASYNC;
+        /// Test only validity of the request, do not actually apply the requested changes
+        const TEST_ONLY = ffi::drm_sys::DRM_MODE_ATOMIC_TEST_ONLY;
+        /// Do not block on the request and return early
+        const NONBLOCK = ffi::drm_sys::DRM_MODE_ATOMIC_NONBLOCK;
+        /// Allow the changes to trigger a modeset, if necessary
+        ///
+        /// Changes requiring a modeset are rejected otherwise.
+        const ALLOW_MODESET = ffi::drm_sys::DRM_MODE_ATOMIC_ALLOW_MODESET;
+    }
+}
+
+bitflags::bitflags! {
+    /// Mode property flags
+    pub struct ModePropFlags : u32 {
+        /// Do not use
+        #[deprecated]
+        const PENDING = ffi::DRM_MODE_PROP_PENDING;
+
+        /// Non-extended types: legacy bitmask, one bit per type:
+        const LEGACY_TYPE = ffi::DRM_MODE_PROP_LEGACY_TYPE;
+        /// An unsigned integer that has a min and max value
+        const RANGE = ffi::DRM_MODE_PROP_RANGE;
+        /// Set when this property is informational only and cannot be modified
+        const IMMUTABLE = ffi::DRM_MODE_PROP_IMMUTABLE;
+        /// Enumerated type with text strings
+        const ENUM = ffi::DRM_MODE_PROP_ENUM;
+        /// A chunk of binary data that must be acquired
+        const BLOB = ffi::DRM_MODE_PROP_BLOB;
+        /// Bitmask of enumerated types
+        const BITMASK = ffi::DRM_MODE_PROP_BITMASK;
+
+        /// Extended-types: rather than continue to consume a bit per type,
+        /// grab a chunk of the bits to use as integer type id.
+        const EXTENDED_TYPE = ffi::DRM_MODE_PROP_EXTENDED_TYPE;
+        /// A DRM object that can have a specific type
+        ///
+        /// See `ffi::DRM_MODE_OBJECT_*` for specific types.
+        const OBJECT = ffi::DRM_MODE_PROP_OBJECT;
+        /// A signed integer that has a min and max value
+        const SIGNED_RANGE = ffi::DRM_MODE_PROP_SIGNED_RANGE;
+        /// the [`Self::ATOMIC`] flag is used to hide properties from userspace that
+        /// is not aware of atomic properties.  This is mostly to work around
+        /// older userspace (DDX drivers) that read/write each prop they find,
+        /// witout being aware that this could be triggering a lengthy modeset.
+        const ATOMIC = ffi::DRM_MODE_PROP_ATOMIC;
+    }
 }
