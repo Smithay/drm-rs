@@ -2,12 +2,12 @@
 name = "drm-ffi"
 description = "Safe, low-level bindings to the Direct Rendering Manager API"
 repository = "https://github.com/Smithay/drm-rs"
-version = "0.2.0"
+version = "0.2.1"
 license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
-drm-sys = { path = "drm-sys", version = "0.1.1" }
+drm-sys = { path = "drm-sys", version = "0.1.2" }
 nix = "^0.22.0"
 
 [features]
