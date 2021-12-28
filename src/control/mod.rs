@@ -1053,7 +1053,7 @@ impl Mode {
 
     /// Returns the bitmask of this mode
     pub fn mode_type(&self) -> ModeTypeFlags {
-        ModeTypeFlags::from_bits_truncate(self.mode.flags)
+        ModeTypeFlags::from_bits_truncate(self.mode.type_)
     }
 }
 
