@@ -31,13 +31,13 @@ fn run_repl(card: &Card) {
 
     for image in &images {
         // Create the Dumbbuffer
-        let fmt = drm::buffer::DrmFourcc::Argb8888;
+        let fmt = drm::buffer::DrmFourcc::Xrgb8888;
         let mut db = card
             .create_dumb_buffer(image.dimensions(), fmt, 32)
             .unwrap();
 
         // Create a Framebuffer to represent it
-        let _fb = card.add_framebuffer(&db, 32, 32).unwrap();
+        let _fb = card.add_framebuffer(&db, 24, 32).unwrap();
 
         // Load the image into the buffer
         {
