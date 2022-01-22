@@ -43,7 +43,7 @@ pub fn main() {
     let crtc = crtcinfo.get(0).expect("No crtcs found");
 
     // Select the pixel format
-    let fmt = DrmFourcc::Rgba8888;
+    let fmt = DrmFourcc::Xrgb8888;
 
     // Create a DB
     // If buffer resolution is larger than display resolution, an ENOSPC (not enough video memory)
@@ -64,7 +64,7 @@ pub fn main() {
 
     // Create an FB:
     let fb = card
-        .add_framebuffer(&db, 32, 32)
+        .add_framebuffer(&db, 24, 32)
         .expect("Could not create FB");
 
     println!("{:#?}", mode);
