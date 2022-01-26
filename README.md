@@ -1,5 +1,10 @@
 # drm-rs
 
+
+[![Crates.io](https://img.shields.io/crates/v/drm.svg)](https://crates.io/crates/drm)
+[![docs.rs](https://docs.rs/drm/badge.svg)](https://docs.rs/drm)
+[![Build Status](https://github.com/Smithay/drm-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Smithay/drm-rs/actions/workflows/ci.yml)
+
 A safe interface to the Direct Rendering Manager.
 
 ## Direct Rendering Manager
