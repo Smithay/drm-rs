@@ -1055,6 +1055,11 @@ impl Mode {
     pub fn mode_type(&self) -> ModeTypeFlags {
         ModeTypeFlags::from_bits_truncate(self.mode.type_)
     }
+
+    /// Returns the flags of this mode
+    pub fn flags(&self) -> ModeFlags {
+        ModeFlags::from_bits_truncate(self.mode.flags)
+    }
 }
 
 impl From<ffi::drm_mode_modeinfo> for Mode {
@@ -1108,6 +1113,58 @@ bitflags::bitflags! {
         const DRIVER = ffi::DRM_MODE_TYPE_DRIVER;
         /// Bitmask of all valid (non-deprecated) mode type flags
         const ALL = ffi::DRM_MODE_TYPE_ALL;
+    }
+}
+
+bitflags::bitflags! {
+    /// Display mode flags
+    pub struct ModeFlags: u32 {
+        /// PHSYNC flag
+        const PHSYNC = ffi::DRM_MODE_FLAG_PHSYNC;
+        /// NHSYNC flag
+        const NHSYNC = ffi::DRM_MODE_FLAG_NHSYNC;
+        /// PVSYNC flag
+        const PVSYNC = ffi::DRM_MODE_FLAG_PVSYNC;
+        /// NVSYNC flag
+        const NVSYNC = ffi::DRM_MODE_FLAG_NVSYNC;
+        /// Interlace flag
+        const INTERLACE = ffi::DRM_MODE_FLAG_INTERLACE;
+        /// DBLSCAN flag
+        const DBLSCAN = ffi::DRM_MODE_FLAG_DBLSCAN;
+        /// CSYNC flag
+        const CSYNC = ffi::DRM_MODE_FLAG_CSYNC;
+        /// PCSYNC flag
+        const PCSYNC = ffi::DRM_MODE_FLAG_PCSYNC;
+        /// NCSYNC flag
+        const NCSYNC = ffi::DRM_MODE_FLAG_NCSYNC;
+        /// HSKEW flag
+        const HSKEW = ffi::DRM_MODE_FLAG_HSKEW;
+        #[deprecated]
+        /// BCAST flag
+        const BCAST = ffi::DRM_MODE_FLAG_BCAST;
+        #[deprecated]
+        /// PIXMUX flag
+        const PIXMUX = ffi::DRM_MODE_FLAG_PIXMUX;
+        /// DBLCLK flag
+        const DBLCLK = ffi::DRM_MODE_FLAG_DBLCLK;
+        /// CLKDIV2 flag
+        const CLKDIV2 = ffi::DRM_MODE_FLAG_CLKDIV2;
+        /// Stereo 3D mode utilizing frame packing
+        const _3D_FRAME_PACKING = ffi::DRM_MODE_FLAG_3D_FRAME_PACKING;
+        /// Stereo 3D mode utilizing alternating fields
+        const _3D_FIELD_ALTERNATIVE = ffi::DRM_MODE_FLAG_3D_FIELD_ALTERNATIVE;
+        /// Stereo 3D mode utilizing alternating lines
+        const _3D_LINE_ALTERNATIVE = ffi::DRM_MODE_FLAG_3D_LINE_ALTERNATIVE;
+        /// Stereo 3D mode utilizing side by side full size image
+        const _3D_SIDE_BY_SIDE_FULL = ffi::DRM_MODE_FLAG_3D_SIDE_BY_SIDE_FULL;
+        /// Stereo 3D mode utilizing depth images
+        const _3D_L_DEPTH = ffi::DRM_MODE_FLAG_3D_L_DEPTH;
+        /// Stereo 3D mode utilizing depth images
+        const _3D_L_DEPTH_GFX_GFX_DEPTH = ffi::DRM_MODE_FLAG_3D_L_DEPTH_GFX_GFX_DEPTH;
+        /// Stereo 3D mode utilizing top and bottom images
+        const _3D_TOP_AND_BOTTOM = ffi::DRM_MODE_FLAG_3D_TOP_AND_BOTTOM;
+        /// Stereo 3D mode utilizing side by side half size image
+        const _3D_SIDE_BY_SIDE_HALF = ffi::DRM_MODE_FLAG_3D_SIDE_BY_SIDE_HALF;
     }
 }
 
