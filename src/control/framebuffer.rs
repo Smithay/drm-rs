@@ -2,8 +2,10 @@
 //!
 //! Process specific GPU buffers that can be attached to a plane.
 
+use buffer;
 use control;
 use drm_ffi as ffi;
+use drm_fourcc::{DrmFourcc, DrmModifier};
 
 /// A handle to a framebuffer
 #[repr(transparent)]
@@ -46,7 +48,7 @@ pub struct Info {
     pub(crate) pitch: u32,
     pub(crate) bpp: u32,
     pub(crate) depth: u32,
-    pub(crate) buffer: u32,
+    pub(crate) buffer: Option<buffer::Handle>,
 }
 
 impl Info {
@@ -73,5 +75,65 @@ impl Info {
     /// Returns the depth of this framebuffer.
     pub fn depth(&self) -> u32 {
         self.depth
+    }
+
+    /// Returns the buffer handle of this framebuffer.
+    pub fn buffer(&self) -> Option<buffer::Handle> {
+        self.buffer
+    }
+}
+
+/// Information about a framebuffer (with modifiers)
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct PlanarInfo {
+    pub(crate) handle: Handle,
+    pub(crate) size: (u32, u32),
+    pub(crate) pixel_format: DrmFourcc,
+    pub(crate) flags: u32,
+    pub(crate) buffers: [Option<buffer::Handle>; 4],
+    pub(crate) pitches: [u32; 4],
+    pub(crate) offsets: [u32; 4],
+    pub(crate) modifier: [DrmModifier; 4],
+}
+
+impl PlanarInfo {
+    /// Returns the handle to this framebuffer.
+    pub fn handle(&self) -> Handle {
+        self.handle
+    }
+
+    /// Returns the size of this framebuffer.
+    pub fn size(&self) -> (u32, u32) {
+        self.size
+    }
+
+    /// Returns the pixel format of this framebuffer.
+    pub fn pixel_format(&self) -> DrmFourcc {
+        self.pixel_format
+    }
+
+    /// Returns the flags of this framebuffer.
+    pub fn flags(&self) -> u32 {
+        self.flags
+    }
+
+    /// Returns the buffer handles of this framebuffer.
+    pub fn buffers(&self) -> [Option<buffer::Handle>; 4] {
+        self.buffers
+    }
+
+    /// Returns the pitches of this framebuffer.
+    pub fn pitches(&self) -> [u32; 4] {
+        self.pitches
+    }
+
+    /// Returns the offsets of this framebuffer.
+    pub fn offsets(&self) -> [u32; 4] {
+        self.offsets
+    }
+
+    /// Returns the modifier of this framebuffer.
+    pub fn modifier(&self) -> [DrmModifier; 4] {
+        self.modifier
     }
 }
