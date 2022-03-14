@@ -10,7 +10,7 @@ exclude = [".gitignore", ".github"]
 [dependencies]
 bitflags = "1"
 drm-ffi = { path = "drm-ffi", version = "0.2.1" }
-drm-fourcc = "^2.0.0"
+drm-fourcc = "^2.2.0"
 nix = "^0.22.0"
 
 [dev-dependencies]
