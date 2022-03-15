@@ -31,6 +31,11 @@ pub enum SystemError {
     /// Permission denied.
     PermissionDenied,
 
+    /// An unknown fourcc code was received.
+    ///
+    /// This likely indicates that the drm-fourcc crate needs updating.
+    UnknownFourcc,
+
     /// Unknown system error.
     Unknown {
         /// Unknown [`nix::errno::Errno`] returned by the system call.
@@ -46,6 +51,7 @@ impl fmt::Display for SystemError {
             SystemError::InvalidArgument => "invalid argument",
             SystemError::InvalidFileType => "invalid file type",
             SystemError::PermissionDenied => "permission denied",
+            SystemError::UnknownFourcc => "unknown fourcc",
             SystemError::Unknown { errno } => {
                 return write!(fmt, "unknown system error: {}", errno)
             }

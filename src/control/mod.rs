@@ -30,7 +30,7 @@
 
 use drm_ffi as ffi;
 use drm_ffi::result::SystemError;
-use drm_fourcc::DrmModifier;
+use drm_fourcc::{DrmFourcc, DrmModifier, UnrecognizedFourcc};
 
 pub mod atomic;
 pub mod connector;
@@ -45,6 +45,7 @@ pub mod property;
 use self::dumbbuffer::*;
 use buffer;
 
+use std::convert::TryFrom;
 use std::mem;
 use std::os::unix::io::RawFd;
 use std::time::Duration;
@@ -242,7 +243,33 @@ pub trait Device: super::Device {
             pitch: info.pitch,
             bpp: info.bpp,
             depth: info.depth,
-            buffer: info.handle,
+            buffer: unsafe { mem::transmute(info.handle) },
+        };
+
+        Ok(fb)
+    }
+
+    /// Returns information about a specific framebuffer (with modifiers)
+    fn get_planar_framebuffer(
+        &self,
+        handle: framebuffer::Handle,
+    ) -> Result<framebuffer::PlanarInfo, SystemError> {
+        let info = ffi::mode::get_framebuffer2(self.as_raw_fd(), handle.into())?;
+
+        let pixel_format = match DrmFourcc::try_from(info.pixel_format) {
+            Ok(pixel_format) => pixel_format,
+            Err(UnrecognizedFourcc(_)) => return Err(SystemError::UnknownFourcc),
+        };
+
+        let fb = framebuffer::PlanarInfo {
+            handle,
+            size: (info.width, info.height),
+            pixel_format,
+            flags: info.flags,
+            buffers: unsafe { mem::transmute(info.handles) },
+            pitches: info.pitches,
+            offsets: info.offsets,
+            modifier: info.modifier.map(DrmModifier::from),
         };
 
         Ok(fb)
