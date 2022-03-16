@@ -11,7 +11,7 @@ exclude = [".gitignore", ".github"]
 bitflags = "1"
 drm-ffi = { path = "drm-ffi", version = "0.2.1" }
 drm-fourcc = "^2.2.0"
-nix = "^0.22.0"
+nix = "0.23.1"
 
 [dev-dependencies]
 image = { version = "^0.23.14", default-features = false, features = ["png"] }
