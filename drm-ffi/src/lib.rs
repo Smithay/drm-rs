@@ -187,3 +187,28 @@ pub fn get_version(
 
     Ok(version)
 }
+
+/// Waits for a vblank.
+pub fn wait_vblank(
+    fd: RawFd,
+    type_: u32,
+    sequence: u32,
+    signal: usize,
+) -> Result<drm_wait_vblank_reply, Error> {
+    // We can't assume the kernel will completely fill the reply in the union
+    // with valid data (it won't populate the timestamp if the event flag is
+    // set, for example), so use `default` to ensure the structure is completely
+    // initialized with zeros
+    let mut wait_vblank = drm_wait_vblank::default();
+    wait_vblank.request = drm_wait_vblank_request {
+        type_,
+        sequence,
+        signal: signal as c_ulong,
+    };
+
+    unsafe {
+        ioctl::wait_vblank(fd, &mut wait_vblank)?;
+    };
+
+    Ok(unsafe { wait_vblank.reply })
+}
