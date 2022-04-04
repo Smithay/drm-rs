@@ -40,6 +40,7 @@ pub mod buffer;
 pub mod control;
 
 use std::os::unix::io::AsRawFd;
+use std::time::Duration;
 
 pub use drm_ffi::result::SystemError;
 use util::*;
@@ -209,6 +210,45 @@ pub trait Device: AsRawFd {
 
         Ok(driver)
     }
+
+    /// Waits for a vblank.
+    fn wait_vblank(
+        &self,
+        target_sequence: VblankWaitTarget,
+        flags: VblankWaitFlags,
+        high_crtc: u32,
+        user_data: usize,
+    ) -> Result<VblankWaitReply, SystemError> {
+        use drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_HIGH_CRTC_MASK;
+        use drm_ffi::_DRM_VBLANK_HIGH_CRTC_SHIFT;
+
+        let high_crtc_mask = _DRM_VBLANK_HIGH_CRTC_MASK >> _DRM_VBLANK_HIGH_CRTC_SHIFT;
+        if (high_crtc & !high_crtc_mask) != 0 {
+            return Err(SystemError::InvalidArgument);
+        }
+
+        let (sequence, wait_type) = match target_sequence {
+            VblankWaitTarget::Absolute(n) => {
+                (n, drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_ABSOLUTE)
+            }
+            VblankWaitTarget::Relative(n) => {
+                (n, drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_RELATIVE)
+            }
+        };
+
+        let type_ = wait_type | (high_crtc << _DRM_VBLANK_HIGH_CRTC_SHIFT) | flags.bits();
+        let reply = drm_ffi::wait_vblank(self.as_raw_fd(), type_, sequence, user_data)?;
+
+        let time = match (reply.tval_sec, reply.tval_usec) {
+            (0, 0) => None,
+            (sec, usec) => Some(Duration::new(sec as u64, (usec * 1000) as u32)),
+        };
+
+        Ok(VblankWaitReply {
+            frame: reply.sequence,
+            time,
+        })
+    }
 }
 
 /// An authentication token, unique to the file descriptor of the device.
@@ -304,4 +344,43 @@ pub enum ClientCapability {
     UniversalPlanes = drm_ffi::DRM_CLIENT_CAP_UNIVERSAL_PLANES as u64,
     /// The driver provides atomic modesetting
     Atomic = drm_ffi::DRM_CLIENT_CAP_ATOMIC as u64,
+}
+
+/// Used to specify a vblank sequence to wait for
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum VblankWaitTarget {
+    /// Wait for a specific vblank sequence number
+    Absolute(u32),
+    /// Wait for a given number of vblanks
+    Relative(u32),
+}
+
+bitflags::bitflags! {
+    /// Flags to alter the behaviour when waiting for a vblank
+    pub struct VblankWaitFlags : u32 {
+        /// Send event instead of blocking
+        const EVENT = drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_EVENT;
+        /// If missed, wait for next vblank
+        const NEXT_ON_MISS = drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_NEXTONMISS;
+    }
+}
+
+/// Data returned from a vblank wait
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct VblankWaitReply {
+    frame: u32,
+    time: Option<Duration>,
+}
+
+impl VblankWaitReply {
+    /// Sequence of the frame
+    pub fn frame(&self) -> u32 {
+        self.frame
+    }
+
+    /// Time at which the vblank occurred. [`None`] if an asynchronous event was
+    /// requested
+    pub fn time(&self) -> Option<Duration> {
+        self.time
+    }
 }

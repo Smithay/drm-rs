@@ -786,19 +786,28 @@ pub trait Device: super::Device {
         handle: crtc::Handle,
         framebuffer: framebuffer::Handle,
         flags: PageFlipFlags,
-        target_sequence: Option<(PageFlipTarget, u32)>,
+        target_sequence: Option<PageFlipTarget>,
     ) -> Result<(), SystemError> {
         let mut flags = flags.bits();
-        if let Some((target, _)) = target_sequence {
-            flags |= target as u32;
-        }
+
+        let sequence = match target_sequence {
+            Some(PageFlipTarget::Absolute(n)) => {
+                flags |= ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE;
+                n
+            }
+            Some(PageFlipTarget::Relative(n)) => {
+                flags |= ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_RELATIVE;
+                n
+            }
+            None => 0,
+        };
 
         let _info = ffi::mode::page_flip(
             self.as_raw_fd(),
             handle.into(),
             framebuffer.into(),
             flags,
-            target_sequence.map(|(_, sequence)| sequence).unwrap_or(0),
+            sequence,
         )?;
 
         Ok(())
@@ -834,18 +843,17 @@ bitflags::bitflags! {
     }
 }
 
-#[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// Target to alter the sequence of page flips
 ///
-/// These are the [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_FLAGS`] bits
+/// These represent the [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET`] bits
 /// of [`PageFlipFlags`] wrapped in a regular `enum` due to their
 /// mutual-exclusiveness.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PageFlipTarget {
     /// Absolute Vblank Sequence
-    Absolute = ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE,
+    Absolute(u32),
     /// Relative Vblank Sequence (to the current, when calling)
-    Relative = ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_RELATIVE,
+    Relative(u32),
 }
 
 /// Iterator over [`Event`]s of a device. Create via [`Device::receive_events()`].
@@ -869,10 +877,12 @@ pub enum Event {
 pub struct VblankEvent {
     /// sequence of the frame
     pub frame: u32,
-    /// duration between events
-    pub duration: Duration,
+    /// time at which the vblank occurred
+    pub time: Duration,
     /// crtc that did throw the event
     pub crtc: crtc::Handle,
+    /// user data that was passed to wait_vblank
+    pub user_data: usize,
 }
 
 /// Page Flip event
@@ -898,11 +908,12 @@ impl Iterator for Events {
                         unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
                     Some(Event::Vblank(VblankEvent {
                         frame: vblank_event.sequence,
-                        duration: Duration::new(
+                        time: Duration::new(
                             vblank_event.tv_sec as u64,
                             vblank_event.tv_usec * 1000,
                         ),
-                        crtc: unsafe { mem::transmute(vblank_event.user_data as u32) },
+                        crtc: unsafe { mem::transmute(vblank_event.crtc_id as u32) },
+                        user_data: vblank_event.user_data as usize,
                     }))
                 }
                 ffi::DRM_EVENT_FLIP_COMPLETE => {
