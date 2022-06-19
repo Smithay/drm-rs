@@ -177,7 +177,7 @@ pub trait Device: super::Device {
                 (0, 0) => None,
                 (x, y) => Some((x, y)),
             },
-            modes: unsafe {  transmute_vec(modes) },
+            modes: unsafe { transmute_vec(modes) },
             encoders: unsafe { mem::transmute(encoders) },
             curr_enc: unsafe { mem::transmute(ffi_info.encoder_id) },
         };
