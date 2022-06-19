@@ -72,12 +72,8 @@ pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
 
 unsafe fn transmute_vec<T, U>(from: Vec<T>) -> Vec<U> {
     let mut from = std::mem::ManuallyDrop::new(from);
-    
-    Vec::from_raw_parts(
-        from.as_mut_ptr() as *mut U,
-        from.len(),
-        from.capacity()
-    )
+
+    Vec::from_raw_parts(from.as_mut_ptr() as *mut U, from.len(), from.capacity())
 }
 
 /// This trait should be implemented by any object that acts as a DRM device and
@@ -572,7 +568,7 @@ pub trait Device: super::Device {
 
         let prop_val_set = PropertyValueSet {
             prop_ids: unsafe { mem::transmute(prop_ids) },
-            prop_vals: unsafe { mem::transmute(prop_vals) },
+            prop_vals,
             len: prop_len,
         };
 
@@ -812,7 +808,7 @@ pub trait Device: super::Device {
             None => 0,
         };
 
-        let _info = ffi::mode::page_flip(
+        ffi::mode::page_flip(
             self.as_raw_fd(),
             handle.into(),
             framebuffer.into(),
