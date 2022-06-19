@@ -70,6 +70,16 @@ pub fn from_u32<T: ResourceHandle>(raw: u32) -> Option<T> {
     RawResourceHandle::new(raw).map(T::from)
 }
 
+unsafe fn transmute_vec<T, U>(from: Vec<T>) -> Vec<U> {
+    let mut from = std::mem::ManuallyDrop::new(from);
+    
+    Vec::from_raw_parts(
+        from.as_mut_ptr() as *mut U,
+        from.len(),
+        from.capacity()
+    )
+}
+
 /// This trait should be implemented by any object that acts as a DRM device and
 /// provides modesetting functionality.
 ///
@@ -167,7 +177,7 @@ pub trait Device: super::Device {
                 (0, 0) => None,
                 (x, y) => Some((x, y)),
             },
-            modes: unsafe { mem::transmute(modes) },
+            modes: unsafe {  transmute_vec(modes) },
             encoders: unsafe { mem::transmute(encoders) },
             curr_enc: unsafe { mem::transmute(ffi_info.encoder_id) },
         };
@@ -536,7 +546,7 @@ pub trait Device: super::Device {
             None,
         )?;
 
-        Ok(unsafe { mem::transmute(modes) })
+        Ok(unsafe { transmute_vec(modes) })
     }
 
     /// Gets a list of property handles and values for this resource.
