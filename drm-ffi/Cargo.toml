@@ -8,7 +8,11 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 
 [dependencies]
 drm-sys = { path = "drm-sys", version = "0.1.2" }
-nix = "^0.23.1"
+
+[dependencies.nix]
+version = "0.24.1"
+default-features = false
+features = ["ioctl"]
 
 [features]
 use_bindgen = ["drm-sys/use_bindgen"]
