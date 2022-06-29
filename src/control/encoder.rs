@@ -7,6 +7,7 @@ use control;
 use drm_ffi as ffi;
 
 /// A handle to an encoder
+#[repr(transparent)]
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::RawResourceHandle);
 
