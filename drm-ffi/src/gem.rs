@@ -3,7 +3,6 @@
 //!
 
 use drm_sys::*;
-use ioctl;
 
 use result::SystemError as Error;
 
@@ -17,7 +16,7 @@ pub fn open(fd: RawFd, name: u32) -> Result<drm_gem_open, Error> {
     };
 
     unsafe {
-        ioctl::gem::open(fd, &mut gem)?;
+        crate::ioctl::gem::open(fd, &mut gem)?;
     }
 
     Ok(gem)
@@ -31,7 +30,7 @@ pub fn close(fd: RawFd, handle: u32) -> Result<drm_gem_close, Error> {
     };
 
     unsafe {
-        ioctl::gem::close(fd, &gem)?;
+        crate::ioctl::gem::close(fd, &gem)?;
     }
 
     Ok(gem)
@@ -46,7 +45,7 @@ pub fn handle_to_fd(fd: RawFd, handle: u32, flags: u32) -> Result<drm_prime_hand
     };
 
     unsafe {
-        ioctl::gem::prime_handle_to_fd(fd, &mut prime)?;
+        crate::ioctl::gem::prime_handle_to_fd(fd, &mut prime)?;
     }
 
     Ok(prime)
@@ -60,7 +59,7 @@ pub fn fd_to_handle(fd: RawFd, primefd: RawFd) -> Result<drm_prime_handle, Error
     };
 
     unsafe {
-        ioctl::gem::prime_fd_to_handle(fd, &mut prime)?;
+        crate::ioctl::gem::prime_fd_to_handle(fd, &mut prime)?;
     }
 
     Ok(prime)

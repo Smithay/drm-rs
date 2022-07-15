@@ -29,7 +29,6 @@ use std::os::unix::io::RawFd;
 ///
 pub mod auth {
     use drm_sys::*;
-    use ioctl;
 
     use nix::Error;
     use std::os::unix::io::RawFd;
@@ -39,7 +38,7 @@ pub mod auth {
         let mut auth = drm_auth::default();
 
         unsafe {
-            ioctl::get_token(fd, &mut auth)?;
+            crate::ioctl::get_token(fd, &mut auth)?;
         }
 
         Ok(auth)
@@ -50,7 +49,7 @@ pub mod auth {
         let token = drm_auth { magic: auth };
 
         unsafe {
-            ioctl::auth_token(fd, &token)?;
+            crate::ioctl::auth_token(fd, &token)?;
         }
 
         Ok(token)
@@ -59,7 +58,7 @@ pub mod auth {
     /// Acquire the 'Master DRM Lock' for this file descriptor.
     pub fn acquire_master(fd: RawFd) -> Result<(), Error> {
         unsafe {
-            ioctl::acquire_master(fd)?;
+            crate::ioctl::acquire_master(fd)?;
         }
 
         Ok(())
@@ -68,7 +67,7 @@ pub mod auth {
     /// Release the 'Master DRM Lock' for this file descriptor.
     pub fn release_master(fd: RawFd) -> Result<(), Error> {
         unsafe {
-            ioctl::release_master(fd)?;
+            crate::ioctl::release_master(fd)?;
         }
 
         Ok(())
