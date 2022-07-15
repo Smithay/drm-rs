@@ -357,13 +357,69 @@ pub fn move_cursor(fd: RawFd, crtc_id: u32, x: i32, y: i32) -> Result<drm_mode_c
 pub fn get_connector(
     fd: RawFd,
     connector_id: u32,
-    props: Option<&mut &mut [u32]>,
-    prop_values: Option<&mut &mut [u64]>,
+    mut props: Option<&mut Vec<u32>>,
+    mut prop_values: Option<&mut Vec<u64>>,
     mut modes: Option<&mut Vec<drm_mode_modeinfo>>,
-    encoders: Option<&mut &mut [u32]>,
+    mut encoders: Option<&mut Vec<u32>>,
+    force_probe: bool,
 ) -> Result<drm_mode_get_connector, Error> {
-    let modes_count = if modes.is_some() {
+    assert_eq!(props.is_some(), prop_values.is_some());
+    let (mut count_modes, mut count_encoders, mut count_props) =
+        if modes.is_some() || encoders.is_some() || props.is_some() {
+            let tmp_mode_info = force_probe.then(|| [drm_mode_modeinfo::default()]);
+            let mut info = drm_mode_get_connector {
+                connector_id,
+                modes_ptr: map_ptr!(&tmp_mode_info),
+                count_modes: if force_probe { 0 } else { 1 },
+                ..Default::default()
+            };
+
+            unsafe {
+                ioctl::mode::get_connector(fd, &mut info)?;
+            }
+
+            (info.count_modes, info.count_encoders, info.count_props)
+        } else {
+            (0, 0, 0)
+        };
+
+    let info = loop {
         let mut info = drm_mode_get_connector {
+            encoders_ptr: match encoders.as_mut() {
+                Some(encoders) => {
+                    encoders.clear();
+                    encoders.reserve_exact(count_encoders as usize);
+                    encoders.as_ptr() as _
+                }
+                None => 0u64,
+            },
+            modes_ptr: match modes.as_mut() {
+                Some(modes) => {
+                    modes.clear();
+                    modes.reserve_exact(count_modes as usize);
+                    modes.as_ptr() as _
+                }
+                None => 0u64,
+            },
+            props_ptr: match props.as_mut() {
+                Some(props) => {
+                    props.clear();
+                    props.reserve_exact(count_props as usize);
+                    props.as_ptr() as _
+                }
+                None => 0u64,
+            },
+            prop_values_ptr: match prop_values.as_mut() {
+                Some(prop_values) => {
+                    prop_values.clear();
+                    prop_values.reserve_exact(count_props as usize);
+                    prop_values.as_ptr() as _
+                }
+                None => 0u64,
+            },
+            count_modes,
+            count_props,
+            count_encoders,
             connector_id,
             ..Default::default()
         };
@@ -372,43 +428,38 @@ pub fn get_connector(
             ioctl::mode::get_connector(fd, &mut info)?;
         }
 
-        info.count_modes
-    } else {
-        0
+        if info.count_modes == count_modes
+            && info.count_encoders == count_encoders
+            && info.count_props == count_props
+        {
+            break info;
+        } else {
+            count_modes = info.count_modes;
+            count_encoders = info.count_encoders;
+            count_props = info.count_props;
+        }
     };
-
-    let mut info = drm_mode_get_connector {
-        encoders_ptr: map_ptr!(&encoders),
-        modes_ptr: match modes.as_mut() {
-            Some(modes) => {
-                modes.clear();
-                modes.reserve_exact(modes_count as usize);
-                modes.as_ptr() as _
-            }
-            None => 0u64,
-        },
-        props_ptr: map_ptr!(&props),
-        prop_values_ptr: map_ptr!(&prop_values),
-        count_modes: modes_count,
-        count_props: map_len!(&props),
-        count_encoders: map_len!(&encoders),
-        connector_id,
-        ..Default::default()
-    };
-
-    unsafe {
-        ioctl::mode::get_connector(fd, &mut info)?;
-    }
 
     if let Some(modes) = modes {
         unsafe {
             modes.set_len(info.count_modes as usize);
         }
     }
-
-    map_shrink!(props, info.count_props as usize);
-    map_shrink!(prop_values, info.count_props as usize);
-    map_shrink!(encoders, info.count_encoders as usize);
+    if let Some(encoders) = encoders {
+        unsafe {
+            encoders.set_len(info.count_encoders as usize);
+        }
+    }
+    if let Some(props) = props {
+        unsafe {
+            props.set_len(info.count_props as usize);
+        }
+    }
+    if let Some(prop_values) = prop_values {
+        unsafe {
+            prop_values.set_len(info.count_props as usize);
+        }
+    }
 
     Ok(info)
 }

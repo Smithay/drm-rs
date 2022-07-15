@@ -149,10 +149,13 @@ pub trait Device: super::Device {
     }
 
     /// Returns information about a specific connector
-    fn get_connector(&self, handle: connector::Handle) -> Result<connector::Info, SystemError> {
+    fn get_connector(
+        &self,
+        handle: connector::Handle,
+        force_probe: bool,
+    ) -> Result<connector::Info, SystemError> {
         // Maximum number of encoders is 3 due to kernel restrictions
-        let mut encoders = [0u32; 3];
-        let mut enc_slice = &mut encoders[..];
+        let mut encoders = Vec::new();
         let mut modes = Vec::new();
 
         let ffi_info = ffi::mode::get_connector(
@@ -161,7 +164,8 @@ pub trait Device: super::Device {
             None,
             None,
             Some(&mut modes),
-            Some(&mut enc_slice),
+            Some(&mut encoders),
+            force_probe,
         )?;
 
         let connector = connector::Info {
@@ -174,7 +178,7 @@ pub trait Device: super::Device {
                 (x, y) => Some((x, y)),
             },
             modes: unsafe { transmute_vec(modes) },
-            encoders: unsafe { mem::transmute(encoders) },
+            encoders: unsafe { transmute_vec(encoders) },
             curr_enc: unsafe { mem::transmute(ffi_info.encoder_id) },
         };
 
@@ -540,6 +544,7 @@ pub trait Device: super::Device {
             None,
             Some(&mut modes),
             None,
+            false,
         )?;
 
         Ok(unsafe { transmute_vec(modes) })

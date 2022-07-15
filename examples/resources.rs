@@ -27,7 +27,7 @@ pub fn main() {
     println!("Planes:\t\t{:?}", plane_res.planes());
 
     for &handle in resources.connectors() {
-        let info = card.get_connector(handle).unwrap();
+        let info = card.get_connector(handle, false).unwrap();
         println!("Connector: {:?}", handle);
         println!("\t{:?}-{}", info.interface(), info.interface_id());
         println!("\t{:?}", info.state());
