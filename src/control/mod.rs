@@ -768,9 +768,9 @@ pub trait Device: super::Device {
             self.as_raw_fd(),
             flags.bits(),
             unsafe { &mut *(&mut *req.objects as *mut _ as *mut [u32]) },
-            &mut *req.count_props_per_object,
+            &mut req.count_props_per_object,
             unsafe { &mut *(&mut *req.props as *mut _ as *mut [u32]) },
-            &mut *req.values,
+            &mut req.values,
         )
     }
 
