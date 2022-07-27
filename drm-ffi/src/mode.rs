@@ -380,11 +380,13 @@ pub fn get_connector(
     mut prop_values: Option<&mut Vec<u64>>,
     mut modes: Option<&mut Vec<drm_mode_modeinfo>>,
     mut encoders: Option<&mut Vec<u32>>,
+    force_probe: bool,
 ) -> Result<drm_mode_get_connector, Error> {
     assert_eq!(props.is_some(), prop_values.is_some());
 
     let mut sizes = drm_mode_get_connector {
         connector_id,
+        count_modes: if force_probe { 0 } else { 1 },
         ..Default::default()
     };
 

@@ -10,7 +10,7 @@ pub fn main() {
 
     let resources = card.resource_handles().unwrap();
     for connector in resources.connectors().iter() {
-        let info = card.get_connector(*connector).unwrap();
+        let info = card.get_connector(*connector, false).unwrap();
         println!("Connector {:?}: {:?}", info.interface(), info.state());
         if info.state() == drm::control::connector::State::Connected {
             println!("\t Modes:\n{:#?}", info.modes());

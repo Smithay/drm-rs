@@ -124,7 +124,11 @@ pub trait Device: super::Device {
     }
 
     /// Returns information about a specific connector
-    fn get_connector(&self, handle: connector::Handle) -> Result<connector::Info, SystemError> {
+    fn get_connector(
+        &self,
+        handle: connector::Handle,
+        force_probe: bool,
+    ) -> Result<connector::Info, SystemError> {
         // Maximum number of encoders is 3 due to kernel restrictions
         let mut encoders = Vec::new();
         let mut modes = Vec::new();
@@ -136,6 +140,7 @@ pub trait Device: super::Device {
             None,
             Some(&mut modes),
             Some(&mut encoders),
+            force_probe,
         )?;
 
         let connector = connector::Info {
@@ -504,6 +509,7 @@ pub trait Device: super::Device {
             None,
             Some(&mut modes),
             None,
+            false,
         )?;
 
         Ok(unsafe { transmute_vec(modes) })
