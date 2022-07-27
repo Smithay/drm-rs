@@ -1,4 +1,4 @@
-/// Takes an `Option<&mut &mut [T]>` style buffer and gets its pointer.
+/// Takes an `Option<&mut Vec<T>>` style buffer and gets its pointer.
 macro_rules! map_ptr {
     ($buffer:expr) => {
         match $buffer {
@@ -8,35 +8,31 @@ macro_rules! map_ptr {
     };
 }
 
-/// Takes an `Option<&mut &mut T>` style buffer and gets its length.
+/// Takes an `Option<&mut Vec<T>>` style buffer and gets its allocated length.
 macro_rules! map_len {
     ($buffer:expr) => {
         match $buffer {
-            Some(b) => b.len() as _,
-            None => 0 as _,
+            Some(b) => b.capacity() as _,
+            None => 0,
         }
     };
 }
 
-/// Takes an `Option<&mut &mut T>` style buffer and shrinks it.
-macro_rules! map_shrink {
-    ($buffer:expr, $min:expr) => {
+/// Takes an `Option<&mut Vec<T>>` style buffer and shrinks it.
+macro_rules! map_reserve {
+    ($buffer:expr, $size:expr) => {
         match $buffer {
-            Some(b) => utils::shrink(b, $min),
+            Some(ref mut b) => b.reserve_exact($size - b.len()),
             _ => (),
         }
     };
 }
-
-/// Takes a `&mut &mut [T]` and shrinks the slice down to a specific size.
-pub fn shrink<T>(slice_ref: &mut &mut [T], min: usize) {
-    use std::mem::replace;
-    use std::slice::from_raw_parts_mut;
-
-    if min < slice_ref.len() {
-        let ptr = slice_ref.as_mut_ptr();
-        unsafe {
-            let _ = replace(slice_ref, from_raw_parts_mut(ptr, min));
+/// Takes an `Option<&mut Vec<T>>` style buffer and shrinks it.
+macro_rules! map_set {
+    ($buffer:expr, $min:expr) => {
+        match $buffer {
+            Some(ref mut b) => unsafe { b.set_len($min) },
+            _ => (),
         }
-    }
+    };
 }

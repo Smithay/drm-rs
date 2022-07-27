@@ -24,7 +24,7 @@ pub fn main() {
     println!("Encoders:\t{:?}", resources.encoders());
     println!("CRTCs:\t\t{:?}", resources.crtcs());
     println!("Framebuffers:\t{:?}", resources.framebuffers());
-    println!("Planes:\t\t{:?}", plane_res.planes());
+    println!("Planes:\t\t{:?}", plane_res);
 
     for &handle in resources.connectors() {
         let info = card.get_connector(handle).unwrap();
@@ -70,7 +70,7 @@ pub fn main() {
 
     println!("\n");
 
-    for &handle in plane_res.planes() {
+    for handle in plane_res {
         let info = card.get_plane(handle).unwrap();
         println!("Plane: {:?}", handle);
         println!("\tCRTC: {:?}", info.crtc());

@@ -76,12 +76,20 @@ pub mod auth {
 }
 
 /// Load this device's Bus ID into a buffer.
-///
-/// If the buffer is too small, this will load the maximum bytes in the buffer.
-/// If the buffer is too big, this will coerce the buffer to the proper size.
-pub fn get_bus_id(fd: RawFd, buf: Option<&mut &mut [u8]>) -> Result<drm_unique, Error> {
+pub fn get_bus_id(fd: RawFd, mut buf: Option<&mut Vec<u8>>) -> Result<drm_unique, Error> {
+    let mut sizes = drm_unique::default();
+    unsafe {
+        ioctl::get_bus_id(fd, &mut sizes)?;
+    }
+
+    if buf.is_none() {
+        return Ok(sizes);
+    }
+
+    map_reserve!(buf, sizes.unique_len as usize);
+
     let mut busid = drm_unique {
-        unique_len: map_len!(&buf),
+        unique_len: sizes.unique_len,
         unique: map_ptr!(&buf),
     };
 
@@ -89,7 +97,7 @@ pub fn get_bus_id(fd: RawFd, buf: Option<&mut &mut [u8]>) -> Result<drm_unique, 
         ioctl::get_bus_id(fd, &mut busid)?;
     }
 
-    map_shrink!(buf, busid.unique_len as usize);
+    map_set!(buf, busid.unique_len as usize);
 
     Ok(busid)
 }
@@ -158,15 +166,21 @@ pub fn set_capability(fd: RawFd, cty: u64, val: bool) -> Result<drm_set_client_c
 }
 
 /// Gets the driver version for this device.
-///
-/// If any buffer is too small, this will load the maximum bytes in the buffer.
-/// If any buffer is too big, this will coerce the buffer to the proper size.
 pub fn get_version(
     fd: RawFd,
-    name_buf: Option<&mut &mut [i8]>,
-    date_buf: Option<&mut &mut [i8]>,
-    desc_buf: Option<&mut &mut [i8]>,
+    mut name_buf: Option<&mut Vec<i8>>,
+    mut date_buf: Option<&mut Vec<i8>>,
+    mut desc_buf: Option<&mut Vec<i8>>,
 ) -> Result<drm_version, Error> {
+    let mut sizes = drm_version::default();
+    unsafe {
+        ioctl::get_version(fd, &mut sizes)?;
+    }
+
+    map_reserve!(name_buf, sizes.name_len as usize);
+    map_reserve!(date_buf, sizes.date_len as usize);
+    map_reserve!(desc_buf, sizes.desc_len as usize);
+
     let mut version = drm_version {
         name_len: map_len!(&name_buf),
         name: map_ptr!(&name_buf),
@@ -181,9 +195,9 @@ pub fn get_version(
         ioctl::get_version(fd, &mut version)?;
     }
 
-    map_shrink!(name_buf, version.name_len as usize);
-    map_shrink!(date_buf, version.date_len as usize);
-    map_shrink!(desc_buf, version.desc_len as usize);
+    map_set!(name_buf, version.name_len as usize);
+    map_set!(date_buf, version.date_len as usize);
+    map_set!(desc_buf, version.desc_len as usize);
 
     Ok(version)
 }

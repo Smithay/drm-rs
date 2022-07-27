@@ -48,7 +48,7 @@ pub fn main() {
         print_properties(&card, handle);
     }
 
-    for &handle in plane_res.planes() {
+    for handle in plane_res {
         print_properties(&card, handle);
     }
 }

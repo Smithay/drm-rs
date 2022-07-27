@@ -51,7 +51,7 @@ pub struct Info {
     pub(crate) connection: State,
     pub(crate) size: Option<(u32, u32)>,
     pub(crate) modes: Vec<control::Mode>,
-    pub(crate) encoders: [Option<control::encoder::Handle>; 3],
+    pub(crate) encoders: Vec<control::encoder::Handle>,
     pub(crate) curr_enc: Option<control::encoder::Handle>,
 }
 
@@ -85,7 +85,7 @@ impl Info {
     }
 
     /// Returns a list of encoders that can be possibly used by this connector.
-    pub fn encoders(&self) -> &[Option<control::encoder::Handle>] {
+    pub fn encoders(&self) -> &[control::encoder::Handle] {
         &self.encoders
     }
 

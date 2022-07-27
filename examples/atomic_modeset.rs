@@ -96,7 +96,6 @@ pub fn main() {
         Vec<control::plane::Handle>,
         Vec<control::plane::Handle>,
     ) = planes
-        .planes()
         .iter()
         .filter(|&&plane| {
             card.get_plane(plane)
