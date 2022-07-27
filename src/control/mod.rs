@@ -49,6 +49,7 @@ use super::util::*;
 
 use std::convert::TryFrom;
 use std::mem;
+use std::ops::RangeBounds;
 use std::os::unix::io::RawFd;
 use std::time::Duration;
 
@@ -942,6 +943,16 @@ impl ResourceHandles {
     /// Returns the set of [`framebuffer::Handle`]
     pub fn framebuffers(&self) -> &[framebuffer::Handle] {
         &self.fbs
+    }
+
+    /// Returns the supported minimum and maximum width for framebuffers
+    pub fn supported_fb_width(&self) -> impl RangeBounds<u32> {
+        self.width.0..=self.width.1
+    }
+
+    /// Returns the supported minimum and maximum height for framebuffers
+    pub fn supported_fb_height(&self) -> impl RangeBounds<u32> {
+        self.height.0..=self.height.1
     }
 
     /// Apply a filter the all crtcs of these resources, resulting in a list of crtcs allowed.
