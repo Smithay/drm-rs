@@ -39,7 +39,8 @@ pub(crate) mod util;
 pub mod buffer;
 pub mod control;
 
-use std::os::unix::io::AsRawFd;
+use std::ffi::{OsStr, OsString};
+use std::os::unix::{ffi::OsStringExt, io::AsRawFd};
 use std::time::Duration;
 
 pub use drm_ffi::result::SystemError;
@@ -141,19 +142,10 @@ pub trait Device: AsRawFd {
     }
 
     /// Gets the [`BusID`] of this device.
-    fn get_bus_id(&self) -> Result<BusID, SystemError> {
-        let mut buffer = [0u8; 32];
-
-        let buffer_len;
-
-        let _busid = {
-            let mut slice = &mut buffer[..];
-            let busid = drm_ffi::get_bus_id(self.as_raw_fd(), Some(&mut slice))?;
-            buffer_len = slice.len();
-            busid
-        };
-
-        let bus_id = BusID(SmallOsString::from_u8_buffer(buffer, buffer_len));
+    fn get_bus_id(&self) -> Result<OsString, SystemError> {
+        let mut buffer = Vec::new();
+        let _ = drm_ffi::get_bus_id(self.as_raw_fd(), Some(&mut buffer))?;
+        let bus_id = OsString::from_vec(buffer);
 
         Ok(bus_id)
     }
@@ -175,36 +167,20 @@ pub trait Device: AsRawFd {
     ///   - [`SystemError::MemoryFault`]: Kernel could not copy fields into userspace
     #[allow(missing_docs)]
     fn get_driver(&self) -> Result<Driver, SystemError> {
-        let mut name = [0i8; 32];
-        let mut date = [0i8; 32];
-        let mut desc = [0i8; 32];
+        let mut name = Vec::new();
+        let mut date = Vec::new();
+        let mut desc = Vec::new();
 
-        let name_len;
-        let date_len;
-        let desc_len;
+        let _ = drm_ffi::get_version(
+            self.as_raw_fd(),
+            Some(&mut name),
+            Some(&mut date),
+            Some(&mut desc),
+        )?;
 
-        let _version = {
-            let mut name_slice = &mut name[..];
-            let mut date_slice = &mut date[..];
-            let mut desc_slice = &mut desc[..];
-
-            let version = drm_ffi::get_version(
-                self.as_raw_fd(),
-                Some(&mut name_slice),
-                Some(&mut date_slice),
-                Some(&mut desc_slice),
-            )?;
-
-            name_len = name_slice.len();
-            date_len = date_slice.len();
-            desc_len = desc_slice.len();
-
-            version
-        };
-
-        let name = SmallOsString::from_i8_buffer(name, name_len);
-        let date = SmallOsString::from_i8_buffer(date, date_len);
-        let desc = SmallOsString::from_i8_buffer(desc, desc_len);
+        let name = OsString::from_vec(unsafe { transmute_vec(name) });
+        let date = OsString::from_vec(unsafe { transmute_vec(date) });
+        let desc = OsString::from_vec(unsafe { transmute_vec(desc) });
 
         let driver = Driver { name, date, desc };
 
@@ -265,23 +241,15 @@ pub trait Device: AsRawFd {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AuthToken(u32);
 
-/// Bus ID of a device.
-#[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct BusID(SmallOsString);
-
-impl AsRef<OsStr> for BusID {
-    fn as_ref(&self) -> &OsStr {
-        self.0.as_ref()
-    }
-}
-
 /// Driver version of a device.
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Driver {
-    name: SmallOsString,
-    date: SmallOsString,
-    desc: SmallOsString,
+    /// Name of the driver
+    pub name: OsString,
+    /// Date driver was published
+    pub date: OsString,
+    /// Driver description
+    pub desc: OsString,
 }
 
 impl Driver {

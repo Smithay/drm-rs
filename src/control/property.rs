@@ -51,7 +51,7 @@ impl std::fmt::Debug for Handle {
 }
 
 /// Information about a property
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Info {
     pub(crate) handle: Handle,
     pub(crate) val_type: ValueType,
@@ -68,7 +68,7 @@ impl Info {
 
     /// Returns the ValueType of this property.
     pub fn value_type(&self) -> ValueType {
-        self.val_type
+        self.val_type.clone()
     }
 
     /// Returns whether this property is mutable.
@@ -85,7 +85,7 @@ impl Info {
 /// Describes the types of value that a property uses.
 #[allow(clippy::upper_case_acronyms)]
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum ValueType {
     /// A catch-all for any unknown types
     Unknown,
@@ -227,17 +227,16 @@ impl std::fmt::Debug for EnumValue {
 }
 
 /// A set of [`EnumValue`]s for a single property
-#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct EnumValues {
-    pub(crate) values: [u64; 24],
-    pub(crate) enums: [EnumValue; 24],
-    pub(crate) length: usize,
+    pub(crate) values: Vec<u64>,
+    pub(crate) enums: Vec<EnumValue>,
 }
 
 impl EnumValues {
     /// Returns a tuple containing slices to the [`RawValue`]s and the [`EnumValue`]s
     pub fn values(&self) -> (&[RawValue], &[EnumValue]) {
-        (&self.values[..self.length], &self.enums[..self.length])
+        (&self.values, &self.enums)
     }
 
     /// Returns an [`EnumValue`] for a [`RawValue`], or [`None`] if `value` is
@@ -251,16 +250,5 @@ impl EnumValues {
             values.iter().position(|&v| v == value)?
         };
         Some(&enums[index])
-    }
-}
-
-impl std::fmt::Debug for EnumValues {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let (vals, enums) = self.values();
-
-        f.debug_struct("EnumValues")
-            .field("values", &vals)
-            .field("enums", &enums)
-            .finish()
     }
 }

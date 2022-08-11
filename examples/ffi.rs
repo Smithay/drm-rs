@@ -30,9 +30,8 @@ impl Card {
 }
 
 fn print_busid(fd: RawFd) {
-    let mut buffer = [0u8; 32];
-    let mut slice = &mut buffer[..];
-    let busid = ffi::get_bus_id(fd, Some(&mut slice));
+    let mut buffer = Vec::new();
+    let busid = ffi::get_bus_id(fd, Some(&mut buffer));
     println!("{:#?}", busid);
 }
 
@@ -42,20 +41,11 @@ fn print_client(fd: RawFd) {
 }
 
 fn print_version(fd: RawFd) {
-    let mut name = [0i8; 32];
-    let mut date = [0i8; 32];
-    let mut desc = [0i8; 32];
+    let mut name = Vec::new();
+    let mut date = Vec::new();
+    let mut desc = Vec::new();
 
-    let mut name_slice = &mut name[..];
-    let mut date_slice = &mut date[..];
-    let mut desc_slice = &mut desc[..];
-
-    let version = ffi::get_version(
-        fd,
-        Some(&mut name_slice),
-        Some(&mut date_slice),
-        Some(&mut desc_slice),
-    );
+    let version = ffi::get_version(fd, Some(&mut name), Some(&mut date), Some(&mut desc));
 
     println!("{:#?}", version);
 }

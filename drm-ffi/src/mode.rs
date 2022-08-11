@@ -10,16 +10,24 @@ use ioctl;
 use result::SystemError as Error;
 use std::os::unix::io::RawFd;
 
-use utils;
-
 /// Enumerate most card resources.
 pub fn get_resources(
     fd: RawFd,
-    fbs: Option<&mut &mut [u32]>,
-    crtcs: Option<&mut &mut [u32]>,
-    connectors: Option<&mut &mut [u32]>,
-    encoders: Option<&mut &mut [u32]>,
+    mut fbs: Option<&mut Vec<u32>>,
+    mut crtcs: Option<&mut Vec<u32>>,
+    mut connectors: Option<&mut Vec<u32>>,
+    mut encoders: Option<&mut Vec<u32>>,
 ) -> Result<drm_mode_card_res, Error> {
+    let mut sizes = drm_mode_card_res::default();
+    unsafe {
+        ioctl::mode::get_resources(fd, &mut sizes)?;
+    }
+
+    map_reserve!(fbs, sizes.count_fbs as usize);
+    map_reserve!(crtcs, sizes.count_crtcs as usize);
+    map_reserve!(connectors, sizes.count_connectors as usize);
+    map_reserve!(encoders, sizes.count_encoders as usize);
+
     let mut res = drm_mode_card_res {
         fb_id_ptr: map_ptr!(&fbs),
         crtc_id_ptr: map_ptr!(&crtcs),
@@ -36,10 +44,10 @@ pub fn get_resources(
         ioctl::mode::get_resources(fd, &mut res)?;
     }
 
-    map_shrink!(fbs, res.count_fbs as usize);
-    map_shrink!(crtcs, res.count_crtcs as usize);
-    map_shrink!(connectors, res.count_connectors as usize);
-    map_shrink!(encoders, res.count_encoders as usize);
+    map_set!(fbs, res.count_fbs as usize);
+    map_set!(crtcs, res.count_crtcs as usize);
+    map_set!(connectors, res.count_connectors as usize);
+    map_set!(encoders, res.count_encoders as usize);
 
     Ok(res)
 }
@@ -47,18 +55,29 @@ pub fn get_resources(
 /// Enumerate plane resources.
 pub fn get_plane_resources(
     fd: RawFd,
-    planes: Option<&mut &mut [u32]>,
+    mut planes: Option<&mut Vec<u32>>,
 ) -> Result<drm_mode_get_plane_res, Error> {
+    let mut sizes = drm_mode_get_plane_res::default();
+    unsafe {
+        ioctl::mode::get_plane_resources(fd, &mut sizes)?;
+    }
+
+    if planes.is_none() {
+        return Ok(sizes);
+    }
+
+    map_reserve!(planes, sizes.count_planes as usize);
+
     let mut res = drm_mode_get_plane_res {
         plane_id_ptr: map_ptr!(&planes),
-        count_planes: map_len!(&planes),
+        count_planes: sizes.count_planes,
     };
 
     unsafe {
         ioctl::mode::get_plane_resources(fd, &mut res)?;
     }
 
-    map_shrink!(planes, res.count_planes as usize);
+    map_set!(planes, res.count_planes as usize);
 
     Ok(res)
 }
@@ -357,14 +376,39 @@ pub fn move_cursor(fd: RawFd, crtc_id: u32, x: i32, y: i32) -> Result<drm_mode_c
 pub fn get_connector(
     fd: RawFd,
     connector_id: u32,
-    props: Option<&mut &mut [u32]>,
-    prop_values: Option<&mut &mut [u64]>,
+    mut props: Option<&mut Vec<u32>>,
+    mut prop_values: Option<&mut Vec<u64>>,
     mut modes: Option<&mut Vec<drm_mode_modeinfo>>,
-    encoders: Option<&mut &mut [u32]>,
+    mut encoders: Option<&mut Vec<u32>>,
+    force_probe: bool,
 ) -> Result<drm_mode_get_connector, Error> {
-    let modes_count = if modes.is_some() {
+    assert_eq!(props.is_some(), prop_values.is_some());
+
+    let mut sizes = drm_mode_get_connector {
+        connector_id,
+        count_modes: if force_probe { 0 } else { 1 },
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::get_connector(fd, &mut sizes)?;
+    }
+
+    let info = loop {
+        map_reserve!(props, sizes.count_props as usize);
+        map_reserve!(prop_values, sizes.count_props as usize);
+        map_reserve!(modes, sizes.count_modes as usize);
+        map_reserve!(encoders, sizes.count_encoders as usize);
+
         let mut info = drm_mode_get_connector {
             connector_id,
+            encoders_ptr: map_ptr!(&encoders),
+            modes_ptr: map_ptr!(&modes),
+            props_ptr: map_ptr!(&props),
+            prop_values_ptr: map_ptr!(&prop_values),
+            count_modes: map_len!(&modes),
+            count_props: map_len!(&props),
+            count_encoders: map_len!(&encoders),
             ..Default::default()
         };
 
@@ -372,43 +416,20 @@ pub fn get_connector(
             ioctl::mode::get_connector(fd, &mut info)?;
         }
 
-        info.count_modes
-    } else {
-        0
-    };
-
-    let mut info = drm_mode_get_connector {
-        encoders_ptr: map_ptr!(&encoders),
-        modes_ptr: match modes.as_mut() {
-            Some(modes) => {
-                modes.clear();
-                modes.reserve_exact(modes_count as usize);
-                modes.as_ptr() as _
-            }
-            None => 0u64,
-        },
-        props_ptr: map_ptr!(&props),
-        prop_values_ptr: map_ptr!(&prop_values),
-        count_modes: modes_count,
-        count_props: map_len!(&props),
-        count_encoders: map_len!(&encoders),
-        connector_id,
-        ..Default::default()
-    };
-
-    unsafe {
-        ioctl::mode::get_connector(fd, &mut info)?;
-    }
-
-    if let Some(modes) = modes {
-        unsafe {
-            modes.set_len(info.count_modes as usize);
+        if info.count_modes == sizes.count_modes
+            && info.count_encoders == sizes.count_encoders
+            && info.count_props == sizes.count_props
+        {
+            break info;
+        } else {
+            sizes = info;
         }
-    }
+    };
 
-    map_shrink!(props, info.count_props as usize);
-    map_shrink!(prop_values, info.count_props as usize);
-    map_shrink!(encoders, info.count_encoders as usize);
+    map_set!(modes, info.count_modes as usize);
+    map_set!(props, info.count_props as usize);
+    map_set!(prop_values, info.count_props as usize);
+    map_set!(encoders, info.count_encoders as usize);
 
     Ok(info)
 }
@@ -431,11 +452,26 @@ pub fn get_encoder(fd: RawFd, encoder_id: u32) -> Result<drm_mode_get_encoder, E
 pub fn get_plane(
     fd: RawFd,
     plane_id: u32,
-    formats: Option<&mut &mut [u32]>,
+    mut formats: Option<&mut Vec<u32>>,
 ) -> Result<drm_mode_get_plane, Error> {
+    let mut sizes = drm_mode_get_plane {
+        plane_id,
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::get_plane(fd, &mut sizes)?;
+    }
+
+    if formats.is_none() {
+        return Ok(sizes);
+    }
+
+    map_reserve!(formats, sizes.count_format_types as usize);
+
     let mut info = drm_mode_get_plane {
         plane_id,
-        count_format_types: map_len!(&formats),
+        count_format_types: sizes.count_format_types,
         format_type_ptr: map_ptr!(&formats),
         ..Default::default()
     };
@@ -444,7 +480,7 @@ pub fn get_plane(
         ioctl::mode::get_plane(fd, &mut info)?;
     }
 
-    map_shrink!(formats, info.count_format_types as usize);
+    map_set!(formats, info.count_format_types as usize);
 
     Ok(info)
 }
@@ -491,13 +527,25 @@ pub fn set_plane(
 pub fn get_property(
     fd: RawFd,
     prop_id: u32,
-    values: Option<&mut &mut [u64]>,
-    enums: Option<&mut &mut [drm_mode_property_enum]>,
+    mut values: Option<&mut Vec<u64>>,
+    mut enums: Option<&mut Vec<drm_mode_property_enum>>,
 ) -> Result<drm_mode_get_property, Error> {
+    let mut sizes = drm_mode_get_property {
+        prop_id,
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::get_property(fd, &mut sizes)?;
+    }
+
+    map_reserve!(values, sizes.count_values as usize);
+    map_reserve!(enums, sizes.count_enum_blobs as usize);
+
     let mut prop = drm_mode_get_property {
+        prop_id,
         values_ptr: map_ptr!(&values),
         enum_blob_ptr: map_ptr!(&enums),
-        prop_id,
         count_values: map_len!(&values),
         count_enum_blobs: map_len!(&enums),
         ..Default::default()
@@ -507,8 +555,8 @@ pub fn get_property(
         ioctl::mode::get_property(fd, &mut prop)?;
     }
 
-    map_shrink!(values, prop.count_values as usize);
-    map_shrink!(enums, prop.count_enum_blobs as usize);
+    map_set!(values, prop.count_values as usize);
+    map_set!(enums, prop.count_enum_blobs as usize);
 
     Ok(prop)
 }
@@ -537,11 +585,26 @@ pub fn set_connector_property(
 pub fn get_property_blob(
     fd: RawFd,
     blob_id: u32,
-    data: Option<&mut &mut [u8]>,
+    mut data: Option<&mut Vec<u8>>,
 ) -> Result<drm_mode_get_blob, Error> {
+    let mut sizes = drm_mode_get_blob {
+        blob_id,
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::get_blob(fd, &mut sizes)?;
+    }
+
+    if data.is_none() {
+        return Ok(sizes);
+    }
+
+    map_reserve!(data, sizes.length as usize);
+
     let mut blob = drm_mode_get_blob {
         blob_id,
-        length: map_len!(&data),
+        length: sizes.length,
         data: map_ptr!(&data),
     };
 
@@ -549,7 +612,7 @@ pub fn get_property_blob(
         ioctl::mode::get_blob(fd, &mut blob)?;
     }
 
-    map_shrink!(data, blob.length as usize);
+    map_set!(data, blob.length as usize);
 
     Ok(blob)
 }
@@ -585,9 +648,24 @@ pub fn get_properties(
     fd: RawFd,
     obj_id: u32,
     obj_type: u32,
-    props: Option<&mut &mut [u32]>,
-    values: Option<&mut &mut [u64]>,
+    mut props: Option<&mut Vec<u32>>,
+    mut values: Option<&mut Vec<u64>>,
 ) -> Result<drm_mode_obj_get_properties, Error> {
+    assert_eq!(props.is_some(), values.is_some());
+
+    let mut sizes = drm_mode_obj_get_properties {
+        obj_id,
+        obj_type,
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::obj_get_properties(fd, &mut sizes)?;
+    }
+
+    map_reserve!(props, sizes.count_props as usize);
+    map_reserve!(values, sizes.count_props as usize);
+
     let mut info = drm_mode_obj_get_properties {
         props_ptr: map_ptr!(&props),
         prop_values_ptr: map_ptr!(&values),
@@ -600,8 +678,8 @@ pub fn get_properties(
         ioctl::mode::obj_get_properties(fd, &mut info)?;
     }
 
-    map_shrink!(props, info.count_props as usize);
-    map_shrink!(values, info.count_props as usize);
+    map_set!(props, info.count_props as usize);
+    map_set!(values, info.count_props as usize);
 
     Ok(info)
 }

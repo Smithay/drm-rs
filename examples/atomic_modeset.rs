@@ -44,7 +44,7 @@ pub fn main() {
     let coninfo: Vec<connector::Info> = res
         .connectors()
         .iter()
-        .flat_map(|con| card.get_connector(*con))
+        .flat_map(|con| card.get_connector(*con, true))
         .collect();
     let crtcinfo: Vec<crtc::Info> = res
         .crtcs()
@@ -96,7 +96,6 @@ pub fn main() {
         Vec<control::plane::Handle>,
         Vec<control::plane::Handle>,
     ) = planes
-        .planes()
         .iter()
         .filter(|&&plane| {
             card.get_plane(plane)

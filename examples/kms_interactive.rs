@@ -92,7 +92,7 @@ fn run_repl(card: &Card) {
                 println!("\tCRTCS: {:?}", resources.crtcs());
                 println!("\tFramebuffers: {:?}", resources.framebuffers());
                 let planes = card.plane_handles().unwrap();
-                println!("\tPlanes: {:?}", planes.planes());
+                println!("\tPlanes: {:?}", planes);
             }
             // Print out the values of a specific property
             ["GetProperty", handle] => {
@@ -202,7 +202,7 @@ impl HandleWithProperties {
         }
 
         let phandles = card.plane_handles().unwrap();
-        for plane in phandles.planes().iter().map(|h| (*h).into()) {
+        for plane in phandles.iter().map(|h| (*h).into()) {
             if handle == plane {
                 return Ok(HandleWithProperties::Plane(handle.into()));
             }

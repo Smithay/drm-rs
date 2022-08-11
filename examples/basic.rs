@@ -13,7 +13,7 @@ pub fn main() {
     println!("Release Master lock: {:?}", card.release_master_lock());
 
     // Get the Bus ID of the device
-    println!("Getting Bus ID: {:?}", card.get_bus_id().unwrap().as_ref());
+    println!("Getting Bus ID: {:?}", card.get_bus_id().unwrap());
 
     // Figure out driver in use
     println!("Getting driver info");
