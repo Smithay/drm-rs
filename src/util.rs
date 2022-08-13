@@ -10,9 +10,9 @@ pub unsafe fn transmute_vec<T, U>(from: Vec<T>) -> Vec<U> {
 
 pub unsafe fn transmute_vec_from_u32<T: From<RawResourceHandle>>(raw: Vec<u32>) -> Vec<T> {
     if cfg!(debug_assertions) {
-        raw.into_iter().map(
-            |handle| from_u32(handle).unwrap()
-        ).collect()
+        raw.into_iter()
+            .map(|handle| from_u32(handle).unwrap())
+            .collect()
     } else {
         transmute_vec(raw)
     }

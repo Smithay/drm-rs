@@ -531,7 +531,7 @@ pub trait Device: super::Device {
 
         let prop_val_set = PropertyValueSet {
             prop_ids: unsafe { transmute_vec_from_u32(prop_ids) },
-            prop_vals
+            prop_vals,
         };
 
         Ok(prop_val_set)
