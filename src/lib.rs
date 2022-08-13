@@ -34,6 +34,8 @@ extern crate drm_ffi;
 extern crate drm_fourcc;
 extern crate nix;
 
+extern crate bytemuck;
+
 pub(crate) mod util;
 
 pub mod buffer;

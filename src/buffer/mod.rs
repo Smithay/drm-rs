@@ -24,6 +24,7 @@
 //! like a regular one. This allows better control and security, and is the
 //! recommended method of sharing buffers.
 
+use control;
 pub use drm_fourcc::{DrmFourcc, DrmModifier, DrmVendor, UnrecognizedFourcc, UnrecognizedVendor};
 
 /// A handle to a GEM buffer
@@ -35,9 +36,13 @@ pub use drm_fourcc::{DrmFourcc, DrmModifier, DrmVendor, UnrecognizedFourcc, Unre
 /// prevent buffers from leaking by properly closing them after they are done.
 #[repr(transparent)]
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
-pub struct Handle(::control::RawResourceHandle);
+pub struct Handle(control::RawResourceHandle);
 
-impl From<Handle> for ::control::RawResourceHandle {
+// Safety: Handle is repr(transparent) over NonZeroU32
+unsafe impl bytemuck::ZeroableInOption for Handle {}
+unsafe impl bytemuck::PodInOption for Handle {}
+
+impl From<Handle> for control::RawResourceHandle {
     fn from(handle: Handle) -> Self {
         handle.0
     }
@@ -49,8 +54,8 @@ impl From<Handle> for u32 {
     }
 }
 
-impl From<::control::RawResourceHandle> for Handle {
-    fn from(handle: ::control::RawResourceHandle) -> Self {
+impl From<control::RawResourceHandle> for Handle {
+    fn from(handle: control::RawResourceHandle) -> Self {
         Handle(handle)
     }
 }
