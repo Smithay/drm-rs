@@ -4,6 +4,7 @@ extern crate rustyline;
 
 /// Check the `util` module to see how the `Card` structure is implemented.
 pub mod utils;
+use drm::control::{from_u32, RawResourceHandle};
 use utils::*;
 
 pub fn main() {
@@ -78,8 +79,7 @@ fn run_repl(card: &Card) {
             // Destroying a framebuffer
             ["DestroyFramebuffer", handle] => {
                 let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::framebuffer::Handle =
-                    unsafe { std::mem::transmute(handle) };
+                let handle: drm::control::framebuffer::Handle = from_u32(handle).unwrap();
                 if let Err(err) = card.destroy_framebuffer(handle) {
                     println!("Unable to destroy framebuffer ({:?}): {}", handle, err);
                 }
@@ -97,7 +97,7 @@ fn run_repl(card: &Card) {
             // Print out the values of a specific property
             ["GetProperty", handle] => {
                 let handle: u32 = str::parse(handle).unwrap();
-                let handle: drm::control::property::Handle = unsafe { std::mem::transmute(handle) };
+                let handle: drm::control::property::Handle = from_u32(handle).unwrap();
                 let property = card.get_property(handle).unwrap();
                 println!("\tName: {:?}", property.name());
                 println!("\tMutable: {:?}", property.mutable());
@@ -124,8 +124,7 @@ fn run_repl(card: &Card) {
             // Set a property's value on a resource
             ["SetProperty", handle, property, value] => {
                 let property: u32 = str::parse(property).unwrap();
-                let property: drm::control::property::Handle =
-                    unsafe { std::mem::transmute(property) };
+                let property: drm::control::property::Handle = from_u32(property).unwrap();
                 let value: u64 = str::parse(value).unwrap();
 
                 match HandleWithProperties::from_str(card, handle) {
@@ -186,7 +185,7 @@ impl HandleWithProperties {
     // the corresponding resource.
     fn from_str(card: &Card, handle: &str) -> Result<Self, ()> {
         let handle: u32 = str::parse(handle).unwrap();
-        let handle = drm::control::RawResourceHandle::new(handle).unwrap();
+        let handle = RawResourceHandle::new(handle).unwrap();
 
         let rhandles = card.resource_handles().unwrap();
         for connector in rhandles.connectors().iter().map(|h| (*h).into()) {

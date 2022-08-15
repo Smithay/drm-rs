@@ -12,6 +12,10 @@ use drm_fourcc::{DrmFourcc, DrmModifier};
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Handle(control::RawResourceHandle);
 
+// Safety: Handle is repr(transparent) over NonZeroU32
+unsafe impl bytemuck::ZeroableInOption for Handle {}
+unsafe impl bytemuck::PodInOption for Handle {}
+
 impl From<Handle> for control::RawResourceHandle {
     fn from(handle: Handle) -> Self {
         handle.0

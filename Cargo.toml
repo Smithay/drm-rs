@@ -9,6 +9,7 @@ exclude = [".gitignore", ".github"]
 
 [dependencies]
 bitflags = "1"
+bytemuck = { version = "1.12", features = ["extern_crate_alloc", "derive"] }
 drm-ffi = { path = "drm-ffi", version = "0.2.1" }
 drm-fourcc = "^2.2.0"
 
