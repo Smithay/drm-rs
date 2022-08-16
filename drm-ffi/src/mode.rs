@@ -384,8 +384,14 @@ pub fn get_connector(
 ) -> Result<drm_mode_get_connector, Error> {
     assert_eq!(props.is_some(), prop_values.is_some());
 
+    let tmp_mode = drm_mode_modeinfo::default();
     let mut sizes = drm_mode_get_connector {
         connector_id,
+        modes_ptr: if force_probe {
+            0
+        } else {
+            &tmp_mode as *const _ as _
+        },
         count_modes: if force_probe { 0 } else { 1 },
         ..Default::default()
     };
@@ -403,10 +409,28 @@ pub fn get_connector(
         let mut info = drm_mode_get_connector {
             connector_id,
             encoders_ptr: map_ptr!(&encoders),
-            modes_ptr: map_ptr!(&modes),
+            modes_ptr: match &modes {
+                Some(b) => b.as_ptr() as _,
+                None => {
+                    if force_probe {
+                        0 as _
+                    } else {
+                        &tmp_mode as *const _ as _
+                    }
+                }
+            },
             props_ptr: map_ptr!(&props),
             prop_values_ptr: map_ptr!(&prop_values),
-            count_modes: map_len!(&modes),
+            count_modes: match &modes {
+                Some(b) => b.capacity() as _,
+                None => {
+                    if force_probe {
+                        0
+                    } else {
+                        1
+                    }
+                }
+            },
             count_props: map_len!(&props),
             count_encoders: map_len!(&encoders),
             ..Default::default()
