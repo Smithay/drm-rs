@@ -266,21 +266,23 @@ pub trait Device: super::Device {
     fn add_framebuffer<B>(
         &self,
         buffer: &B,
-        depth: u32,
-        bpp: u32,
+        modifier: Option<DrmModifier>,
+        flags: u32,
     ) -> Result<framebuffer::Handle, SystemError>
     where
         B: buffer::Buffer + ?Sized,
     {
         let (w, h) = buffer.size();
-        let info = ffi::mode::add_fb(
+        let info = ffi::mode::add_fb2(
             self.as_raw_fd(),
             w,
             h,
-            buffer.pitch(),
-            bpp,
-            depth,
-            buffer.handle().into(),
+            buffer.format() as u32,
+            &[buffer.handle().into(), 0,0,0],
+            &[buffer.pitch(),0,0,0],
+            &[0,0,0,0],
+            &[modifier.map(Into::<u64>::into).unwrap_or(0),0,0,0],
+            flags,
         )?;
 
         Ok(from_u32(info.fb_id).unwrap())
