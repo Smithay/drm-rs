@@ -1168,7 +1168,8 @@ impl PropertyValueSet {
     }
 }
 
-type ClipRect = ffi::drm_sys::drm_clip_rect;
+/// Describes a rectangular region of a buffer
+pub type ClipRect = ffi::drm_sys::drm_clip_rect;
 
 bitflags::bitflags! {
     /// Commit flags for atomic mode setting
