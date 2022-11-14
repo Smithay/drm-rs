@@ -10,15 +10,15 @@ pub use drm::control::ResourceHandle;
 /// A simple wrapper for a device node.
 pub struct Card(std::fs::File);
 
-/// Implementing `AsRawFd` is a prerequisite to implementing the traits found
-/// in this crate. Here, we are just calling `as_raw_fd()` on the inner File.
-impl std::os::unix::io::AsRawFd for Card {
-    fn as_raw_fd(&self) -> std::os::unix::io::RawFd {
-        self.0.as_raw_fd()
+/// Implementing `AsFd` is a prerequisite to implementing the traits found
+/// in this crate. Here, we are just calling `as_fd()` on the inner File.
+impl std::os::unix::io::AsFd for Card {
+    fn as_fd(&self) -> std::os::unix::io::BorrowedFd<'_> {
+        self.0.as_fd()
     }
 }
 
-/// With `AsRawFd` implemented, we can now implement `drm::Device`.
+/// With `AsFd` implemented, we can now implement `drm::Device`.
 impl Device for Card {}
 impl ControlDevice for Card {}
 
