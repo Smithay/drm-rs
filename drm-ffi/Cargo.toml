@@ -10,7 +10,7 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 drm-sys = { path = "drm-sys", version = "0.2.0" }
 
 [dependencies.nix]
-version = "0.24.1"
+version = "0.25.0"
 default-features = false
 features = ["ioctl"]
 

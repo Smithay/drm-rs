@@ -14,7 +14,7 @@ drm-ffi = { path = "drm-ffi", version = "0.3.0" }
 drm-fourcc = "^2.2.0"
 
 [dependencies.nix]
-version = "0.24.1"
+version = "0.25.0"
 default-features = false
 features = ["mman"]
 
