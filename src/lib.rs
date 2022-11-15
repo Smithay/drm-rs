@@ -42,7 +42,10 @@ pub mod buffer;
 pub mod control;
 
 use std::ffi::{OsStr, OsString};
-use std::os::unix::{ffi::OsStringExt, io::AsRawFd};
+use std::os::unix::{
+    ffi::OsStringExt,
+    io::{AsFd, AsRawFd},
+};
 use std::time::Duration;
 
 pub use drm_ffi::result::SystemError;
@@ -66,23 +69,23 @@ use util::*;
 /// use std::fs::File;
 /// use std::fs::OpenOptions;
 ///
-/// use std::os::unix::io::RawFd;
-/// use std::os::unix::io::AsRawFd;
+/// use std::os::unix::io::AsFd;
+/// use std::os::unix::io::BorrowedFd;
 ///
 /// #[derive(Debug)]
 /// /// A simple wrapper for a device node.
 /// struct Card(File);
 ///
-/// /// Implementing [`AsRawFd`] is a prerequisite to implementing the traits found
-/// /// in this crate. Here, we are just calling [`File::as_raw_fd()`] on the inner
+/// /// Implementing [`AsFd`] is a prerequisite to implementing the traits found
+/// /// in this crate. Here, we are just calling [`File::as_fd()`] on the inner
 /// /// [`File`].
-/// impl AsRawFd for Card {
-///     fn as_raw_fd(&self) -> RawFd {
-///         self.0.as_raw_fd()
+/// impl AsFd for Card {
+///     fn as_fd(&self) -> BorrowedFd<'_> {
+///         self.0.as_fd()
 ///     }
 /// }
 ///
-/// /// With [`AsRawFd`] implemented, we can now implement [`drm::Device`].
+/// /// With [`AsFd`] implemented, we can now implement [`drm::Device`].
 /// impl Device for Card {}
 ///
 /// impl Card {
@@ -97,7 +100,7 @@ use util::*;
 ///     }
 /// }
 /// ```
-pub trait Device: AsRawFd {
+pub trait Device: AsFd {
     /// Acquires the DRM Master lock for this process.
     ///
     /// # Notes
@@ -109,26 +112,26 @@ pub trait Device: AsRawFd {
     /// This function is only available to processes with CAP_SYS_ADMIN
     /// privileges (usually as root)
     fn acquire_master_lock(&self) -> Result<(), SystemError> {
-        drm_ffi::auth::acquire_master(self.as_raw_fd())?;
+        drm_ffi::auth::acquire_master(self.as_fd().as_raw_fd())?;
         Ok(())
     }
 
     /// Releases the DRM Master lock for another process to use.
     fn release_master_lock(&self) -> Result<(), SystemError> {
-        drm_ffi::auth::release_master(self.as_raw_fd())?;
+        drm_ffi::auth::release_master(self.as_fd().as_raw_fd())?;
         Ok(())
     }
 
     /// Generates an [`AuthToken`] for this process.
     #[deprecated(note = "Consider opening a render node instead.")]
     fn generate_auth_token(&self) -> Result<AuthToken, SystemError> {
-        let token = drm_ffi::auth::get_magic_token(self.as_raw_fd())?;
+        let token = drm_ffi::auth::get_magic_token(self.as_fd().as_raw_fd())?;
         Ok(AuthToken(token.magic))
     }
 
     /// Authenticates an [`AuthToken`] from another process.
     fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), SystemError> {
-        drm_ffi::auth::auth_magic_token(self.as_raw_fd(), token.0)?;
+        drm_ffi::auth::auth_magic_token(self.as_fd().as_raw_fd(), token.0)?;
         Ok(())
     }
 
@@ -139,14 +142,14 @@ pub trait Device: AsRawFd {
         cap: ClientCapability,
         enable: bool,
     ) -> Result<(), SystemError> {
-        drm_ffi::set_capability(self.as_raw_fd(), cap as u64, enable)?;
+        drm_ffi::set_capability(self.as_fd().as_raw_fd(), cap as u64, enable)?;
         Ok(())
     }
 
     /// Gets the [`BusID`] of this device.
     fn get_bus_id(&self) -> Result<OsString, SystemError> {
         let mut buffer = Vec::new();
-        let _ = drm_ffi::get_bus_id(self.as_raw_fd(), Some(&mut buffer))?;
+        let _ = drm_ffi::get_bus_id(self.as_fd().as_raw_fd(), Some(&mut buffer))?;
         let bus_id = OsString::from_vec(buffer);
 
         Ok(bus_id)
@@ -155,13 +158,13 @@ pub trait Device: AsRawFd {
     /// Check to see if our [`AuthToken`] has been authenticated
     /// by the DRM Master
     fn authenticated(&self) -> Result<bool, SystemError> {
-        let client = drm_ffi::get_client(self.as_raw_fd(), 0)?;
+        let client = drm_ffi::get_client(self.as_fd().as_raw_fd(), 0)?;
         Ok(client.auth == 1)
     }
 
     /// Gets the value of a capability.
     fn get_driver_capability(&self, cap: DriverCapability) -> Result<u64, SystemError> {
-        let cap = drm_ffi::get_capability(self.as_raw_fd(), cap as u64)?;
+        let cap = drm_ffi::get_capability(self.as_fd().as_raw_fd(), cap as u64)?;
         Ok(cap.value)
     }
 
@@ -174,7 +177,7 @@ pub trait Device: AsRawFd {
         let mut desc = Vec::new();
 
         let _ = drm_ffi::get_version(
-            self.as_raw_fd(),
+            self.as_fd().as_raw_fd(),
             Some(&mut name),
             Some(&mut date),
             Some(&mut desc),
@@ -215,7 +218,7 @@ pub trait Device: AsRawFd {
         };
 
         let type_ = wait_type | (high_crtc << _DRM_VBLANK_HIGH_CRTC_SHIFT) | flags.bits();
-        let reply = drm_ffi::wait_vblank(self.as_raw_fd(), type_, sequence, user_data)?;
+        let reply = drm_ffi::wait_vblank(self.as_fd().as_raw_fd(), type_, sequence, user_data)?;
 
         let time = match (reply.tval_sec, reply.tval_usec) {
             (0, 0) => None,

@@ -143,7 +143,7 @@ mod use_bindgen {
         println!("cargo:rerun-if-changed={}", dest_file.display());
 
         fs::create_dir_all(&dest_dir).unwrap();
-        fs::copy(&bind_file, &dest_file).unwrap();
+        fs::copy(bind_file, &dest_file).unwrap();
 
         if let Ok(github_env) = var("GITHUB_ENV") {
             let mut env_file = fs::OpenOptions::new()
