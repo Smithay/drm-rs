@@ -51,6 +51,7 @@ use super::util::*;
 
 use std::convert::TryFrom;
 use std::mem;
+use std::num::NonZeroUsize;
 use std::ops::RangeBounds;
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::time::Duration;
@@ -637,13 +638,12 @@ pub trait Device: super::Device {
 
         let map = {
             use nix::sys::mman;
-            let addr = core::ptr::null_mut();
             let prot = mman::ProtFlags::PROT_READ | mman::ProtFlags::PROT_WRITE;
             let flags = mman::MapFlags::MAP_SHARED;
-            let length = buffer.length;
+            let length = NonZeroUsize::new(buffer.length).ok_or(SystemError::InvalidArgument)?;
             let fd = self.as_fd().as_raw_fd();
             let offset = info.offset as _;
-            unsafe { mman::mmap(addr, length, prot, flags, fd, offset)? }
+            unsafe { mman::mmap(None, length, prot, flags, fd, offset)? }
         };
 
         let mapping = DumbMapping {
