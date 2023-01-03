@@ -373,7 +373,6 @@ pub fn move_cursor(fd: RawFd, crtc_id: u32, x: i32, y: i32) -> Result<drm_mode_c
 }
 
 /// Get info about a connector
-#[allow(clippy::bool_to_int_with_if)]
 pub fn get_connector(
     fd: RawFd,
     connector_id: u32,
