@@ -1,7 +1,7 @@
 [package]
 name = "drm-sys"
 description = "Bindings to the Direct Rendering Manager API"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 license = "MIT"
 build = "build.rs"

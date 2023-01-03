@@ -2,13 +2,13 @@
 name = "drm-ffi"
 description = "Safe, low-level bindings to the Direct Rendering Manager API"
 repository = "https://github.com/Smithay/drm-rs"
-version = "0.3.0"
+version = "0.4.0"
 license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 rust-version = "1.63"
 
 [dependencies]
-drm-sys = { path = "drm-sys", version = "0.2.0" }
+drm-sys = { path = "drm-sys", version = "0.3.0" }
 
 [dependencies.nix]
 version = "0.26.0"

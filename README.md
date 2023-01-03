@@ -1,6 +1,5 @@
 # drm-rs
 
-
 [![Crates.io](https://img.shields.io/crates/v/drm.svg)](https://crates.io/crates/drm)
 [![docs.rs](https://docs.rs/drm/badge.svg)](https://docs.rs/drm)
 [![Build Status](https://github.com/Smithay/drm-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Smithay/drm-rs/actions/workflows/ci.yml)
@@ -31,10 +30,11 @@ trait. Here is a basic example using `File` as a backend:
 /// A simple wrapper for a device node.
 pub struct Card(std::fs::File);
 
-/// Implementing `AsFd` is a prerequisite to implementing the traits found
-/// in this crate. Here, we are just calling `as_fd()` on the inner File.
-impl std::os::unix::io::AsRawFd for Card {
-    fn as_fd(&self) -> std::os::unix::io::BorrowedFd<'_> {
+/// Implementing [`AsFd`] is a prerequisite to implementing the traits found
+/// in this crate. Here, we are just calling [`File::as_fd()`] on the inner
+/// [`File`].
+impl AsFd for Card {
+    fn as_fd(&self) -> BorrowedFd<'_> {
         self.0.as_fd()
     }
 }
