@@ -10,7 +10,7 @@ on:
 
 jobs:
   format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - name: Setup Rust
@@ -35,7 +35,7 @@ jobs:
           args: --all -- --check
 
   doc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - name: Setup Rust
@@ -61,7 +61,7 @@ jobs:
           command: doc
 
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
       - run: |
@@ -93,7 +93,7 @@ jobs:
           args: --all --all-features --all-targets -- -D warnings -A clippy::redundant_static_lifetimes
 
   check-minimal:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
       - run: |
@@ -134,36 +134,36 @@ jobs:
         include:
           # Generate bindings
           - task: bindings
-            os: ubuntu-latest
+            os: ubuntu-22.04
             rust: stable
             target: i686-unknown-linux-gnu
           - task: bindings
-            os: ubuntu-latest
+            os: ubuntu-22.04
             rust: stable
             target: x86_64-unknown-linux-gnu
           - task: bindings
-            os: ubuntu-latest
+            os: ubuntu-22.04
             rust: stable
             target: arm-unknown-linux-gnueabihf
           - task: bindings
-            os: ubuntu-latest
+            os: ubuntu-22.04
             rust: stable
             target: armv7-unknown-linux-gnueabihf
           - task: bindings
-            os: ubuntu-latest
+            os: ubuntu-22.04
             rust: stable
             target: aarch64-unknown-linux-gnu
           # Test channels
           - task: channels
-            os: ubuntu-latest
+            os: ubuntu-22.04
             rust: stable
             target: x86_64-unknown-linux-gnu
           - task: channels
-            os: ubuntu-latest
+            os: ubuntu-22.04
             rust: beta
             target: x86_64-unknown-linux-gnu
           - task: channels
-            os: ubuntu-latest
+            os: ubuntu-22.04
             rust: nightly
             target: x86_64-unknown-linux-gnu
     runs-on: ${{ matrix.os }}
@@ -189,12 +189,12 @@ jobs:
           case "${{ matrix.target }}" in
             arm* | aarch64*)
           sudo tee /etc/apt/sources.list << EOF
-          deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ focal main universe
-          deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ focal-updates main universe
-          deb [arch=i386,amd64] http://security.ubuntu.com/ubuntu/ focal-security main universe
-          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal main universe
-          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main universe
-          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-security main universe
+          deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy main universe
+          deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main universe
+          deb [arch=i386,amd64] http://security.ubuntu.com/ubuntu/ jammy-security main universe
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main universe
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main universe
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main universe
           EOF
               ;;
           esac
@@ -202,7 +202,7 @@ jobs:
           dpkg --print-foreign-architectures
           sudo apt-get update -y
           sudo apt-get upgrade -y --fix-broken
-          sudo apt-get install -y libdrm-dev:${SYSTEM_ARCH} gcc-${GCC_TARGET} pkg-config-${GCC_TARGET}
+          sudo apt-get install -y libdrm-dev:${SYSTEM_ARCH} gcc-${GCC_TARGET} pkg-config
           echo "CARGO_TARGET_${ENV_TARGET_UC}_LINKER=${GCC_TARGET}-gcc" >> $GITHUB_ENV
           echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
           echo "PKG_CONFIG_${ENV_TARGET}=${GCC_TARGET}-pkg-config" >> $GITHUB_ENV
@@ -268,7 +268,7 @@ jobs:
     if: ${{ github.event_name != 'pull_request' && !startsWith(github.ref, 'refs/tags/') }}
     needs:
       - test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - name: Download bindings
@@ -294,7 +294,7 @@ jobs:
       - check
       - check-minimal
       - test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - name: Setup Rust
