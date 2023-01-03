@@ -5,6 +5,7 @@ version = "0.2.0"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 license = "MIT"
 build = "build.rs"
+rust-version = "1.63"
 
 [dependencies]
 libc = { version = "^0.2.29", default-features = false }
