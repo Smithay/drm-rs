@@ -130,7 +130,7 @@ pub trait Device: super::Device {
     ///
     /// ## Force-probing
     ///
-    /// If the `force_probe` is set to `true` and the DRM client is the current DRM master,
+    /// If `force_probe` is set to `true` and the DRM client is the current DRM master,
     /// the kernel will perform a forced probe on the connector to refresh the connector status, modes and EDID.
     /// A forced-probe can be slow, might cause flickering and the ioctl will block.
     ///
