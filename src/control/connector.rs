@@ -127,6 +127,9 @@ pub enum Interface {
     Virtual,
     DSI,
     DPI,
+    Writeback,
+    SPI,
+    USB,
 }
 
 impl From<u32> for Interface {
@@ -150,6 +153,9 @@ impl From<u32> for Interface {
             ffi::DRM_MODE_CONNECTOR_VIRTUAL => Interface::Virtual,
             ffi::DRM_MODE_CONNECTOR_DSI => Interface::DSI,
             ffi::DRM_MODE_CONNECTOR_DPI => Interface::DPI,
+            ffi::DRM_MODE_CONNECTOR_WRITEBACK => Interface::Writeback,
+            ffi::DRM_MODE_CONNECTOR_SPI => Interface::SPI,
+            ffi::DRM_MODE_CONNECTOR_USB => Interface::USB,
             _ => Interface::Unknown,
         }
     }
@@ -176,6 +182,9 @@ impl From<Interface> for u32 {
             Interface::Virtual => ffi::DRM_MODE_CONNECTOR_VIRTUAL,
             Interface::DSI => ffi::DRM_MODE_CONNECTOR_DSI,
             Interface::DPI => ffi::DRM_MODE_CONNECTOR_DPI,
+            Interface::Writeback => ffi::DRM_MODE_CONNECTOR_WRITEBACK,
+            Interface::SPI => ffi::DRM_MODE_CONNECTOR_SPI,
+            Interface::USB => ffi::DRM_MODE_CONNECTOR_USB,
         }
     }
 }
