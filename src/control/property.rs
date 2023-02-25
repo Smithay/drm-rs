@@ -65,6 +65,11 @@ pub struct Info {
 }
 
 impl Info {
+    /// Returns the handle to this property.
+    pub fn handle(&self) -> Handle {
+        self.handle
+    }
+
     /// Returns the name of this property.
     pub fn name(&self) -> &std::ffi::CStr {
         unsafe { std::ffi::CStr::from_ptr(&self.info.name[0] as _) }
