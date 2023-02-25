@@ -1172,6 +1172,12 @@ impl PropertyValueSet {
     pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawValue]) {
         (&self.prop_ids, &self.prop_vals)
     }
+
+    /// Returns iterator over pairs representing a set of [`property::Handle`] and their raw values
+    pub fn iter(&self) -> impl Iterator<Item = (&property::Handle, &property::RawValue)> {
+        let (ids, values) = self.as_props_and_values();
+        ids.iter().zip(values.iter())
+    }
 }
 
 /// Describes a rectangular region of a buffer
