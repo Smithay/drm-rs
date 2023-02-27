@@ -133,6 +133,36 @@ pub enum Interface {
     USB,
 }
 
+impl Interface {
+    /// Get interface name as string
+    pub fn as_str(&self) -> &'static str {
+        // source: https://github.com/torvalds/linux/blob/489fa31ea873282b41046d412ec741f93946fc2d/drivers/gpu/drm/drm_connector.c#L89
+        match self {
+            Interface::Unknown => "Unknown",
+            Interface::VGA => "VGA",
+            Interface::DVII => "DVI-I",
+            Interface::DVID => "DVI-D",
+            Interface::DVIA => "DVI-A",
+            Interface::Composite => "Composite",
+            Interface::SVideo => "SVIDEO",
+            Interface::LVDS => "LVDS",
+            Interface::Component => "Component",
+            Interface::NinePinDIN => "DIN",
+            Interface::DisplayPort => "DP",
+            Interface::HDMIA => "HDMI-A",
+            Interface::HDMIB => "HDMI-B",
+            Interface::TV => "TV",
+            Interface::EmbeddedDisplayPort => "eDP",
+            Interface::Virtual => "Virtual",
+            Interface::DSI => "DSI",
+            Interface::DPI => "DPI",
+            Interface::Writeback => "Writeback",
+            Interface::SPI => "SPI",
+            Interface::USB => "USB",
+        }
+    }
+}
+
 impl From<u32> for Interface {
     fn from(n: u32) -> Self {
         match n {
