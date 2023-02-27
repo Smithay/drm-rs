@@ -107,6 +107,7 @@ impl Info {
 /// A physical interface type.
 #[allow(missing_docs)]
 #[allow(clippy::upper_case_acronyms)]
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum Interface {
     Unknown,
