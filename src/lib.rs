@@ -146,7 +146,7 @@ pub trait Device: AsFd {
         Ok(())
     }
 
-    /// Gets the [`BusID`] of this device.
+    /// Gets the bus ID of this device.
     fn get_bus_id(&self) -> Result<OsString, SystemError> {
         let mut buffer = Vec::new();
         let _ = drm_ffi::get_bus_id(self.as_fd().as_raw_fd(), Some(&mut buffer))?;
