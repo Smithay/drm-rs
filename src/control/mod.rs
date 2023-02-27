@@ -50,6 +50,7 @@ use buffer;
 use super::util::*;
 
 use std::convert::TryFrom;
+use std::iter::Zip;
 use std::mem;
 use std::num::NonZeroUsize;
 use std::ops::RangeBounds;
@@ -1171,6 +1172,31 @@ impl PropertyValueSet {
     /// Returns a pair representing a set of [`property::Handle`] and their raw values
     pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawValue]) {
         (&self.prop_ids, &self.prop_vals)
+    }
+
+    /// Returns iterator over pairs representing a set of [`property::Handle`] and their raw values
+    pub fn iter(&self) -> impl Iterator<Item = (&property::Handle, &property::RawValue)> {
+        self.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a PropertyValueSet {
+    type Item = (&'a property::Handle, &'a property::RawValue);
+    type IntoIter =
+        Zip<std::slice::Iter<'a, property::Handle>, std::slice::Iter<'a, property::RawValue>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.prop_ids.iter().zip(self.prop_vals.iter())
+    }
+}
+
+impl IntoIterator for PropertyValueSet {
+    type Item = (property::Handle, property::RawValue);
+    type IntoIter =
+        Zip<std::vec::IntoIter<property::Handle>, std::vec::IntoIter<property::RawValue>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.prop_ids.into_iter().zip(self.prop_vals.into_iter())
     }
 }
 
