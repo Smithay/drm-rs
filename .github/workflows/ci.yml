@@ -201,6 +201,7 @@ jobs:
           sudo dpkg --add-architecture ${SYSTEM_ARCH}
           dpkg --print-foreign-architectures
           sudo apt-get update -y
+          sudo apt-mark hold grub-efi-amd64-signed
           sudo apt-get upgrade -y --fix-broken
           sudo apt-get install -y libdrm-dev:${SYSTEM_ARCH} gcc-${GCC_TARGET} pkg-config
           echo "CARGO_TARGET_${ENV_TARGET_UC}_LINKER=${GCC_TARGET}-gcc" >> $GITHUB_ENV
