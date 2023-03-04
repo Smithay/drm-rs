@@ -205,6 +205,83 @@ impl<'a> From<Value<'a>> for RawValue {
     }
 }
 
+macro_rules! match_variant {
+    ($this:ident, $variant:ident) => {
+        if let Self::$variant(v) = *$this {
+            Some(v)
+        } else {
+            None
+        }
+    };
+}
+
+impl<'a> Value<'a> {
+    /// Boolean value
+    pub fn as_boolean(&self) -> Option<bool> {
+        match_variant!(self, Boolean)
+    }
+
+    /// Unsigned range value
+    pub fn as_unsigned_range(&self) -> Option<u64> {
+        match_variant!(self, UnsignedRange)
+    }
+
+    /// Signed range value
+    pub fn as_signed_range(&self) -> Option<i64> {
+        match_variant!(self, SignedRange)
+    }
+
+    /// Enum Value
+    pub fn as_enum(&self) -> Option<&'a EnumValue> {
+        match_variant!(self, Enum).flatten()
+    }
+
+    /// Bitmask value
+    pub fn as_bitmask(&self) -> Option<u64> {
+        match_variant!(self, Bitmask)
+    }
+
+    /// Opaque (blob) value
+    pub fn as_blob(&self) -> Option<u64> {
+        match_variant!(self, Blob)
+    }
+
+    /// Unknown object value
+    pub fn as_object(&self) -> Option<RawResourceHandle> {
+        match_variant!(self, Object).flatten()
+    }
+
+    /// Crtc object value
+    pub fn as_crtc(&self) -> Option<super::crtc::Handle> {
+        match_variant!(self, CRTC).flatten()
+    }
+
+    /// Connector object value
+    pub fn as_connector(&self) -> Option<super::connector::Handle> {
+        match_variant!(self, Connector).flatten()
+    }
+
+    /// Encoder object value
+    pub fn as_encoder(&self) -> Option<super::encoder::Handle> {
+        match_variant!(self, Encoder).flatten()
+    }
+
+    /// Framebuffer object value
+    pub fn as_framebuffer(&self) -> Option<super::framebuffer::Handle> {
+        match_variant!(self, Framebuffer).flatten()
+    }
+
+    /// Plane object value
+    pub fn as_plane(&self) -> Option<super::plane::Handle> {
+        match_variant!(self, Plane).flatten()
+    }
+
+    /// Property object value
+    pub fn as_property(&self) -> Option<Handle> {
+        match_variant!(self, Property).flatten()
+    }
+}
+
 /// A single value of [`ValueType::Enum`] type
 #[repr(transparent)]
 #[derive(Copy, Clone, Hash, PartialEq, Eq, bytemuck::TransparentWrapper)]
