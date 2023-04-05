@@ -57,6 +57,7 @@ pub struct Info {
     pub(crate) modes: Vec<control::Mode>,
     pub(crate) encoders: Vec<control::encoder::Handle>,
     pub(crate) curr_enc: Option<control::encoder::Handle>,
+    pub(crate) subpixel: SubPixel,
 }
 
 impl Info {
@@ -101,6 +102,11 @@ impl Info {
     /// Returns the current encoder attached to this connector.
     pub fn current_encoder(&self) -> Option<control::encoder::Handle> {
         self.curr_enc
+    }
+
+    /// Subpixel order of the connected sink
+    pub fn subpixel(&self) -> SubPixel {
+        self.subpixel
     }
 }
 
@@ -249,6 +255,56 @@ impl From<State> for u32 {
             State::Connected => 1,
             State::Disconnected => 2,
             State::Unknown => 3,
+        }
+    }
+}
+
+/// Subpixel order of the connected sink
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum SubPixel {
+    /// Unknown geometry
+    Unknown,
+    /// Horizontal RGB
+    HorizontalRgb,
+    /// Horizontal BGR
+    HorizontalBgr,
+    /// Vertical RGB
+    VerticalRgb,
+    /// Vertical BGR
+    VerticalBgr,
+    /// No geometry
+    None,
+}
+
+impl From<u32> for SubPixel {
+    fn from(n: u32) -> Self {
+        // These values are not defined in drm_mode.h
+        // They were copied from linux's drm_connector.h
+        // Don't mistake those for ones used in xf86DrmMode.h (libdrm offsets those by 1)
+        match n {
+            0 => Self::Unknown,
+            1 => Self::HorizontalRgb,
+            2 => Self::HorizontalBgr,
+            3 => Self::VerticalRgb,
+            4 => Self::VerticalBgr,
+            5 => Self::None,
+            _ => Self::Unknown,
+        }
+    }
+}
+
+impl From<SubPixel> for u32 {
+    fn from(state: SubPixel) -> Self {
+        // These values are not defined in drm_mode.h
+        // They were copied from linux's drm_connector.h
+        // Don't mistake those for ones used in xf86DrmMode.h (libdrm offsets those by 1)
+        match state {
+            SubPixel::Unknown => 0,
+            SubPixel::HorizontalRgb => 1,
+            SubPixel::HorizontalBgr => 2,
+            SubPixel::VerticalRgb => 3,
+            SubPixel::VerticalBgr => 4,
+            SubPixel::None => 5,
         }
     }
 }
