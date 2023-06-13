@@ -758,7 +758,7 @@ pub trait Device: super::Device {
         Ok(from_u32(info.handle).unwrap())
     }
 
-    /// Convert a prime file descriptor to a GEM buffer handle
+    /// Convert a GEM buffer handle to a prime file descriptor
     fn buffer_to_prime_fd(&self, handle: buffer::Handle, flags: u32) -> Result<RawFd, SystemError> {
         let info = ffi::gem::handle_to_fd(self.as_fd().as_raw_fd(), handle.into(), flags)?;
         Ok(info.fd)
