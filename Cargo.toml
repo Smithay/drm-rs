@@ -7,6 +7,7 @@ license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>", "Victoria Brekenfeld <crates-io@drakulix.de>"]
 exclude = [".gitignore", ".github"]
 rust-version = "1.63"
+resolver = "2" # Required to separate dev-dependencies.nix features
 
 [dependencies]
 bitflags = "1"
@@ -18,6 +19,11 @@ drm-fourcc = "^2.2.0"
 version = "0.26.0"
 default-features = false
 features = ["mman"]
+
+[dev-dependencies.nix]
+version = "0.26.0"
+default-features = false
+features = ["mman", "poll"]
 
 [dev-dependencies]
 image = { version = "^0.23.14", default-features = false, features = ["png"] }

@@ -205,3 +205,41 @@ pub(crate) mod gem {
     /// Converts a dma-buf file descriptor into a buffer handle.
     ioctl_readwrite!(prime_fd_to_handle, DRM_IOCTL_BASE, 0x2e, drm_prime_handle);
 }
+
+pub(crate) mod syncobj {
+    use drm_sys::*;
+
+    /// Creates a syncobj.
+    ioctl_readwrite!(create, DRM_IOCTL_BASE, 0xBF, drm_syncobj_create);
+    /// Destroys a syncobj.
+    ioctl_readwrite!(destroy, DRM_IOCTL_BASE, 0xC0, drm_syncobj_destroy);
+    /// Exports a syncobj as an inter-process file descriptor or as a poll()-able sync file.
+    ioctl_readwrite!(handle_to_fd, DRM_IOCTL_BASE, 0xC1, drm_syncobj_handle);
+    /// Imports a file descriptor exported by [`handle_to_fd`] back into a process-local handle.
+    ioctl_readwrite!(fd_to_handle, DRM_IOCTL_BASE, 0xC2, drm_syncobj_handle);
+    /// Waits for one or more syncobjs to become signalled.
+    ioctl_readwrite!(wait, DRM_IOCTL_BASE, 0xC3, drm_syncobj_wait);
+    /// Resets (un-signals) one or more syncobjs.
+    ioctl_readwrite!(reset, DRM_IOCTL_BASE, 0xC4, drm_syncobj_array);
+    /// Signals one or more syncobjs.
+    ioctl_readwrite!(signal, DRM_IOCTL_BASE, 0xC5, drm_syncobj_array);
+
+    /// Waits for one or more specific timeline syncobj points.
+    ioctl_readwrite!(
+        timeline_wait,
+        DRM_IOCTL_BASE,
+        0xCA,
+        drm_syncobj_timeline_wait
+    );
+    /// Queries for state of one or more timeline syncobjs.
+    ioctl_readwrite!(query, DRM_IOCTL_BASE, 0xCB, drm_syncobj_timeline_array);
+    /// Transfers one timeline syncobj point to another.
+    ioctl_readwrite!(transfer, DRM_IOCTL_BASE, 0xCC, drm_syncobj_transfer);
+    /// Signals one or more specific timeline syncobj points.
+    ioctl_readwrite!(
+        timeline_signal,
+        DRM_IOCTL_BASE,
+        0xCD,
+        drm_syncobj_timeline_array
+    );
+}
