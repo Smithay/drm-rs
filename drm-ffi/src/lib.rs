@@ -20,8 +20,9 @@ pub mod gem;
 pub mod ioctl;
 pub mod mode;
 pub mod result;
+pub mod syncobj;
 
-use nix::libc::*;
+use nix::libc::{c_int, c_ulong};
 use std::os::unix::io::RawFd;
 
 ///

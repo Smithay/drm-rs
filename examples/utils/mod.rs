@@ -55,6 +55,7 @@ pub mod capabilities {
         DC::PageFlipTarget,
         DC::CRTCInVBlankEvent,
         DC::SyncObj,
+        DC::TimelineSyncObj,
     ];
 }
 

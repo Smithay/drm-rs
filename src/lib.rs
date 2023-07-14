@@ -305,6 +305,8 @@ pub enum DriverCapability {
     CRTCInVBlankEvent = drm_ffi::DRM_CAP_CRTC_IN_VBLANK_EVENT as u64,
     /// SyncObj support
     SyncObj = drm_ffi::DRM_CAP_SYNCOBJ as u64,
+    /// Timeline SyncObj support
+    TimelineSyncObj = drm_ffi::DRM_CAP_SYNCOBJ_TIMELINE as u64,
 }
 
 /// Used to enable/disable capabilities for the process.

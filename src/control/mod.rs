@@ -41,6 +41,7 @@ pub mod dumbbuffer;
 pub mod encoder;
 pub mod framebuffer;
 pub mod plane;
+pub mod syncobj;
 
 pub mod property;
 
@@ -794,6 +795,140 @@ pub trait Device: super::Device {
             sequence,
         )?;
 
+        Ok(())
+    }
+
+    /// Creates a syncobj.
+    fn create_syncobj(&self, signalled: bool) -> Result<syncobj::Handle, SystemError> {
+        let info = ffi::syncobj::create(self.as_fd().as_raw_fd(), signalled)?;
+        Ok(from_u32(info.handle).unwrap())
+    }
+
+    /// Destroys a syncobj.
+    fn destroy_syncobj(&self, handle: syncobj::Handle) -> Result<(), SystemError> {
+        ffi::syncobj::destroy(self.as_fd().as_raw_fd(), handle.into())?;
+        Ok(())
+    }
+
+    /// Exports a syncobj as an inter-process file descriptor or as a poll()-able sync file.
+    fn syncobj_to_fd(
+        &self,
+        handle: syncobj::Handle,
+        export_sync_file: bool,
+    ) -> Result<syncobj::SyncFile, SystemError> {
+        use std::os::unix::io::FromRawFd;
+        let info =
+            ffi::syncobj::handle_to_fd(self.as_fd().as_raw_fd(), handle.into(), export_sync_file)?;
+        Ok(unsafe { syncobj::SyncFile::from_raw_fd(info.fd) })
+    }
+
+    /// Imports a file descriptor exported by [`Self::syncobj_to_fd`] back into a process-local handle.
+    fn fd_to_syncobj(
+        &self,
+        fd: RawFd,
+        import_sync_file: bool,
+    ) -> Result<syncobj::Handle, SystemError> {
+        let info = ffi::syncobj::fd_to_handle(self.as_fd().as_raw_fd(), fd, import_sync_file)?;
+        Ok(from_u32(info.handle).unwrap())
+    }
+
+    /// Waits for one or more syncobjs to become signalled.
+    fn syncobj_wait(
+        &self,
+        handles: &[syncobj::Handle],
+        timeout_nsec: i64,
+        wait_all: bool,
+        wait_for_submit: bool,
+    ) -> Result<u32, SystemError> {
+        let info = ffi::syncobj::wait(
+            self.as_fd().as_raw_fd(),
+            bytemuck::cast_slice(handles),
+            timeout_nsec,
+            wait_all,
+            wait_for_submit,
+        )?;
+        Ok(info.first_signaled)
+    }
+
+    /// Resets (un-signals) one or more syncobjs.
+    fn syncobj_reset(&self, handles: &[syncobj::Handle]) -> Result<(), SystemError> {
+        ffi::syncobj::reset(self.as_fd().as_raw_fd(), bytemuck::cast_slice(handles))?;
+        Ok(())
+    }
+
+    /// Signals one or more syncobjs.
+    fn syncobj_signal(&self, handles: &[syncobj::Handle]) -> Result<(), SystemError> {
+        ffi::syncobj::signal(self.as_fd().as_raw_fd(), bytemuck::cast_slice(handles))?;
+        Ok(())
+    }
+
+    /// Waits for one or more specific timeline syncobj points.
+    fn syncobj_timeline_wait(
+        &self,
+        handles: &[syncobj::Handle],
+        points: &[u64],
+        timeout_nsec: i64,
+        wait_all: bool,
+        wait_for_submit: bool,
+        wait_available: bool,
+    ) -> Result<u32, SystemError> {
+        let info = ffi::syncobj::timeline_wait(
+            self.as_fd().as_raw_fd(),
+            bytemuck::cast_slice(handles),
+            points,
+            timeout_nsec,
+            wait_all,
+            wait_for_submit,
+            wait_available,
+        )?;
+        Ok(info.first_signaled)
+    }
+
+    /// Queries for state of one or more timeline syncobjs.
+    fn syncobj_timeline_query(
+        &self,
+        handles: &[syncobj::Handle],
+        points: &mut [u64],
+        last_submitted: bool,
+    ) -> Result<(), SystemError> {
+        ffi::syncobj::query(
+            self.as_fd().as_raw_fd(),
+            bytemuck::cast_slice(handles),
+            points,
+            last_submitted,
+        )?;
+        Ok(())
+    }
+
+    /// Transfers one timeline syncobj point to another.
+    fn syncobj_timeline_transfer(
+        &self,
+        src_handle: syncobj::Handle,
+        dst_handle: syncobj::Handle,
+        src_point: u64,
+        dst_point: u64,
+    ) -> Result<(), SystemError> {
+        ffi::syncobj::transfer(
+            self.as_fd().as_raw_fd(),
+            src_handle.into(),
+            dst_handle.into(),
+            src_point,
+            dst_point,
+        )?;
+        Ok(())
+    }
+
+    /// Signals one or more specific timeline syncobj points.
+    fn syncobj_timeline_signal(
+        &self,
+        handles: &[syncobj::Handle],
+        points: &[u64],
+    ) -> Result<(), SystemError> {
+        ffi::syncobj::timeline_signal(
+            self.as_fd().as_raw_fd(),
+            bytemuck::cast_slice(handles),
+            points,
+        )?;
         Ok(())
     }
 
