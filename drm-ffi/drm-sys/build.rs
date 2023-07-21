@@ -40,7 +40,7 @@ mod use_bindgen {
     const TMP_BIND_PREFIX: &str = "__BINDGEN_TMP_";
     const TMP_BIND_PREFIX_REG: &str = "_BINDGEN_TMP_.*";
 
-    const INCLUDES: &[&str] = &["drm.h", "drm_mode.h"];
+    const INCLUDES: &[&str] = &["drm.h", "drm_mode.h", "xf86drm.h"];
 
     const MACROS: &[&str] = &["DRM_MODE_PROP_SIGNED_RANGE", "DRM_MODE_PROP_OBJECT"];
 
@@ -104,6 +104,7 @@ mod use_bindgen {
             .blocklist_type("drm_control_DRM_ADD_COMMAND")
             .allowlist_type("_?DRM_.*|drm_.*")
             .allowlist_var("_?DRM_.*|drm_.*")
+            .allowlist_function("drm.*")
             .constified_enum_module("drm_control_.*")
             .constified_enum_module("drm_buf_desc_.*")
             .constified_enum_module("drm_map_type")

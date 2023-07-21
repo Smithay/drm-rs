@@ -193,6 +193,42 @@ pub const DRM_COMMAND_END: u32 = 160;
 pub const DRM_EVENT_VBLANK: u32 = 1;
 pub const DRM_EVENT_FLIP_COMPLETE: u32 = 2;
 pub const DRM_EVENT_CRTC_SEQUENCE: u32 = 3;
+pub const DRM_MAX_MINOR: u32 = 16;
+pub const DRM_IOC_VOID: u32 = 0;
+pub const DRM_IOC_READ: u32 = 2;
+pub const DRM_IOC_WRITE: u32 = 1;
+pub const DRM_IOC_READWRITE: u32 = 3;
+pub const DRM_DEV_UID: u32 = 0;
+pub const DRM_DEV_GID: u32 = 0;
+pub const DRM_DIR_NAME: &[u8; 9usize] = b"/dev/dri\0";
+pub const DRM_PRIMARY_MINOR_NAME: &[u8; 5usize] = b"card\0";
+pub const DRM_CONTROL_MINOR_NAME: &[u8; 9usize] = b"controlD\0";
+pub const DRM_RENDER_MINOR_NAME: &[u8; 8usize] = b"renderD\0";
+pub const DRM_PROC_NAME: &[u8; 11usize] = b"/proc/dri/\0";
+pub const DRM_DEV_NAME: &[u8; 10usize] = b"%s/card%d\0";
+pub const DRM_CONTROL_DEV_NAME: &[u8; 14usize] = b"%s/controlD%d\0";
+pub const DRM_RENDER_DEV_NAME: &[u8; 13usize] = b"%s/renderD%d\0";
+pub const DRM_ERR_NO_DEVICE: i32 = -1001;
+pub const DRM_ERR_NO_ACCESS: i32 = -1002;
+pub const DRM_ERR_NOT_ROOT: i32 = -1003;
+pub const DRM_ERR_INVALID: i32 = -1004;
+pub const DRM_ERR_NO_FD: i32 = -1005;
+pub const DRM_AGP_NO_HANDLE: u32 = 0;
+pub const DRM_VBLANK_HIGH_CRTC_SHIFT: u32 = 1;
+pub const DRM_LOCK_HELD: u32 = 2147483648;
+pub const DRM_LOCK_CONT: u32 = 1073741824;
+pub const DRM_NODE_PRIMARY: u32 = 0;
+pub const DRM_NODE_CONTROL: u32 = 1;
+pub const DRM_NODE_RENDER: u32 = 2;
+pub const DRM_NODE_MAX: u32 = 3;
+pub const DRM_EVENT_CONTEXT_VERSION: u32 = 4;
+pub const DRM_BUS_PCI: u32 = 0;
+pub const DRM_BUS_USB: u32 = 1;
+pub const DRM_BUS_PLATFORM: u32 = 2;
+pub const DRM_BUS_HOST1X: u32 = 3;
+pub const DRM_PLATFORM_DEVICE_NAME_LEN: u32 = 512;
+pub const DRM_HOST1X_DEVICE_NAME_LEN: u32 = 512;
+pub const DRM_DEVICE_GET_PCI_REVISION: u32 = 1;
 pub type __u16 = libc::c_ushort;
 pub type __s32 = libc::c_int;
 pub type __u32 = libc::c_uint;
@@ -1332,5 +1368,1168 @@ pub type drm_agp_binding_t = drm_agp_binding;
 pub type drm_agp_info_t = drm_agp_info;
 pub type drm_scatter_gather_t = drm_scatter_gather;
 pub type drm_set_version_t = drm_set_version;
+pub type va_list = __builtin_va_list;
+pub type __uint8_t = libc::c_uchar;
+pub type __uint16_t = libc::c_ushort;
+pub type __uint32_t = libc::c_uint;
+pub type __int64_t = libc::c_long;
+pub type __uint64_t = libc::c_ulong;
+pub type __dev_t = libc::c_ulong;
+pub type __gid_t = libc::c_uint;
+pub type __mode_t = libc::c_uint;
+pub type dev_t = __dev_t;
+pub type gid_t = __gid_t;
+pub type mode_t = __mode_t;
+pub type drmSize = libc::c_uint;
+pub type drmAddress = *mut libc::c_void;
+pub type drmAddressPtr = *mut *mut libc::c_void;
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmServerInfo {
+    pub debug_print: ::core::option::Option<
+        unsafe extern "C" fn(format: *const libc::c_char, ap: *mut __va_list_tag) -> libc::c_int,
+    >,
+    pub load_module:
+        ::core::option::Option<unsafe extern "C" fn(name: *const libc::c_char) -> libc::c_int>,
+    pub get_perms:
+        ::core::option::Option<unsafe extern "C" fn(arg1: *mut gid_t, arg2: *mut mode_t)>,
+}
+pub type drmServerInfoPtr = *mut _drmServerInfo;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drmHashEntry {
+    pub fd: libc::c_int,
+    pub f: ::core::option::Option<
+        unsafe extern "C" fn(arg1: libc::c_int, arg2: *mut libc::c_void, arg3: *mut libc::c_void),
+    >,
+    pub tagTable: *mut libc::c_void,
+}
+impl Default for drmHashEntry {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+extern "C" {
+    pub fn drmIoctl(fd: libc::c_int, request: libc::c_ulong, arg: *mut libc::c_void)
+        -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetHashTable() -> *mut libc::c_void;
+}
+extern "C" {
+    pub fn drmGetEntry(fd: libc::c_int) -> *mut drmHashEntry;
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmVersion {
+    pub version_major: libc::c_int,
+    pub version_minor: libc::c_int,
+    pub version_patchlevel: libc::c_int,
+    pub name_len: libc::c_int,
+    pub name: *mut libc::c_char,
+    pub date_len: libc::c_int,
+    pub date: *mut libc::c_char,
+    pub desc_len: libc::c_int,
+    pub desc: *mut libc::c_char,
+}
+impl Default for _drmVersion {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmVersionPtr = *mut _drmVersion;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmStats {
+    pub count: libc::c_ulong,
+    pub data: [_drmStats__bindgen_ty_1; 15usize],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmStats__bindgen_ty_1 {
+    pub value: libc::c_ulong,
+    pub long_format: *const libc::c_char,
+    pub long_name: *const libc::c_char,
+    pub rate_format: *const libc::c_char,
+    pub rate_name: *const libc::c_char,
+    pub isvalue: libc::c_int,
+    pub mult_names: *const libc::c_char,
+    pub mult: libc::c_int,
+    pub verbose: libc::c_int,
+}
+impl Default for _drmStats__bindgen_ty_1 {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+impl Default for _drmStats {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmStatsT = _drmStats;
+pub const DRM_FRAME_BUFFER: drmMapType = 0;
+pub const DRM_REGISTERS: drmMapType = 1;
+pub const DRM_SHM: drmMapType = 2;
+pub const DRM_AGP: drmMapType = 3;
+pub const DRM_SCATTER_GATHER: drmMapType = 4;
+pub const DRM_CONSISTENT: drmMapType = 5;
+pub type drmMapType = libc::c_uint;
+pub const DRM_RESTRICTED: drmMapFlags = 1;
+pub const DRM_READ_ONLY: drmMapFlags = 2;
+pub const DRM_LOCKED: drmMapFlags = 4;
+pub const DRM_KERNEL: drmMapFlags = 8;
+pub const DRM_WRITE_COMBINING: drmMapFlags = 16;
+pub const DRM_CONTAINS_LOCK: drmMapFlags = 32;
+pub const DRM_REMOVABLE: drmMapFlags = 64;
+pub type drmMapFlags = libc::c_uint;
+pub const DRM_DMA_BLOCK: drmDMAFlags = 1;
+pub const DRM_DMA_WHILE_LOCKED: drmDMAFlags = 2;
+pub const DRM_DMA_PRIORITY: drmDMAFlags = 4;
+pub const DRM_DMA_WAIT: drmDMAFlags = 16;
+pub const DRM_DMA_SMALLER_OK: drmDMAFlags = 32;
+pub const DRM_DMA_LARGER_OK: drmDMAFlags = 64;
+pub type drmDMAFlags = libc::c_uint;
+pub const DRM_PAGE_ALIGN: drmBufDescFlags = 1;
+pub const DRM_AGP_BUFFER: drmBufDescFlags = 2;
+pub const DRM_SG_BUFFER: drmBufDescFlags = 4;
+pub const DRM_FB_BUFFER: drmBufDescFlags = 8;
+pub const DRM_PCI_BUFFER_RO: drmBufDescFlags = 16;
+pub type drmBufDescFlags = libc::c_uint;
+pub const DRM_LOCK_READY: drmLockFlags = 1;
+pub const DRM_LOCK_QUIESCENT: drmLockFlags = 2;
+pub const DRM_LOCK_FLUSH: drmLockFlags = 4;
+pub const DRM_LOCK_FLUSH_ALL: drmLockFlags = 8;
+pub const DRM_HALT_ALL_QUEUES: drmLockFlags = 16;
+pub const DRM_HALT_CUR_QUEUES: drmLockFlags = 32;
+pub type drmLockFlags = libc::c_uint;
+pub const DRM_CONTEXT_PRESERVED: drm_context_tFlags = 1;
+pub const DRM_CONTEXT_2DONLY: drm_context_tFlags = 2;
+pub type drm_context_tFlags = libc::c_uint;
+pub type drm_context_tFlagsPtr = *mut drm_context_tFlags;
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmBufDesc {
+    pub count: libc::c_int,
+    pub size: libc::c_int,
+    pub low_mark: libc::c_int,
+    pub high_mark: libc::c_int,
+}
+pub type drmBufDescPtr = *mut _drmBufDesc;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmBufInfo {
+    pub count: libc::c_int,
+    pub list: drmBufDescPtr,
+}
+impl Default for _drmBufInfo {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmBufInfoPtr = *mut _drmBufInfo;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmBuf {
+    pub idx: libc::c_int,
+    pub total: libc::c_int,
+    pub used: libc::c_int,
+    pub address: drmAddress,
+}
+impl Default for _drmBuf {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmBufPtr = *mut _drmBuf;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmBufMap {
+    pub count: libc::c_int,
+    pub list: drmBufPtr,
+}
+impl Default for _drmBufMap {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmBufMapPtr = *mut _drmBufMap;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmDMAReq {
+    pub context: drm_context_t,
+    pub send_count: libc::c_int,
+    pub send_list: *mut libc::c_int,
+    pub send_sizes: *mut libc::c_int,
+    pub flags: drmDMAFlags,
+    pub request_count: libc::c_int,
+    pub request_size: libc::c_int,
+    pub request_list: *mut libc::c_int,
+    pub request_sizes: *mut libc::c_int,
+    pub granted_count: libc::c_int,
+}
+impl Default for _drmDMAReq {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmDMAReqPtr = *mut _drmDMAReq;
+pub const DRM_VBLANK_ABSOLUTE: drmVBlankSeqType = 0;
+pub const DRM_VBLANK_RELATIVE: drmVBlankSeqType = 1;
+pub const DRM_VBLANK_HIGH_CRTC_MASK: drmVBlankSeqType = 62;
+pub const DRM_VBLANK_EVENT: drmVBlankSeqType = 67108864;
+pub const DRM_VBLANK_FLIP: drmVBlankSeqType = 134217728;
+pub const DRM_VBLANK_NEXTONMISS: drmVBlankSeqType = 268435456;
+pub const DRM_VBLANK_SECONDARY: drmVBlankSeqType = 536870912;
+pub const DRM_VBLANK_SIGNAL: drmVBlankSeqType = 1073741824;
+pub type drmVBlankSeqType = libc::c_uint;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmVBlankReq {
+    pub type_: drmVBlankSeqType,
+    pub sequence: libc::c_uint,
+    pub signal: libc::c_ulong,
+}
+impl Default for _drmVBlankReq {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmVBlankReq = _drmVBlankReq;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmVBlankReply {
+    pub type_: drmVBlankSeqType,
+    pub sequence: libc::c_uint,
+    pub tval_sec: libc::c_long,
+    pub tval_usec: libc::c_long,
+}
+impl Default for _drmVBlankReply {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmVBlankReply = _drmVBlankReply;
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union _drmVBlank {
+    pub request: drmVBlankReq,
+    pub reply: drmVBlankReply,
+}
+impl Default for _drmVBlank {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmVBlankPtr = *mut _drmVBlank;
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmSetVersion {
+    pub drm_di_major: libc::c_int,
+    pub drm_di_minor: libc::c_int,
+    pub drm_dd_major: libc::c_int,
+    pub drm_dd_minor: libc::c_int,
+}
+pub type drmSetVersion = _drmSetVersion;
+extern "C" {
+    pub fn drmAvailable() -> libc::c_int;
+}
+extern "C" {
+    pub fn drmOpen(name: *const libc::c_char, busid: *const libc::c_char) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmOpenWithType(
+        name: *const libc::c_char,
+        busid: *const libc::c_char,
+        type_: libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmOpenControl(minor: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmOpenRender(minor: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmClose(fd: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetVersion(fd: libc::c_int) -> drmVersionPtr;
+}
+extern "C" {
+    pub fn drmGetLibVersion(fd: libc::c_int) -> drmVersionPtr;
+}
+extern "C" {
+    pub fn drmGetCap(fd: libc::c_int, capability: u64, value: *mut u64) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmFreeVersion(arg1: drmVersionPtr);
+}
+extern "C" {
+    pub fn drmGetMagic(fd: libc::c_int, magic: *mut drm_magic_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetBusid(fd: libc::c_int) -> *mut libc::c_char;
+}
+extern "C" {
+    pub fn drmGetInterruptFromBusID(
+        fd: libc::c_int,
+        busnum: libc::c_int,
+        devnum: libc::c_int,
+        funcnum: libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetMap(
+        fd: libc::c_int,
+        idx: libc::c_int,
+        offset: *mut drm_handle_t,
+        size: *mut drmSize,
+        type_: *mut drmMapType,
+        flags: *mut drmMapFlags,
+        handle: *mut drm_handle_t,
+        mtrr: *mut libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetClient(
+        fd: libc::c_int,
+        idx: libc::c_int,
+        auth: *mut libc::c_int,
+        pid: *mut libc::c_int,
+        uid: *mut libc::c_int,
+        magic: *mut libc::c_ulong,
+        iocs: *mut libc::c_ulong,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetStats(fd: libc::c_int, stats: *mut drmStatsT) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSetInterfaceVersion(fd: libc::c_int, version: *mut drmSetVersion) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCommandNone(fd: libc::c_int, drmCommandIndex: libc::c_ulong) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCommandRead(
+        fd: libc::c_int,
+        drmCommandIndex: libc::c_ulong,
+        data: *mut libc::c_void,
+        size: libc::c_ulong,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCommandWrite(
+        fd: libc::c_int,
+        drmCommandIndex: libc::c_ulong,
+        data: *mut libc::c_void,
+        size: libc::c_ulong,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCommandWriteRead(
+        fd: libc::c_int,
+        drmCommandIndex: libc::c_ulong,
+        data: *mut libc::c_void,
+        size: libc::c_ulong,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmFreeBusid(busid: *const libc::c_char);
+}
+extern "C" {
+    pub fn drmSetBusid(fd: libc::c_int, busid: *const libc::c_char) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAuthMagic(fd: libc::c_int, magic: drm_magic_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAddMap(
+        fd: libc::c_int,
+        offset: drm_handle_t,
+        size: drmSize,
+        type_: drmMapType,
+        flags: drmMapFlags,
+        handle: *mut drm_handle_t,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmRmMap(fd: libc::c_int, handle: drm_handle_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAddContextPrivateMapping(
+        fd: libc::c_int,
+        ctx_id: drm_context_t,
+        handle: drm_handle_t,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAddBufs(
+        fd: libc::c_int,
+        count: libc::c_int,
+        size: libc::c_int,
+        flags: drmBufDescFlags,
+        agp_offset: libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmMarkBufs(fd: libc::c_int, low: f64, high: f64) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCreateContext(fd: libc::c_int, handle: *mut drm_context_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSetContextFlags(
+        fd: libc::c_int,
+        context: drm_context_t,
+        flags: drm_context_tFlags,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetContextFlags(
+        fd: libc::c_int,
+        context: drm_context_t,
+        flags: drm_context_tFlagsPtr,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAddContextTag(
+        fd: libc::c_int,
+        context: drm_context_t,
+        tag: *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmDelContextTag(fd: libc::c_int, context: drm_context_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetContextTag(fd: libc::c_int, context: drm_context_t) -> *mut libc::c_void;
+}
+extern "C" {
+    pub fn drmGetReservedContextList(
+        fd: libc::c_int,
+        count: *mut libc::c_int,
+    ) -> *mut drm_context_t;
+}
+extern "C" {
+    pub fn drmFreeReservedContextList(arg1: *mut drm_context_t);
+}
+extern "C" {
+    pub fn drmSwitchToContext(fd: libc::c_int, context: drm_context_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmDestroyContext(fd: libc::c_int, handle: drm_context_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCreateDrawable(fd: libc::c_int, handle: *mut drm_drawable_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmDestroyDrawable(fd: libc::c_int, handle: drm_drawable_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmUpdateDrawableInfo(
+        fd: libc::c_int,
+        handle: drm_drawable_t,
+        type_: drm_drawable_info_type_t::Type,
+        num: libc::c_uint,
+        data: *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCtlInstHandler(fd: libc::c_int, irq: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCtlUninstHandler(fd: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSetClientCap(fd: libc::c_int, capability: u64, value: u64) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCrtcGetSequence(
+        fd: libc::c_int,
+        crtcId: u32,
+        sequence: *mut u64,
+        ns: *mut u64,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCrtcQueueSequence(
+        fd: libc::c_int,
+        crtcId: u32,
+        flags: u32,
+        sequence: u64,
+        sequence_queued: *mut u64,
+        user_data: u64,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmMap(
+        fd: libc::c_int,
+        handle: drm_handle_t,
+        size: drmSize,
+        address: drmAddressPtr,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmUnmap(address: drmAddress, size: drmSize) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetBufInfo(fd: libc::c_int) -> drmBufInfoPtr;
+}
+extern "C" {
+    pub fn drmMapBufs(fd: libc::c_int) -> drmBufMapPtr;
+}
+extern "C" {
+    pub fn drmUnmapBufs(bufs: drmBufMapPtr) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmDMA(fd: libc::c_int, request: drmDMAReqPtr) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmFreeBufs(fd: libc::c_int, count: libc::c_int, list: *mut libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetLock(fd: libc::c_int, context: drm_context_t, flags: drmLockFlags) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmUnlock(fd: libc::c_int, context: drm_context_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmFinish(fd: libc::c_int, context: libc::c_int, flags: drmLockFlags) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetContextPrivateMapping(
+        fd: libc::c_int,
+        ctx_id: drm_context_t,
+        handle: *mut drm_handle_t,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpAcquire(fd: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpRelease(fd: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpEnable(fd: libc::c_int, mode: libc::c_ulong) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpAlloc(
+        fd: libc::c_int,
+        size: libc::c_ulong,
+        type_: libc::c_ulong,
+        address: *mut libc::c_ulong,
+        handle: *mut drm_handle_t,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpFree(fd: libc::c_int, handle: drm_handle_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpBind(fd: libc::c_int, handle: drm_handle_t, offset: libc::c_ulong) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpUnbind(fd: libc::c_int, handle: drm_handle_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpVersionMajor(fd: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpVersionMinor(fd: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmAgpGetMode(fd: libc::c_int) -> libc::c_ulong;
+}
+extern "C" {
+    pub fn drmAgpBase(fd: libc::c_int) -> libc::c_ulong;
+}
+extern "C" {
+    pub fn drmAgpSize(fd: libc::c_int) -> libc::c_ulong;
+}
+extern "C" {
+    pub fn drmAgpMemoryUsed(fd: libc::c_int) -> libc::c_ulong;
+}
+extern "C" {
+    pub fn drmAgpMemoryAvail(fd: libc::c_int) -> libc::c_ulong;
+}
+extern "C" {
+    pub fn drmAgpVendorId(fd: libc::c_int) -> libc::c_uint;
+}
+extern "C" {
+    pub fn drmAgpDeviceId(fd: libc::c_int) -> libc::c_uint;
+}
+extern "C" {
+    pub fn drmScatterGatherAlloc(
+        fd: libc::c_int,
+        size: libc::c_ulong,
+        handle: *mut drm_handle_t,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmScatterGatherFree(fd: libc::c_int, handle: drm_handle_t) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmWaitVBlank(fd: libc::c_int, vbl: drmVBlankPtr) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSetServerInfo(info: drmServerInfoPtr);
+}
+extern "C" {
+    pub fn drmError(err: libc::c_int, label: *const libc::c_char) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmMalloc(size: libc::c_int) -> *mut libc::c_void;
+}
+extern "C" {
+    pub fn drmFree(pt: *mut libc::c_void);
+}
+extern "C" {
+    pub fn drmHashCreate() -> *mut libc::c_void;
+}
+extern "C" {
+    pub fn drmHashDestroy(t: *mut libc::c_void) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmHashLookup(
+        t: *mut libc::c_void,
+        key: libc::c_ulong,
+        value: *mut *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmHashInsert(
+        t: *mut libc::c_void,
+        key: libc::c_ulong,
+        value: *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmHashDelete(t: *mut libc::c_void, key: libc::c_ulong) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmHashFirst(
+        t: *mut libc::c_void,
+        key: *mut libc::c_ulong,
+        value: *mut *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmHashNext(
+        t: *mut libc::c_void,
+        key: *mut libc::c_ulong,
+        value: *mut *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmRandomCreate(seed: libc::c_ulong) -> *mut libc::c_void;
+}
+extern "C" {
+    pub fn drmRandomDestroy(state: *mut libc::c_void) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmRandom(state: *mut libc::c_void) -> libc::c_ulong;
+}
+extern "C" {
+    pub fn drmRandomDouble(state: *mut libc::c_void) -> f64;
+}
+extern "C" {
+    pub fn drmSLCreate() -> *mut libc::c_void;
+}
+extern "C" {
+    pub fn drmSLDestroy(l: *mut libc::c_void) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSLLookup(
+        l: *mut libc::c_void,
+        key: libc::c_ulong,
+        value: *mut *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSLInsert(
+        l: *mut libc::c_void,
+        key: libc::c_ulong,
+        value: *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSLDelete(l: *mut libc::c_void, key: libc::c_ulong) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSLNext(
+        l: *mut libc::c_void,
+        key: *mut libc::c_ulong,
+        value: *mut *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSLFirst(
+        l: *mut libc::c_void,
+        key: *mut libc::c_ulong,
+        value: *mut *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSLDump(l: *mut libc::c_void);
+}
+extern "C" {
+    pub fn drmSLLookupNeighbors(
+        l: *mut libc::c_void,
+        key: libc::c_ulong,
+        prev_key: *mut libc::c_ulong,
+        prev_value: *mut *mut libc::c_void,
+        next_key: *mut libc::c_ulong,
+        next_value: *mut *mut libc::c_void,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmOpenOnce(
+        unused: *mut libc::c_void,
+        BusID: *const libc::c_char,
+        newlyopened: *mut libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmOpenOnceWithType(
+        BusID: *const libc::c_char,
+        newlyopened: *mut libc::c_int,
+        type_: libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCloseOnce(fd: libc::c_int);
+}
+extern "C" {
+    pub fn drmMsg(format: *const libc::c_char, ...);
+}
+extern "C" {
+    pub fn drmSetMaster(fd: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmDropMaster(fd: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmIsMaster(fd: libc::c_int) -> libc::c_int;
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmEventContext {
+    pub version: libc::c_int,
+    pub vblank_handler: ::core::option::Option<
+        unsafe extern "C" fn(
+            fd: libc::c_int,
+            sequence: libc::c_uint,
+            tv_sec: libc::c_uint,
+            tv_usec: libc::c_uint,
+            user_data: *mut libc::c_void,
+        ),
+    >,
+    pub page_flip_handler: ::core::option::Option<
+        unsafe extern "C" fn(
+            fd: libc::c_int,
+            sequence: libc::c_uint,
+            tv_sec: libc::c_uint,
+            tv_usec: libc::c_uint,
+            user_data: *mut libc::c_void,
+        ),
+    >,
+    pub page_flip_handler2: ::core::option::Option<
+        unsafe extern "C" fn(
+            fd: libc::c_int,
+            sequence: libc::c_uint,
+            tv_sec: libc::c_uint,
+            tv_usec: libc::c_uint,
+            crtc_id: libc::c_uint,
+            user_data: *mut libc::c_void,
+        ),
+    >,
+    pub sequence_handler: ::core::option::Option<
+        unsafe extern "C" fn(fd: libc::c_int, sequence: u64, ns: u64, user_data: u64),
+    >,
+}
+pub type drmEventContextPtr = *mut _drmEventContext;
+extern "C" {
+    pub fn drmHandleEvent(fd: libc::c_int, evctx: drmEventContextPtr) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetDeviceNameFromFd(fd: libc::c_int) -> *mut libc::c_char;
+}
+extern "C" {
+    pub fn drmGetDeviceNameFromFd2(fd: libc::c_int) -> *mut libc::c_char;
+}
+extern "C" {
+    pub fn drmGetNodeTypeFromFd(fd: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmPrimeHandleToFD(
+        fd: libc::c_int,
+        handle: u32,
+        flags: u32,
+        prime_fd: *mut libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmPrimeFDToHandle(
+        fd: libc::c_int,
+        prime_fd: libc::c_int,
+        handle: *mut u32,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmCloseBufferHandle(fd: libc::c_int, handle: u32) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetPrimaryDeviceNameFromFd(fd: libc::c_int) -> *mut libc::c_char;
+}
+extern "C" {
+    pub fn drmGetRenderDeviceNameFromFd(fd: libc::c_int) -> *mut libc::c_char;
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmPciBusInfo {
+    pub domain: u16,
+    pub bus: u8,
+    pub dev: u8,
+    pub func: u8,
+}
+pub type drmPciBusInfoPtr = *mut _drmPciBusInfo;
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmPciDeviceInfo {
+    pub vendor_id: u16,
+    pub device_id: u16,
+    pub subvendor_id: u16,
+    pub subdevice_id: u16,
+    pub revision_id: u8,
+}
+pub type drmPciDeviceInfoPtr = *mut _drmPciDeviceInfo;
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmUsbBusInfo {
+    pub bus: u8,
+    pub dev: u8,
+}
+pub type drmUsbBusInfoPtr = *mut _drmUsbBusInfo;
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmUsbDeviceInfo {
+    pub vendor: u16,
+    pub product: u16,
+}
+pub type drmUsbDeviceInfoPtr = *mut _drmUsbDeviceInfo;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmPlatformBusInfo {
+    pub fullname: [libc::c_char; 512usize],
+}
+impl Default for _drmPlatformBusInfo {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmPlatformBusInfoPtr = *mut _drmPlatformBusInfo;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmPlatformDeviceInfo {
+    pub compatible: *mut *mut libc::c_char,
+}
+impl Default for _drmPlatformDeviceInfo {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmPlatformDeviceInfoPtr = *mut _drmPlatformDeviceInfo;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmHost1xBusInfo {
+    pub fullname: [libc::c_char; 512usize],
+}
+impl Default for _drmHost1xBusInfo {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmHost1xBusInfoPtr = *mut _drmHost1xBusInfo;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct _drmHost1xDeviceInfo {
+    pub compatible: *mut *mut libc::c_char,
+}
+impl Default for _drmHost1xDeviceInfo {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmHost1xDeviceInfoPtr = *mut _drmHost1xDeviceInfo;
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct _drmDevice {
+    pub nodes: *mut *mut libc::c_char,
+    pub available_nodes: libc::c_int,
+    pub bustype: libc::c_int,
+    pub businfo: _drmDevice__bindgen_ty_1,
+    pub deviceinfo: _drmDevice__bindgen_ty_2,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union _drmDevice__bindgen_ty_1 {
+    pub pci: drmPciBusInfoPtr,
+    pub usb: drmUsbBusInfoPtr,
+    pub platform: drmPlatformBusInfoPtr,
+    pub host1x: drmHost1xBusInfoPtr,
+}
+impl Default for _drmDevice__bindgen_ty_1 {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union _drmDevice__bindgen_ty_2 {
+    pub pci: drmPciDeviceInfoPtr,
+    pub usb: drmUsbDeviceInfoPtr,
+    pub platform: drmPlatformDeviceInfoPtr,
+    pub host1x: drmHost1xDeviceInfoPtr,
+}
+impl Default for _drmDevice__bindgen_ty_2 {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+impl Default for _drmDevice {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type drmDevicePtr = *mut _drmDevice;
+extern "C" {
+    pub fn drmGetDevice(fd: libc::c_int, device: *mut drmDevicePtr) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmFreeDevice(device: *mut drmDevicePtr);
+}
+extern "C" {
+    pub fn drmGetDevices(devices: *mut drmDevicePtr, max_devices: libc::c_int) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmFreeDevices(devices: *mut drmDevicePtr, count: libc::c_int);
+}
+extern "C" {
+    pub fn drmGetDevice2(fd: libc::c_int, flags: u32, device: *mut drmDevicePtr) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetDevices2(
+        flags: u32,
+        devices: *mut drmDevicePtr,
+        max_devices: libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetDeviceFromDevId(
+        dev_id: dev_t,
+        flags: u32,
+        device: *mut drmDevicePtr,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmDevicesEqual(a: drmDevicePtr, b: drmDevicePtr) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjCreate(fd: libc::c_int, flags: u32, handle: *mut u32) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjDestroy(fd: libc::c_int, handle: u32) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjHandleToFD(
+        fd: libc::c_int,
+        handle: u32,
+        obj_fd: *mut libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjFDToHandle(
+        fd: libc::c_int,
+        obj_fd: libc::c_int,
+        handle: *mut u32,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjImportSyncFile(
+        fd: libc::c_int,
+        handle: u32,
+        sync_file_fd: libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjExportSyncFile(
+        fd: libc::c_int,
+        handle: u32,
+        sync_file_fd: *mut libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjWait(
+        fd: libc::c_int,
+        handles: *mut u32,
+        num_handles: libc::c_uint,
+        timeout_nsec: i64,
+        flags: libc::c_uint,
+        first_signaled: *mut u32,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjReset(fd: libc::c_int, handles: *const u32, handle_count: u32) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjSignal(fd: libc::c_int, handles: *const u32, handle_count: u32)
+        -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjTimelineSignal(
+        fd: libc::c_int,
+        handles: *const u32,
+        points: *mut u64,
+        handle_count: u32,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjTimelineWait(
+        fd: libc::c_int,
+        handles: *mut u32,
+        points: *mut u64,
+        num_handles: libc::c_uint,
+        timeout_nsec: i64,
+        flags: libc::c_uint,
+        first_signaled: *mut u32,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjQuery(
+        fd: libc::c_int,
+        handles: *mut u32,
+        points: *mut u64,
+        handle_count: u32,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjQuery2(
+        fd: libc::c_int,
+        handles: *mut u32,
+        points: *mut u64,
+        handle_count: u32,
+        flags: u32,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmSyncobjTransfer(
+        fd: libc::c_int,
+        dst_handle: u32,
+        dst_point: u64,
+        src_handle: u32,
+        src_point: u64,
+        flags: u32,
+    ) -> libc::c_int;
+}
+extern "C" {
+    pub fn drmGetFormatModifierVendor(modifier: u64) -> *mut libc::c_char;
+}
+extern "C" {
+    pub fn drmGetFormatModifierName(modifier: u64) -> *mut libc::c_char;
+}
+extern "C" {
+    pub fn drmGetFormatName(format: u32) -> *mut libc::c_char;
+}
 pub const DRM_MODE_PROP_SIGNED_RANGE: libc::c_uint = 128;
 pub const DRM_MODE_PROP_OBJECT: libc::c_uint = 64;
+pub type __builtin_va_list = [__va_list_tag; 1usize];
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct __va_list_tag {
+    pub gp_offset: libc::c_uint,
+    pub fp_offset: libc::c_uint,
+    pub overflow_arg_area: *mut libc::c_void,
+    pub reg_save_area: *mut libc::c_void,
+}
+impl Default for __va_list_tag {
+    fn default() -> Self {
+        let mut s = ::core::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::core::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
