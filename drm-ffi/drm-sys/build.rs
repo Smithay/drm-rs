@@ -188,4 +188,6 @@ pub fn main() {
             target_os, target_arch
         );
     }
+
+    println!("cargo:rustc-link-lib=drm");
 }
