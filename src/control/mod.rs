@@ -940,11 +940,7 @@ pub trait Device: super::Device {
         let mut event_buf: [u8; 1024] = [0; 1024];
         let amount = ::nix::unistd::read(self.as_fd().as_raw_fd(), &mut event_buf)?;
 
-        Ok(Events {
-            event_buf,
-            amount,
-            i: 0,
-        })
+        Ok(Events::with_event_buf(event_buf, amount))
     }
 }
 
@@ -980,6 +976,18 @@ pub struct Events {
     event_buf: [u8; 1024],
     amount: usize,
     i: usize,
+}
+
+impl Events {
+    /// Create [`Event`]s iterator from buffer read using something other than
+    /// [`Device::receive_events()`].
+    pub fn with_event_buf(event_buf: [u8; 1024], amount: usize) -> Self {
+        Events {
+            event_buf,
+            amount,
+            i: 0,
+        }
+    }
 }
 
 /// An event from a device.
