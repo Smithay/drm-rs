@@ -6,6 +6,9 @@
 
 use buffer;
 
+use std::borrow::{Borrow, BorrowMut};
+use std::ops::{Deref, DerefMut};
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// Slow, but generic [`buffer::Buffer`] implementation
 pub struct DumbBuffer {
@@ -22,8 +25,40 @@ pub struct DumbMapping<'a> {
     pub(crate) map: &'a mut [u8],
 }
 
-impl<'a> AsMut<[u8]> for DumbMapping<'a> {
+impl AsRef<[u8]> for DumbMapping<'_> {
+    fn as_ref(&self) -> &[u8] {
+        self.map
+    }
+}
+
+impl AsMut<[u8]> for DumbMapping<'_> {
     fn as_mut(&mut self) -> &mut [u8] {
+        self.map
+    }
+}
+
+impl Borrow<[u8]> for DumbMapping<'_> {
+    fn borrow(&self) -> &[u8] {
+        self.map
+    }
+}
+
+impl BorrowMut<[u8]> for DumbMapping<'_> {
+    fn borrow_mut(&mut self) -> &mut [u8] {
+        self.map
+    }
+}
+
+impl Deref for DumbMapping<'_> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.map
+    }
+}
+
+impl DerefMut for DumbMapping<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
         self.map
     }
 }
