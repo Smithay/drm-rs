@@ -22,7 +22,7 @@ mod use_bindgen {
                     .map(|path| "-I".to_string() + &path.into_os_string().into_string().unwrap()),
             )
             .header_contents("bindings.h", contents)
-            .ctypes_prefix("libc")
+            .ctypes_prefix("core::ffi")
             .with_codegen_config(config)
             .prepend_enum_name(false)
             .layout_tests(false)

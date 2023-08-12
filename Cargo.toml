@@ -6,7 +6,7 @@ version = "0.9.0"
 license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>", "Victoria Brekenfeld <crates-io@drakulix.de>"]
 exclude = [".gitignore", ".github"]
-rust-version = "1.63"
+rust-version = "1.64"
 resolver = "2" # Required to separate dev-dependencies.nix features
 
 [dependencies]
