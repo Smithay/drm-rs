@@ -22,6 +22,12 @@ pub struct DumbMapping<'a> {
     pub(crate) map: &'a mut [u8],
 }
 
+impl AsRef<[u8]> for DumbMapping<'_> {
+    fn as_ref(&self) -> &[u8] {
+        self.map
+    }
+}
+
 impl<'a> AsMut<[u8]> for DumbMapping<'a> {
     fn as_mut(&mut self) -> &mut [u8] {
         self.map
