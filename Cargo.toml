@@ -27,7 +27,7 @@ features = ["mman", "poll"]
 
 [dev-dependencies]
 image = { version = "0.24", default-features = false, features = ["png"] }
-rustyline = "^8.0.0"
+rustyline = "12"
 
 [features]
 use_bindgen = ["drm-ffi/use_bindgen"]
