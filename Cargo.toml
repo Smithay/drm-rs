@@ -26,7 +26,7 @@ default-features = false
 features = ["mman", "poll"]
 
 [dev-dependencies]
-image = { version = "^0.23.14", default-features = false, features = ["png"] }
+image = { version = "0.24", default-features = false, features = ["png"] }
 rustyline = "^8.0.0"
 
 [features]
