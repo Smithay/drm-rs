@@ -10,7 +10,7 @@ rust-version = "1.64"
 resolver = "2" # Required to separate dev-dependencies.nix features
 
 [dependencies]
-bitflags = "1"
+bitflags = "2"
 bytemuck = { version = "1.12", features = ["extern_crate_alloc", "derive"] }
 drm-ffi = { path = "drm-ffi", version = "0.5.0" }
 drm-fourcc = "^2.2.0"
