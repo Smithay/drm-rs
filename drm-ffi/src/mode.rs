@@ -255,9 +255,9 @@ pub fn get_gamma(
     let mut lut = drm_mode_crtc_lut {
         crtc_id,
         gamma_size: size as _,
-        red: red.as_ptr() as _,
-        green: green.as_ptr() as _,
-        blue: blue.as_ptr() as _,
+        red: red.as_mut_ptr() as _,
+        green: green.as_mut_ptr() as _,
+        blue: blue.as_mut_ptr() as _,
     };
 
     unsafe {
@@ -409,8 +409,8 @@ pub fn get_connector(
         let mut info = drm_mode_get_connector {
             connector_id,
             encoders_ptr: map_ptr!(&encoders),
-            modes_ptr: match &modes {
-                Some(b) => b.as_ptr() as _,
+            modes_ptr: match &mut modes {
+                Some(b) => b.as_mut_ptr() as _,
                 None => {
                     if force_probe {
                         0 as _
@@ -644,7 +644,7 @@ pub fn get_property_blob(
 /// Create a property blob
 pub fn create_property_blob(fd: RawFd, data: &mut [u8]) -> Result<drm_mode_create_blob, Error> {
     let mut blob = drm_mode_create_blob {
-        data: data.as_ptr() as _,
+        data: data.as_mut_ptr() as _,
         length: data.len() as _,
         ..Default::default()
     };
@@ -766,10 +766,10 @@ pub fn atomic_commit(
     let mut atomic = drm_mode_atomic {
         flags,
         count_objs: objs.len() as _,
-        objs_ptr: objs.as_ptr() as _,
-        count_props_ptr: prop_counts.as_ptr() as _,
-        props_ptr: props.as_ptr() as _,
-        prop_values_ptr: values.as_ptr() as _,
+        objs_ptr: objs.as_mut_ptr() as _,
+        count_props_ptr: prop_counts.as_mut_ptr() as _,
+        props_ptr: props.as_mut_ptr() as _,
+        prop_values_ptr: values.as_mut_ptr() as _,
         ..Default::default()
     };
 
