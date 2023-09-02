@@ -11,7 +11,7 @@ rust-version = "1.64"
 drm-sys = { path = "drm-sys", version = "0.4.0" }
 
 [dependencies.nix]
-version = "0.26.0"
+version = "0.27"
 default-features = false
 features = ["ioctl"]
 

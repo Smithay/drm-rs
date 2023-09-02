@@ -16,12 +16,12 @@ drm-ffi = { path = "drm-ffi", version = "0.5.0" }
 drm-fourcc = "^2.2.0"
 
 [dependencies.nix]
-version = "0.26.0"
+version = "0.27"
 default-features = false
 features = ["mman"]
 
 [dev-dependencies.nix]
-version = "0.26.0"
+version = "0.27"
 default-features = false
 features = ["mman", "poll"]
 

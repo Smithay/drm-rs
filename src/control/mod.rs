@@ -656,9 +656,9 @@ pub trait Device: super::Device {
             let prot = mman::ProtFlags::PROT_READ | mman::ProtFlags::PROT_WRITE;
             let flags = mman::MapFlags::MAP_SHARED;
             let length = NonZeroUsize::new(buffer.length).ok_or(SystemError::InvalidArgument)?;
-            let fd = self.as_fd().as_raw_fd();
+            let fd = self.as_fd();
             let offset = info.offset as _;
-            unsafe { mman::mmap(None, length, prot, flags, fd, offset)? }
+            unsafe { mman::mmap(None, length, prot, flags, Some(fd), offset)? }
         };
 
         let mapping = DumbMapping {
