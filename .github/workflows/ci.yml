@@ -67,6 +67,10 @@ jobs:
       - run: |
           sudo apt-get update -y
           sudo apt-get install -y libdrm-dev
+      - name: Update deps
+        uses: actions-rs/cargo@v1
+        with:
+          command: update
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.64.0
@@ -99,6 +103,10 @@ jobs:
       - run: |
           sudo apt-get update -y
           sudo apt-get install -y libdrm-dev
+      - name: Update deps
+        uses: actions-rs/cargo@v1
+        with:
+          command: update
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
