@@ -260,6 +260,7 @@ impl From<State> for u32 {
 }
 
 /// Subpixel order of the connected sink
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum SubPixel {
     /// Unknown geometry
