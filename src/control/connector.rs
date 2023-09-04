@@ -277,8 +277,8 @@ pub enum SubPixel {
     None,
 }
 
-impl From<u32> for SubPixel {
-    fn from(n: u32) -> Self {
+impl SubPixel {
+    pub(super) fn from_raw(n: u32) -> Self {
         // These values are not defined in drm_mode.h
         // They were copied from linux's drm_connector.h
         // Don't mistake those for ones used in xf86DrmMode.h (libdrm offsets those by 1)
