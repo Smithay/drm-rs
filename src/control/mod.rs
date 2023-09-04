@@ -1349,7 +1349,7 @@ impl IntoIterator for PropertyValueSet {
         Zip<std::vec::IntoIter<property::Handle>, std::vec::IntoIter<property::RawValue>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.prop_ids.into_iter().zip(self.prop_vals.into_iter())
+        self.prop_ids.into_iter().zip(self.prop_vals)
     }
 }
 

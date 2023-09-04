@@ -199,7 +199,7 @@ pub fn query(
 
     let mut args = drm_syncobj_timeline_array {
         handles: handles.as_ptr() as _,
-        points: points.as_ptr() as _,
+        points: points.as_mut_ptr() as _,
         count_handles: handles.len() as _,
         flags: if last_submitted {
             DRM_SYNCOBJ_QUERY_FLAGS_LAST_SUBMITTED
