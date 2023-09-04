@@ -292,19 +292,3 @@ impl From<u32> for SubPixel {
         }
     }
 }
-
-impl From<SubPixel> for u32 {
-    fn from(state: SubPixel) -> Self {
-        // These values are not defined in drm_mode.h
-        // They were copied from linux's drm_connector.h
-        // Don't mistake those for ones used in xf86DrmMode.h (libdrm offsets those by 1)
-        match state {
-            SubPixel::Unknown => 0,
-            SubPixel::HorizontalRgb => 1,
-            SubPixel::HorizontalBgr => 2,
-            SubPixel::VerticalRgb => 3,
-            SubPixel::VerticalBgr => 4,
-            SubPixel::None => 5,
-        }
-    }
-}
