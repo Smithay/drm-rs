@@ -341,7 +341,10 @@ pub trait Device: super::Device {
         handle: framebuffer::Handle,
         clips: &[ClipRect],
     ) -> Result<(), SystemError> {
-        ffi::mode::dirty_fb(self.as_fd().as_raw_fd(), handle.into(), clips)?;
+        ffi::mode::dirty_fb(self.as_fd().as_raw_fd(), handle.into(), unsafe {
+            // SAFETY: ClipRect is repr(transparent) for drm_clip_rect
+            core::slice::from_raw_parts(clips.as_ptr() as *const ffi::drm_clip_rect, clips.len())
+        })?;
         Ok(())
     }
 
@@ -1354,7 +1357,36 @@ impl IntoIterator for PropertyValueSet {
 }
 
 /// Describes a rectangular region of a buffer
-pub type ClipRect = ffi::drm_sys::drm_clip_rect;
+#[repr(transparent)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Default)]
+pub struct ClipRect(ffi::drm_sys::drm_clip_rect);
+
+impl ClipRect {
+    /// Create a new clipping rectangle.
+    pub fn new(x1: u16, y1: u16, x2: u16, y2: u16) -> Self {
+        Self(ffi::drm_sys::drm_clip_rect { x1, y1, x2, y2 })
+    }
+
+    /// Get the X coordinate of the top left corner of the rectangle.
+    pub fn x1(self) -> u16 {
+        self.0.x1
+    }
+
+    /// Get the Y coordinate of the top left corner of the rectangle.
+    pub fn y1(self) -> u16 {
+        self.0.y1
+    }
+
+    /// Get the X coordinate of the bottom right corner of the rectangle
+    pub fn x2(self) -> u16 {
+        self.0.x2
+    }
+
+    /// Get the Y coordinate of the bottom right corner of the rectangle.
+    pub fn y2(self) -> u16 {
+        self.0.y2
+    }
+}
 
 bitflags::bitflags! {
     /// Commit flags for atomic mode setting
