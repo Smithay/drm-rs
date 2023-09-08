@@ -57,12 +57,13 @@ fn run_repl(card: &Card) {
     // Using rustyline to create the interactive prompt.
     let editor_config = rustyline::config::Builder::new()
         .max_history_size(256)
+        .unwrap()
         .completion_type(rustyline::config::CompletionType::List)
         .edit_mode(rustyline::config::EditMode::Vi)
         .auto_add_history(true)
         .build();
-    let mut kms_editor = rustyline::Editor::<()>::with_config(editor_config);
-    let mut atomic_editor = rustyline::Editor::<()>::with_config(editor_config);
+    let mut kms_editor = rustyline::Editor::<(), _>::with_config(editor_config).unwrap();
+    let mut atomic_editor = rustyline::Editor::<(), _>::with_config(editor_config).unwrap();
 
     for line in kms_editor.iter("KMS>> ").map(|x| x.unwrap()) {
         let args: Vec<_> = line.split_whitespace().collect();

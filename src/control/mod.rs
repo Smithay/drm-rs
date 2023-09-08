@@ -656,9 +656,9 @@ pub trait Device: super::Device {
             let prot = mman::ProtFlags::PROT_READ | mman::ProtFlags::PROT_WRITE;
             let flags = mman::MapFlags::MAP_SHARED;
             let length = NonZeroUsize::new(buffer.length).ok_or(SystemError::InvalidArgument)?;
-            let fd = self.as_fd().as_raw_fd();
+            let fd = self.as_fd();
             let offset = info.offset as _;
-            unsafe { mman::mmap(None, length, prot, flags, fd, offset)? }
+            unsafe { mman::mmap(None, length, prot, flags, Some(fd), offset)? }
         };
 
         let mapping = DumbMapping {
@@ -953,6 +953,7 @@ bitflags::bitflags! {
     /// Limited to the values in [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_FLAGS`],
     /// minus [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET`] bits which are
     /// passed through [`PageFlipTarget`].
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct PageFlipFlags : u32 {
         /// Request a vblank event on page flip
         const EVENT = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT;
@@ -1229,6 +1230,7 @@ impl std::fmt::Debug for Mode {
 
 bitflags::bitflags! {
     /// Display mode type flags
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct ModeTypeFlags : u32 {
         /// Builtin mode type
         #[deprecated]
@@ -1255,6 +1257,7 @@ bitflags::bitflags! {
 
 bitflags::bitflags! {
     /// Display mode flags
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct ModeFlags: u32 {
         /// PHSYNC flag
         const PHSYNC = ffi::DRM_MODE_FLAG_PHSYNC;
@@ -1392,6 +1395,7 @@ bitflags::bitflags! {
     /// Commit flags for atomic mode setting
     ///
     /// Limited to the values in [`ffi::drm_sys::DRM_MODE_ATOMIC_FLAGS`].
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct AtomicCommitFlags : u32 {
         /// Generate a page flip event, when the changes are applied
         const PAGE_FLIP_EVENT = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT;
@@ -1410,6 +1414,7 @@ bitflags::bitflags! {
 
 bitflags::bitflags! {
     /// Mode property flags
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct ModePropFlags : u32 {
         /// Do not use
         #[deprecated]

@@ -5,7 +5,7 @@ version = "0.4.0"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 license = "MIT"
 build = "build.rs"
-rust-version = "1.64"
+rust-version = "1.65"
 
 [features]
 default = []
@@ -13,5 +13,5 @@ use_bindgen = ["bindgen", "pkg-config"]
 update_bindings = ["use_bindgen"]
 
 [build-dependencies]
-bindgen = { version = "0.59", optional = true }
+bindgen = { version = "0.66", optional = true }
 pkg-config = { version = "0.3.19", optional = true }

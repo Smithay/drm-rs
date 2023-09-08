@@ -332,6 +332,7 @@ pub enum VblankWaitTarget {
 
 bitflags::bitflags! {
     /// Flags to alter the behaviour when waiting for a vblank
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct VblankWaitFlags : u32 {
         /// Send event instead of blocking
         const EVENT = drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_EVENT;

@@ -6,7 +6,7 @@ extern crate nix;
 pub mod utils;
 
 use nix::poll::PollFlags;
-use std::os::unix::io::AsRawFd;
+use std::os::unix::io::AsFd;
 use utils::*;
 
 use drm::control::syncobj::SyncFile;
@@ -42,6 +42,7 @@ impl Card {
 fn main() {
     let card = Card::open_global();
     let sync_file = card.simulate_command_submission().unwrap();
+    let fd = sync_file.as_fd();
 
     // Poll for readability. The DRM fence object will directly wake the thread when signalled.
     //
@@ -51,9 +52,6 @@ fn main() {
     // let afd = AsyncFd::with_interest(sync_file, Interest::READABLE).unwrap();
     // let future = async move { afd.readable().await.unwrap().retain_ready() };
     // future.await;
-    let mut poll_fds = [nix::poll::PollFd::new(
-        sync_file.as_raw_fd(),
-        PollFlags::POLLIN,
-    )];
+    let mut poll_fds = [nix::poll::PollFd::new(&fd, PollFlags::POLLIN)];
     nix::poll::poll(&mut poll_fds, -1).unwrap();
 }

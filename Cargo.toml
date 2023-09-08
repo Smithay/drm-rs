@@ -6,28 +6,28 @@ version = "0.9.0"
 license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>", "Victoria Brekenfeld <crates-io@drakulix.de>"]
 exclude = [".gitignore", ".github"]
-rust-version = "1.64"
+rust-version = "1.65"
 resolver = "2" # Required to separate dev-dependencies.nix features
 
 [dependencies]
-bitflags = "1"
+bitflags = "2"
 bytemuck = { version = "1.12", features = ["extern_crate_alloc", "derive"] }
 drm-ffi = { path = "drm-ffi", version = "0.5.0" }
 drm-fourcc = "^2.2.0"
 
 [dependencies.nix]
-version = "0.26.0"
+version = "0.27"
 default-features = false
 features = ["mman"]
 
 [dev-dependencies.nix]
-version = "0.26.0"
+version = "0.27"
 default-features = false
 features = ["mman", "poll"]
 
 [dev-dependencies]
-image = { version = "^0.23.14", default-features = false, features = ["png"] }
-rustyline = "^8.0.0"
+image = { version = "0.24", default-features = false, features = ["png"] }
+rustyline = "12"
 
 [features]
 use_bindgen = ["drm-ffi/use_bindgen"]
