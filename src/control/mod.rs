@@ -55,13 +55,18 @@ use std::iter::Zip;
 use std::mem;
 use std::num::NonZeroUsize;
 use std::ops::RangeBounds;
-use std::os::unix::io::{AsRawFd, RawFd};
+use std::os::unix::io::{AsFd, AsRawFd, FromRawFd, OwnedFd, RawFd};
 use std::time::Duration;
 
 use core::num::NonZeroU32;
 
+pub use nix::fcntl::OFlag;
+
 /// Raw handle for a drm resource
 pub type RawResourceHandle = NonZeroU32;
+
+/// Id of a Lease
+pub type LeaseId = NonZeroU32;
 
 /// Handle for a drm resource
 pub trait ResourceHandle:
@@ -820,7 +825,6 @@ pub trait Device: super::Device {
         handle: syncobj::Handle,
         export_sync_file: bool,
     ) -> Result<syncobj::SyncFile, SystemError> {
-        use std::os::unix::io::FromRawFd;
         let info =
             ffi::syncobj::handle_to_fd(self.as_fd().as_raw_fd(), handle.into(), export_sync_file)?;
         Ok(unsafe { syncobj::SyncFile::from_raw_fd(info.fd) })
@@ -936,6 +940,35 @@ pub trait Device: super::Device {
         Ok(())
     }
 
+    /// Create a drm lease
+    fn create_lease(
+        &self,
+        objects: &[RawResourceHandle],
+        flags: OFlag,
+    ) -> Result<(LeaseId, OwnedFd), SystemError> {
+        let lease = ffi::mode::create_lease(
+            self.as_fd().as_raw_fd(),
+            bytemuck::cast_slice(objects),
+            flags.bits() as u32,
+        )?;
+        Ok((
+            unsafe { NonZeroU32::new_unchecked(lease.lessee_id) },
+            unsafe { OwnedFd::from_raw_fd(lease.fd as RawFd) },
+        ))
+    }
+
+    /// List active lessees
+    fn list_lessees(&self) -> Result<Vec<LeaseId>, SystemError> {
+        let mut lessees = Vec::new();
+        ffi::mode::list_lessees(self.as_fd().as_raw_fd(), Some(&mut lessees))?;
+        Ok(unsafe { transmute_vec_from_u32(lessees) })
+    }
+
+    /// Revoke a previously issued drm lease
+    fn revoke_lease(&self, lessee_id: LeaseId) -> Result<(), SystemError> {
+        ffi::mode::revoke_lease(self.as_fd().as_raw_fd(), lessee_id.get())
+    }
+
     /// Receive pending events
     fn receive_events(&self) -> Result<Events, SystemError>
     where
@@ -945,6 +978,58 @@ pub trait Device: super::Device {
         let amount = ::nix::unistd::read(self.as_fd().as_raw_fd(), &mut event_buf)?;
 
         Ok(Events::with_event_buf(event_buf, amount))
+    }
+}
+
+/// List of leased resources
+pub struct LeaseResources {
+    /// leased crtcs
+    pub crtcs: Vec<crtc::Handle>,
+    /// leased connectors
+    pub connectors: Vec<connector::Handle>,
+    /// leased planes
+    pub planes: Vec<plane::Handle>,
+}
+
+/// Query lease resources
+pub fn get_lease<D: AsFd>(lease: D) -> Result<LeaseResources, SystemError> {
+    let mut crtcs = Vec::new();
+    let mut connectors = Vec::new();
+    let mut planes = Vec::new();
+    let mut objects = Vec::new();
+
+    ffi::mode::get_lease(lease.as_fd().as_raw_fd(), Some(&mut objects))?;
+
+    let _ = ffi::mode::get_resources(
+        lease.as_fd().as_raw_fd(),
+        None,
+        Some(&mut crtcs),
+        Some(&mut connectors),
+        None,
+    )?;
+    let _ = ffi::mode::get_plane_resources(lease.as_fd().as_raw_fd(), Some(&mut planes))?;
+
+    unsafe {
+        Ok(LeaseResources {
+            crtcs: transmute_vec_from_u32::<crtc::Handle>(
+                crtcs
+                    .into_iter()
+                    .filter(|handle| objects.contains(handle))
+                    .collect(),
+            ),
+            connectors: transmute_vec_from_u32::<connector::Handle>(
+                connectors
+                    .into_iter()
+                    .filter(|handle| objects.contains(handle))
+                    .collect(),
+            ),
+            planes: transmute_vec_from_u32::<plane::Handle>(
+                planes
+                    .into_iter()
+                    .filter(|handle| objects.contains(handle))
+                    .collect(),
+            ),
+        })
     }
 }
 

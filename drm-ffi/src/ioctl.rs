@@ -190,6 +190,11 @@ pub(crate) mod mode {
     ioctl_readwrite!(dirty_fb, DRM_IOCTL_BASE, 0xB1, drm_mode_fb_dirty_cmd);
 
     ioctl_readwrite!(atomic, DRM_IOCTL_BASE, 0xBC, drm_mode_atomic);
+
+    ioctl_readwrite!(create_lease, DRM_IOCTL_BASE, 0xC6, drm_mode_create_lease);
+    ioctl_readwrite!(list_lessees, DRM_IOCTL_BASE, 0xC7, drm_mode_list_lessees);
+    ioctl_readwrite!(get_lease, DRM_IOCTL_BASE, 0xC8, drm_mode_get_lease);
+    ioctl_readwrite!(revoke_lease, DRM_IOCTL_BASE, 0xC9, drm_mode_revoke_lease);
 }
 
 pub(crate) mod gem {

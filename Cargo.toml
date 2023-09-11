@@ -18,7 +18,7 @@ drm-fourcc = "^2.2.0"
 [dependencies.nix]
 version = "0.27"
 default-features = false
-features = ["mman"]
+features = ["mman", "fs"]
 
 [dev-dependencies.nix]
 version = "0.27"
