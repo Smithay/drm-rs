@@ -856,15 +856,6 @@ pub struct drm_syncobj_timeline_wait {
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct drm_syncobj_eventfd {
-    pub handle: __u32,
-    pub flags: __u32,
-    pub point: __u64,
-    pub fd: __s32,
-    pub pad: __u32,
-}
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_syncobj_array {
     pub handles: __u64,
     pub count_handles: __u32,
