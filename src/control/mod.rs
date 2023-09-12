@@ -262,11 +262,13 @@ pub trait Device: super::Device {
             Err(UnrecognizedFourcc(_)) => return Err(SystemError::UnknownFourcc),
         };
 
+        let flags = FbCmd2Flags::from_bits_truncate(info.flags);
+
         let fb = framebuffer::PlanarInfo {
             handle,
             size: (info.width, info.height),
             pixel_format,
-            flags: info.flags,
+            flags,
             buffers: bytemuck::cast(info.handles),
             pitches: info.pitches,
             offsets: info.offsets,
@@ -305,7 +307,7 @@ pub trait Device: super::Device {
         &self,
         planar_buffer: &B,
         modifiers: &[Option<DrmModifier>; 4],
-        flags: u32,
+        flags: FbCmd2Flags,
     ) -> Result<framebuffer::Handle, SystemError>
     where
         B: buffer::PlanarBuffer + ?Sized,
@@ -330,7 +332,7 @@ pub trait Device: super::Device {
             &planar_buffer.pitches(),
             &planar_buffer.offsets(),
             &mods,
-            flags,
+            flags.bits(),
         )?;
 
         Ok(from_u32(info.fb_id).unwrap())
@@ -1448,5 +1450,16 @@ bitflags::bitflags! {
         /// older userspace (DDX drivers) that read/write each prop they find,
         /// witout being aware that this could be triggering a lengthy modeset.
         const ATOMIC = ffi::DRM_MODE_PROP_ATOMIC;
+    }
+}
+
+bitflags::bitflags! {
+    /// Planar framebuffer flags
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct FbCmd2Flags : u32 {
+        /// For interlaced framebuffers
+        const INTERLACED = ffi::DRM_MODE_FB_INTERLACED;
+        /// Enables .modifier
+        const MODIFIERS = ffi::DRM_MODE_FB_MODIFIERS;
     }
 }
