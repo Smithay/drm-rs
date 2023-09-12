@@ -97,7 +97,7 @@ pub struct PlanarInfo {
     pub(crate) buffers: [Option<buffer::Handle>; 4],
     pub(crate) pitches: [u32; 4],
     pub(crate) offsets: [u32; 4],
-    pub(crate) modifier: [DrmModifier; 4],
+    pub(crate) modifier: Option<DrmModifier>,
 }
 
 impl PlanarInfo {
@@ -137,7 +137,7 @@ impl PlanarInfo {
     }
 
     /// Returns the modifier of this framebuffer.
-    pub fn modifier(&self) -> [DrmModifier; 4] {
+    pub fn modifier(&self) -> Option<DrmModifier> {
         self.modifier
     }
 }

@@ -263,6 +263,9 @@ pub trait Device: super::Device {
         };
 
         let flags = FbCmd2Flags::from_bits_truncate(info.flags);
+        let modifier = flags
+            .contains(FbCmd2Flags::MODIFIERS)
+            .then(|| DrmModifier::from(info.modifier[0]));
 
         let fb = framebuffer::PlanarInfo {
             handle,
@@ -272,7 +275,7 @@ pub trait Device: super::Device {
             buffers: bytemuck::cast(info.handles),
             pitches: info.pitches,
             offsets: info.offsets,
-            modifier: info.modifier.map(DrmModifier::from),
+            modifier,
         };
 
         Ok(fb)
