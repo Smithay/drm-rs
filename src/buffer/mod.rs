@@ -109,6 +109,8 @@ pub trait PlanarBuffer {
     fn size(&self) -> (u32, u32);
     /// The format of the buffer.
     fn format(&self) -> DrmFourcc;
+    /// The modifier of the buffer.
+    fn modifier(&self) -> Option<DrmModifier>;
     /// The pitches of the buffer.
     fn pitches(&self) -> [u32; 4];
     /// The handles to the buffer.

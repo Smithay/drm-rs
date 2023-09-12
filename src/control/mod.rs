@@ -309,21 +309,29 @@ pub trait Device: super::Device {
     fn add_planar_framebuffer<B>(
         &self,
         planar_buffer: &B,
-        modifiers: &[Option<DrmModifier>; 4],
         flags: FbCmd2Flags,
     ) -> Result<framebuffer::Handle, SystemError>
     where
         B: buffer::PlanarBuffer + ?Sized,
     {
+        let modifier = planar_buffer.modifier();
+        let has_modifier = flags.contains(FbCmd2Flags::MODIFIERS);
+        assert!((has_modifier && modifier.is_some()) || (!has_modifier && modifier.is_none()));
+        let modifier = if let Some(modifier) = modifier {
+            u64::from(modifier)
+        } else {
+            0
+        };
+
         let (w, h) = planar_buffer.size();
         let opt_handles = planar_buffer.handles();
 
         let handles = bytemuck::cast(opt_handles);
         let mods = [
-            modifiers[0].map(Into::<u64>::into).unwrap_or(0),
-            modifiers[1].map(Into::<u64>::into).unwrap_or(0),
-            modifiers[2].map(Into::<u64>::into).unwrap_or(0),
-            modifiers[3].map(Into::<u64>::into).unwrap_or(0),
+            opt_handles[0].map_or(0, |_| modifier),
+            opt_handles[1].map_or(0, |_| modifier),
+            opt_handles[2].map_or(0, |_| modifier),
+            opt_handles[3].map_or(0, |_| modifier),
         ];
 
         let info = ffi::mode::add_fb2(
