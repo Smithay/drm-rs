@@ -170,6 +170,7 @@ pub trait Device: super::Device {
             modes: Mode::wrap_vec(modes),
             encoders: unsafe { transmute_vec_from_u32(encoders) },
             curr_enc: unsafe { mem::transmute(ffi_info.encoder_id) },
+            subpixel: connector::SubPixel::from_raw(ffi_info.subpixel),
         };
 
         Ok(connector)
