@@ -275,6 +275,8 @@ pub enum SubPixel {
     VerticalBgr,
     /// No geometry
     None,
+    /// Encountered value not supported by drm-rs
+    NotImplemented,
 }
 
 impl SubPixel {
@@ -289,7 +291,7 @@ impl SubPixel {
             3 => Self::VerticalRgb,
             4 => Self::VerticalBgr,
             5 => Self::None,
-            _ => Self::Unknown,
+            _ => Self::NotImplemented,
         }
     }
 }
