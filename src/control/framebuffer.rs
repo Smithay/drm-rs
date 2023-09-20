@@ -93,11 +93,11 @@ pub struct PlanarInfo {
     pub(crate) handle: Handle,
     pub(crate) size: (u32, u32),
     pub(crate) pixel_format: DrmFourcc,
-    pub(crate) flags: u32,
+    pub(crate) flags: control::FbCmd2Flags,
     pub(crate) buffers: [Option<buffer::Handle>; 4],
     pub(crate) pitches: [u32; 4],
     pub(crate) offsets: [u32; 4],
-    pub(crate) modifier: [DrmModifier; 4],
+    pub(crate) modifier: Option<DrmModifier>,
 }
 
 impl PlanarInfo {
@@ -117,7 +117,7 @@ impl PlanarInfo {
     }
 
     /// Returns the flags of this framebuffer.
-    pub fn flags(&self) -> u32 {
+    pub fn flags(&self) -> control::FbCmd2Flags {
         self.flags
     }
 
@@ -137,7 +137,7 @@ impl PlanarInfo {
     }
 
     /// Returns the modifier of this framebuffer.
-    pub fn modifier(&self) -> [DrmModifier; 4] {
+    pub fn modifier(&self) -> Option<DrmModifier> {
         self.modifier
     }
 }
