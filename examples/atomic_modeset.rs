@@ -107,8 +107,7 @@ pub fn main() {
         })
         .partition(|&&plane| {
             if let Ok(props) = card.get_properties(plane) {
-                let (ids, vals) = props.as_props_and_values();
-                for (&id, &val) in ids.iter().zip(vals.iter()) {
+                for (&id, &val) in props.iter() {
                     if let Ok(info) = card.get_property(id) {
                         if info.name().to_str().map(|x| x == "type").unwrap_or(false) {
                             return val == (drm::control::PlaneType::Primary as u32).into();

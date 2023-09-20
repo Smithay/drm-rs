@@ -8,9 +8,7 @@ use utils::*;
 fn print_properties<T: drm::control::ResourceHandle>(card: &Card, handle: T) {
     let props = card.get_properties(handle).unwrap();
 
-    let (ids, vals) = props.as_props_and_values();
-
-    for (&id, &val) in ids.iter().zip(vals.iter()) {
+    for (&id, &val) in props.iter() {
         println!("Property: {:?}", id);
         let info = card.get_property(id).unwrap();
         println!("{:?}", info.name());

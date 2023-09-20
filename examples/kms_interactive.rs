@@ -115,8 +115,7 @@ fn run_repl(card: &Card) {
                         HandleWithProperties::CRTC(handle) => card.get_properties(handle).unwrap(),
                         HandleWithProperties::Plane(handle) => card.get_properties(handle).unwrap(),
                     };
-                    let (ids, vals) = props.as_props_and_values();
-                    for (id, val) in ids.iter().zip(vals.iter()) {
+                    for (id, val) in props.iter() {
                         println!("\tProperty: {:?}\tValue: {:?}", id, val);
                     }
                 }
