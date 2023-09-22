@@ -780,6 +780,93 @@ pub fn atomic_commit(
     Ok(())
 }
 
+/// Create a drm lease
+pub fn create_lease(
+    fd: RawFd,
+    objects: &[u32],
+    flags: u32,
+) -> Result<drm_mode_create_lease, Error> {
+    let mut data = drm_mode_create_lease {
+        object_ids: objects.as_ptr() as _,
+        object_count: objects.len() as u32,
+        flags,
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::create_lease(fd, &mut data)?;
+    }
+
+    Ok(data)
+}
+
+/// List all active drm leases
+pub fn list_lessees(
+    fd: RawFd,
+    mut lessees: Option<&mut Vec<u32>>,
+) -> Result<drm_mode_list_lessees, Error> {
+    let mut sizes = drm_mode_list_lessees::default();
+
+    unsafe {
+        ioctl::mode::list_lessees(fd, &mut sizes)?;
+    };
+
+    map_reserve!(lessees, sizes.count_lessees as usize);
+
+    let mut data = drm_mode_list_lessees {
+        lessees_ptr: map_ptr!(&lessees),
+        count_lessees: map_len!(&lessees),
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::list_lessees(fd, &mut data)?;
+    };
+
+    map_set!(lessees, data.count_lessees as usize);
+
+    Ok(data)
+}
+
+/// Get leased objects for a lease file descriptor
+pub fn get_lease(
+    fd: RawFd,
+    mut objects: Option<&mut Vec<u32>>,
+) -> Result<drm_mode_get_lease, Error> {
+    let mut sizes = drm_mode_get_lease::default();
+
+    unsafe {
+        ioctl::mode::get_lease(fd, &mut sizes)?;
+    }
+
+    map_reserve!(objects, sizes.count_objects as usize);
+
+    let mut data = drm_mode_get_lease {
+        count_objects: map_len!(&objects),
+        objects_ptr: map_ptr!(&objects),
+        ..Default::default()
+    };
+
+    unsafe {
+        ioctl::mode::get_lease(fd, &mut data)?;
+    }
+
+    map_set!(objects, data.count_objects as usize);
+
+    Ok(data)
+}
+
+/// Revoke previously issued lease
+pub fn revoke_lease(fd: RawFd, lessee_id: u32) -> Result<(), Error> {
+    let mut data = drm_mode_revoke_lease { lessee_id };
+
+    unsafe {
+        ioctl::mode::revoke_lease(fd, &mut data)?;
+    }
+
+    Ok(())
+}
+
 ///
 /// Dumbbuffers are basic buffers that can be used for scanout.
 ///
