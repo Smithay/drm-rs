@@ -23,7 +23,7 @@ found in `/dev/dri`, but can also be opened in other ways (ex. udev).
 
 This crate does not provide a method of opening these files. Instead, the
 user program must provide a way to access the file descriptor representing the
-device through the [AsRawFd](https://doc.rust-lang.org/std/os/unix/io/trait.AsRawFd.html)
+device through the [AsFd](https://doc.rust-lang.org/std/os/fd/trait.AsFd.html)
 trait. Here is a basic example using `File` as a backend:
 
 ```rust
