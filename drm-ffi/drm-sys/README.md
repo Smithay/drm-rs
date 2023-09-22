@@ -9,7 +9,12 @@ drm-sys = "..."
 
 The following platforms have prebuilt bindings available:
 
-* Linux
+* Linux/Android
+  * x86_64
+  * x86
+  * arm
+  * aarch64
+* FreeBSD
   * x86_64
 
 If bindings for your target platform are not available, you can attempt to
