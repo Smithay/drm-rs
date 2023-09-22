@@ -72,7 +72,7 @@ and [`legacy_modeset`](https://github.com/Smithay/drm-rs/blob/develop/examples/l
 
 Rendering is done by [creating](https://docs.rs/drm/*/drm/control/trait.Device.html#method.add_framebuffer) and
 [attaching](https://docs.rs/drm/*/drm/control/trait.Device.html#method.page_flip) [framebuffers](https://docs.rs/drm/*/drm/control/framebuffer/index.html)
-to [crtcs](https://docs.rs/drm/*/drm/control/crtcs/index.html).
+to [crtcs](https://docs.rs/drm/*/drm/control/crtc/index.html).
 
 A framebuffer is created from anything implementing [`Buffer`](https://docs.rs/drm/*/drm/buffer/trait.Buffer.html) like the always
 available, but very limited, [`DumbBuffer`](https://docs.rs/drm/*/drm/control/dumbbuffer/struct.DumbBuffer.html).
