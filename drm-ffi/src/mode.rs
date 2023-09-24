@@ -554,26 +554,25 @@ pub fn get_property(
     mut values: Option<&mut Vec<u64>>,
     mut enums: Option<&mut Vec<drm_mode_property_enum>>,
 ) -> Result<drm_mode_get_property, Error> {
-    let mut sizes = drm_mode_get_property {
+    let mut prop = drm_mode_get_property {
         prop_id,
         ..Default::default()
     };
 
     unsafe {
-        ioctl::mode::get_property(fd, &mut sizes)?;
+        ioctl::mode::get_property(fd, &mut prop)?;
     }
 
-    map_reserve!(values, sizes.count_values as usize);
-    map_reserve!(enums, sizes.count_enum_blobs as usize);
+    // There is no need to call get_property() twice if there is nothing else to retrieve.
+    if prop.count_values == 0 && prop.count_enum_blobs == 0 {
+        return Ok(prop);
+    }
 
-    let mut prop = drm_mode_get_property {
-        prop_id,
-        values_ptr: map_ptr!(&values),
-        enum_blob_ptr: map_ptr!(&enums),
-        count_values: map_len!(&values),
-        count_enum_blobs: map_len!(&enums),
-        ..Default::default()
-    };
+    map_reserve!(values, prop.count_values as usize);
+    map_reserve!(enums, prop.count_enum_blobs as usize);
+
+    prop.values_ptr = map_ptr!(&values);
+    prop.enum_blob_ptr = map_ptr!(&enums);
 
     unsafe {
         ioctl::mode::get_property(fd, &mut prop)?;
