@@ -50,6 +50,7 @@ use buffer;
 
 use super::util::*;
 
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::iter::Zip;
 use std::mem;
@@ -1427,6 +1428,20 @@ pub struct PropertyValueSet {
 }
 
 impl PropertyValueSet {
+    /// Returns a HashMap mapping property names to info
+    pub fn as_hashmap(
+        &self,
+        device: &impl Device,
+    ) -> Result<HashMap<String, property::Info>, SystemError> {
+        let mut map = HashMap::new();
+        for id in self.prop_ids.iter() {
+            let info = device.get_property(*id)?;
+            let name = info.name().to_str().unwrap().to_owned();
+            map.insert(name, info);
+        }
+        Ok(map)
+    }
+
     /// Returns a pair representing a set of [`property::Handle`] and their raw values
     pub fn as_props_and_values(&self) -> (&[property::Handle], &[property::RawValue]) {
         (&self.prop_ids, &self.prop_vals)

@@ -9,25 +9,7 @@ use drm::Device as BasicDevice;
 
 use drm::buffer::DrmFourcc;
 
-use drm::control::ResourceHandle;
 use drm::control::{self, atomic, connector, crtc, property, AtomicCommitFlags};
-
-fn find_prop_id<T: ResourceHandle>(
-    card: &Card,
-    handle: T,
-    name: &'static str,
-) -> Option<property::Handle> {
-    let props = card
-        .get_properties(handle)
-        .expect("Could not get props of connector");
-    let (ids, _vals) = props.as_props_and_values();
-    ids.iter()
-        .find(|&id| {
-            let info = card.get_property(*id).unwrap();
-            info.name().to_str().map(|x| x == name).unwrap_or(false)
-        })
-        .cloned()
-}
 
 pub fn main() {
     let card = Card::open_global();
@@ -124,73 +106,85 @@ pub fn main() {
     println!("{:#?}", db);
     println!("{:#?}", plane);
 
+    let con_props = card
+        .get_properties(con.handle())
+        .expect("Could not get props of connector")
+        .as_hashmap(&card)
+        .expect("Could not get a prop from connector");
+    let crtc_props = card
+        .get_properties(crtc.handle())
+        .expect("Could not get props of crtc")
+        .as_hashmap(&card)
+        .expect("Could not get a prop from crtc");
+    let plane_props = card
+        .get_properties(plane)
+        .expect("Could not get props of plane")
+        .as_hashmap(&card)
+        .expect("Could not get a prop from plane");
+
     let mut atomic_req = atomic::AtomicModeReq::new();
     atomic_req.add_property(
         con.handle(),
-        find_prop_id(&card, con.handle(), "CRTC_ID").expect("Could not get CRTC_ID"),
+        con_props["CRTC_ID"].handle(),
         property::Value::CRTC(Some(crtc.handle())),
     );
     let blob = card
         .create_property_blob(&mode)
         .expect("Failed to create blob");
+    atomic_req.add_property(crtc.handle(), crtc_props["MODE_ID"].handle(), blob);
     atomic_req.add_property(
         crtc.handle(),
-        find_prop_id(&card, crtc.handle(), "MODE_ID").expect("Could not get MODE_ID"),
-        blob,
-    );
-    atomic_req.add_property(
-        crtc.handle(),
-        find_prop_id(&card, crtc.handle(), "ACTIVE").expect("Could not get ACTIVE"),
+        crtc_props["ACTIVE"].handle(),
         property::Value::Boolean(true),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "FB_ID").expect("Could not get FB_ID"),
+        plane_props["FB_ID"].handle(),
         property::Value::Framebuffer(Some(fb)),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "CRTC_ID").expect("Could not get CRTC_ID"),
+        plane_props["CRTC_ID"].handle(),
         property::Value::CRTC(Some(crtc.handle())),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "SRC_X").expect("Could not get SRC_X"),
+        plane_props["SRC_X"].handle(),
         property::Value::UnsignedRange(0),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "SRC_Y").expect("Could not get SRC_Y"),
+        plane_props["SRC_Y"].handle(),
         property::Value::UnsignedRange(0),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "SRC_W").expect("Could not get SRC_W"),
+        plane_props["SRC_W"].handle(),
         property::Value::UnsignedRange((mode.size().0 as u64) << 16),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "SRC_H").expect("Could not get SRC_H"),
+        plane_props["SRC_H"].handle(),
         property::Value::UnsignedRange((mode.size().1 as u64) << 16),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "CRTC_X").expect("Could not get CRTC_X"),
+        plane_props["CRTC_X"].handle(),
         property::Value::SignedRange(0),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "CRTC_Y").expect("Could not get CRTC_Y"),
+        plane_props["CRTC_Y"].handle(),
         property::Value::SignedRange(0),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "CRTC_W").expect("Could not get CRTC_W"),
+        plane_props["CRTC_W"].handle(),
         property::Value::UnsignedRange(mode.size().0 as u64),
     );
     atomic_req.add_property(
         plane,
-        find_prop_id(&card, plane, "CRTC_H").expect("Could not get CRTC_H"),
+        plane_props["CRTC_H"].handle(),
         property::Value::UnsignedRange(mode.size().1 as u64),
     );
 
