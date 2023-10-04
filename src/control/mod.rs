@@ -56,7 +56,7 @@ use std::iter::Zip;
 use std::mem;
 use std::num::NonZeroUsize;
 use std::ops::RangeBounds;
-use std::os::unix::io::{AsFd, AsRawFd, FromRawFd, OwnedFd, RawFd};
+use std::os::unix::io::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 use std::time::Duration;
 
 use core::num::NonZeroU32;
@@ -777,15 +777,19 @@ pub trait Device: super::Device {
     }
 
     /// Convert a prime file descriptor to a GEM buffer handle
-    fn prime_fd_to_buffer(&self, fd: RawFd) -> Result<buffer::Handle, SystemError> {
-        let info = ffi::gem::fd_to_handle(self.as_fd().as_raw_fd(), fd)?;
+    fn prime_fd_to_buffer(&self, fd: BorrowedFd<'_>) -> Result<buffer::Handle, SystemError> {
+        let info = ffi::gem::fd_to_handle(self.as_fd().as_raw_fd(), fd.as_raw_fd())?;
         Ok(from_u32(info.handle).unwrap())
     }
 
     /// Convert a GEM buffer handle to a prime file descriptor
-    fn buffer_to_prime_fd(&self, handle: buffer::Handle, flags: u32) -> Result<RawFd, SystemError> {
+    fn buffer_to_prime_fd(
+        &self,
+        handle: buffer::Handle,
+        flags: u32,
+    ) -> Result<OwnedFd, SystemError> {
         let info = ffi::gem::handle_to_fd(self.as_fd().as_raw_fd(), handle.into(), flags)?;
-        Ok(info.fd)
+        Ok(unsafe { OwnedFd::from_raw_fd(info.fd) })
     }
 
     /// Queue a page flip on the given crtc
@@ -838,19 +842,20 @@ pub trait Device: super::Device {
         &self,
         handle: syncobj::Handle,
         export_sync_file: bool,
-    ) -> Result<syncobj::SyncFile, SystemError> {
+    ) -> Result<OwnedFd, SystemError> {
         let info =
             ffi::syncobj::handle_to_fd(self.as_fd().as_raw_fd(), handle.into(), export_sync_file)?;
-        Ok(unsafe { syncobj::SyncFile::from_raw_fd(info.fd) })
+        Ok(unsafe { OwnedFd::from_raw_fd(info.fd) })
     }
 
     /// Imports a file descriptor exported by [`Self::syncobj_to_fd`] back into a process-local handle.
     fn fd_to_syncobj(
         &self,
-        fd: RawFd,
+        fd: BorrowedFd<'_>,
         import_sync_file: bool,
     ) -> Result<syncobj::Handle, SystemError> {
-        let info = ffi::syncobj::fd_to_handle(self.as_fd().as_raw_fd(), fd, import_sync_file)?;
+        let info =
+            ffi::syncobj::fd_to_handle(self.as_fd().as_raw_fd(), fd.as_raw_fd(), import_sync_file)?;
         Ok(from_u32(info.handle).unwrap())
     }
 
