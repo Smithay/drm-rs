@@ -193,11 +193,11 @@ pub const DRM_COMMAND_END: u32 = 160;
 pub const DRM_EVENT_VBLANK: u32 = 1;
 pub const DRM_EVENT_FLIP_COMPLETE: u32 = 2;
 pub const DRM_EVENT_CRTC_SEQUENCE: u32 = 3;
-pub type __uint16_t = libc::c_ushort;
-pub type __int32_t = libc::c_int;
-pub type __uint32_t = libc::c_uint;
-pub type __int64_t = libc::c_long;
-pub type __uint64_t = libc::c_ulong;
+pub type __uint16_t = core::ffi::c_ushort;
+pub type __int32_t = core::ffi::c_int;
+pub type __uint32_t = core::ffi::c_uint;
+pub type __int64_t = core::ffi::c_long;
+pub type __uint64_t = core::ffi::c_ulong;
 pub type __size_t = __uint64_t;
 pub type size_t = __size_t;
 pub type __u16 = u16;
@@ -206,22 +206,22 @@ pub type __u32 = u32;
 pub type __s64 = i64;
 pub type __u64 = u64;
 pub type __kernel_size_t = size_t;
-pub type drm_handle_t = libc::c_ulong;
-pub type drm_context_t = libc::c_uint;
-pub type drm_drawable_t = libc::c_uint;
-pub type drm_magic_t = libc::c_uint;
+pub type drm_handle_t = core::ffi::c_ulong;
+pub type drm_context_t = core::ffi::c_uint;
+pub type drm_drawable_t = core::ffi::c_uint;
+pub type drm_magic_t = core::ffi::c_uint;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_clip_rect {
-    pub x1: libc::c_ushort,
-    pub y1: libc::c_ushort,
-    pub x2: libc::c_ushort,
-    pub y2: libc::c_ushort,
+    pub x1: core::ffi::c_ushort,
+    pub y1: core::ffi::c_ushort,
+    pub x2: core::ffi::c_ushort,
+    pub y2: core::ffi::c_ushort,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_drawable_info {
-    pub num_rects: libc::c_uint,
+    pub num_rects: core::ffi::c_uint,
     pub rects: *mut drm_clip_rect,
 }
 impl Default for drm_drawable_info {
@@ -236,17 +236,17 @@ impl Default for drm_drawable_info {
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_tex_region {
-    pub next: libc::c_uchar,
-    pub prev: libc::c_uchar,
-    pub in_use: libc::c_uchar,
-    pub padding: libc::c_uchar,
-    pub age: libc::c_uint,
+    pub next: core::ffi::c_uchar,
+    pub prev: core::ffi::c_uchar,
+    pub in_use: core::ffi::c_uchar,
+    pub padding: core::ffi::c_uchar,
+    pub age: core::ffi::c_uint,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_hw_lock {
-    pub lock: libc::c_uint,
-    pub padding: [libc::c_char; 60usize],
+    pub lock: core::ffi::c_uint,
+    pub padding: [core::ffi::c_char; 60usize],
 }
 impl Default for drm_hw_lock {
     fn default() -> Self {
@@ -260,15 +260,15 @@ impl Default for drm_hw_lock {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_version {
-    pub version_major: libc::c_int,
-    pub version_minor: libc::c_int,
-    pub version_patchlevel: libc::c_int,
+    pub version_major: core::ffi::c_int,
+    pub version_minor: core::ffi::c_int,
+    pub version_patchlevel: core::ffi::c_int,
     pub name_len: __kernel_size_t,
-    pub name: *mut libc::c_char,
+    pub name: *mut core::ffi::c_char,
     pub date_len: __kernel_size_t,
-    pub date: *mut libc::c_char,
+    pub date: *mut core::ffi::c_char,
     pub desc_len: __kernel_size_t,
-    pub desc: *mut libc::c_char,
+    pub desc: *mut core::ffi::c_char,
 }
 impl Default for drm_version {
     fn default() -> Self {
@@ -283,7 +283,7 @@ impl Default for drm_version {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_unique {
     pub unique_len: __kernel_size_t,
-    pub unique: *mut libc::c_char,
+    pub unique: *mut core::ffi::c_char,
 }
 impl Default for drm_unique {
     fn default() -> Self {
@@ -297,7 +297,7 @@ impl Default for drm_unique {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_list {
-    pub count: libc::c_int,
+    pub count: core::ffi::c_int,
     pub version: *mut drm_version,
 }
 impl Default for drm_list {
@@ -312,16 +312,16 @@ impl Default for drm_list {
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_block {
-    pub unused: libc::c_int,
+    pub unused: core::ffi::c_int,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_control {
     pub func: drm_control__bindgen_ty_1::Type,
-    pub irq: libc::c_int,
+    pub irq: core::ffi::c_int,
 }
 pub mod drm_control__bindgen_ty_1 {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const DRM_ADD_COMMAND: Type = 0;
     pub const DRM_RM_COMMAND: Type = 1;
     pub const DRM_INST_HANDLER: Type = 2;
@@ -337,7 +337,7 @@ impl Default for drm_control {
     }
 }
 pub mod drm_map_type {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const _DRM_FRAME_BUFFER: Type = 0;
     pub const _DRM_REGISTERS: Type = 1;
     pub const _DRM_SHM: Type = 2;
@@ -346,7 +346,7 @@ pub mod drm_map_type {
     pub const _DRM_CONSISTENT: Type = 5;
 }
 pub mod drm_map_flags {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const _DRM_RESTRICTED: Type = 1;
     pub const _DRM_READ_ONLY: Type = 2;
     pub const _DRM_LOCKED: Type = 4;
@@ -359,8 +359,8 @@ pub mod drm_map_flags {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_ctx_priv_map {
-    pub ctx_id: libc::c_uint,
-    pub handle: *mut libc::c_void,
+    pub ctx_id: core::ffi::c_uint,
+    pub handle: *mut core::ffi::c_void,
 }
 impl Default for drm_ctx_priv_map {
     fn default() -> Self {
@@ -374,12 +374,12 @@ impl Default for drm_ctx_priv_map {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_map {
-    pub offset: libc::c_ulong,
-    pub size: libc::c_ulong,
+    pub offset: core::ffi::c_ulong,
+    pub size: core::ffi::c_ulong,
     pub type_: drm_map_type::Type,
     pub flags: drm_map_flags::Type,
-    pub handle: *mut libc::c_void,
-    pub mtrr: libc::c_int,
+    pub handle: *mut core::ffi::c_void,
+    pub mtrr: core::ffi::c_int,
 }
 impl Default for drm_map {
     fn default() -> Self {
@@ -393,15 +393,15 @@ impl Default for drm_map {
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_client {
-    pub idx: libc::c_int,
-    pub auth: libc::c_int,
-    pub pid: libc::c_ulong,
-    pub uid: libc::c_ulong,
-    pub magic: libc::c_ulong,
-    pub iocs: libc::c_ulong,
+    pub idx: core::ffi::c_int,
+    pub auth: core::ffi::c_int,
+    pub pid: core::ffi::c_ulong,
+    pub uid: core::ffi::c_ulong,
+    pub magic: core::ffi::c_ulong,
+    pub iocs: core::ffi::c_ulong,
 }
 pub mod drm_stat_type {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const _DRM_STAT_LOCK: Type = 0;
     pub const _DRM_STAT_OPENS: Type = 1;
     pub const _DRM_STAT_CLOSES: Type = 2;
@@ -421,13 +421,13 @@ pub mod drm_stat_type {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_stats {
-    pub count: libc::c_ulong,
+    pub count: core::ffi::c_ulong,
     pub data: [drm_stats__bindgen_ty_1; 15usize],
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_stats__bindgen_ty_1 {
-    pub value: libc::c_ulong,
+    pub value: core::ffi::c_ulong,
     pub type_: drm_stat_type::Type,
 }
 impl Default for drm_stats__bindgen_ty_1 {
@@ -449,7 +449,7 @@ impl Default for drm_stats {
     }
 }
 pub mod drm_lock_flags {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const _DRM_LOCK_READY: Type = 1;
     pub const _DRM_LOCK_QUIESCENT: Type = 2;
     pub const _DRM_LOCK_FLUSH: Type = 4;
@@ -460,7 +460,7 @@ pub mod drm_lock_flags {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_lock {
-    pub context: libc::c_int,
+    pub context: core::ffi::c_int,
     pub flags: drm_lock_flags::Type,
 }
 impl Default for drm_lock {
@@ -473,7 +473,7 @@ impl Default for drm_lock {
     }
 }
 pub mod drm_dma_flags {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const _DRM_DMA_BLOCK: Type = 1;
     pub const _DRM_DMA_WHILE_LOCKED: Type = 2;
     pub const _DRM_DMA_PRIORITY: Type = 4;
@@ -484,15 +484,15 @@ pub mod drm_dma_flags {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_buf_desc {
-    pub count: libc::c_int,
-    pub size: libc::c_int,
-    pub low_mark: libc::c_int,
-    pub high_mark: libc::c_int,
+    pub count: core::ffi::c_int,
+    pub size: core::ffi::c_int,
+    pub low_mark: core::ffi::c_int,
+    pub high_mark: core::ffi::c_int,
     pub flags: drm_buf_desc__bindgen_ty_1::Type,
-    pub agp_start: libc::c_ulong,
+    pub agp_start: core::ffi::c_ulong,
 }
 pub mod drm_buf_desc__bindgen_ty_1 {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const _DRM_PAGE_ALIGN: Type = 1;
     pub const _DRM_AGP_BUFFER: Type = 2;
     pub const _DRM_SG_BUFFER: Type = 4;
@@ -511,7 +511,7 @@ impl Default for drm_buf_desc {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_buf_info {
-    pub count: libc::c_int,
+    pub count: core::ffi::c_int,
     pub list: *mut drm_buf_desc,
 }
 impl Default for drm_buf_info {
@@ -526,8 +526,8 @@ impl Default for drm_buf_info {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_buf_free {
-    pub count: libc::c_int,
-    pub list: *mut libc::c_int,
+    pub count: core::ffi::c_int,
+    pub list: *mut core::ffi::c_int,
 }
 impl Default for drm_buf_free {
     fn default() -> Self {
@@ -541,10 +541,10 @@ impl Default for drm_buf_free {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_buf_pub {
-    pub idx: libc::c_int,
-    pub total: libc::c_int,
-    pub used: libc::c_int,
-    pub address: *mut libc::c_void,
+    pub idx: core::ffi::c_int,
+    pub total: core::ffi::c_int,
+    pub used: core::ffi::c_int,
+    pub address: *mut core::ffi::c_void,
 }
 impl Default for drm_buf_pub {
     fn default() -> Self {
@@ -558,8 +558,8 @@ impl Default for drm_buf_pub {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_buf_map {
-    pub count: libc::c_int,
-    pub virtual_: *mut libc::c_void,
+    pub count: core::ffi::c_int,
+    pub virtual_: *mut core::ffi::c_void,
     pub list: *mut drm_buf_pub,
 }
 impl Default for drm_buf_map {
@@ -574,16 +574,16 @@ impl Default for drm_buf_map {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_dma {
-    pub context: libc::c_int,
-    pub send_count: libc::c_int,
-    pub send_indices: *mut libc::c_int,
-    pub send_sizes: *mut libc::c_int,
+    pub context: core::ffi::c_int,
+    pub send_count: core::ffi::c_int,
+    pub send_indices: *mut core::ffi::c_int,
+    pub send_sizes: *mut core::ffi::c_int,
     pub flags: drm_dma_flags::Type,
-    pub request_count: libc::c_int,
-    pub request_size: libc::c_int,
-    pub request_indices: *mut libc::c_int,
-    pub request_sizes: *mut libc::c_int,
-    pub granted_count: libc::c_int,
+    pub request_count: core::ffi::c_int,
+    pub request_size: core::ffi::c_int,
+    pub request_indices: *mut core::ffi::c_int,
+    pub request_sizes: *mut core::ffi::c_int,
+    pub granted_count: core::ffi::c_int,
 }
 impl Default for drm_dma {
     fn default() -> Self {
@@ -595,7 +595,7 @@ impl Default for drm_dma {
     }
 }
 pub mod drm_ctx_flags {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const _DRM_CONTEXT_PRESERVED: Type = 1;
     pub const _DRM_CONTEXT_2DONLY: Type = 2;
 }
@@ -617,7 +617,7 @@ impl Default for drm_ctx {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_ctx_res {
-    pub count: libc::c_int,
+    pub count: core::ffi::c_int,
     pub contexts: *mut drm_ctx,
 }
 impl Default for drm_ctx_res {
@@ -635,16 +635,16 @@ pub struct drm_draw {
     pub handle: drm_drawable_t,
 }
 pub mod drm_drawable_info_type_t {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const DRM_DRAWABLE_CLIPRECTS: Type = 0;
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_update_draw {
     pub handle: drm_drawable_t,
-    pub type_: libc::c_uint,
-    pub num: libc::c_uint,
-    pub data: libc::c_ulonglong,
+    pub type_: core::ffi::c_uint,
+    pub num: core::ffi::c_uint,
+    pub data: core::ffi::c_ulonglong,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -654,13 +654,13 @@ pub struct drm_auth {
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_irq_busid {
-    pub irq: libc::c_int,
-    pub busnum: libc::c_int,
-    pub devnum: libc::c_int,
-    pub funcnum: libc::c_int,
+    pub irq: core::ffi::c_int,
+    pub busnum: core::ffi::c_int,
+    pub devnum: core::ffi::c_int,
+    pub funcnum: core::ffi::c_int,
 }
 pub mod drm_vblank_seq_type {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const _DRM_VBLANK_ABSOLUTE: Type = 0;
     pub const _DRM_VBLANK_RELATIVE: Type = 1;
     pub const _DRM_VBLANK_HIGH_CRTC_MASK: Type = 62;
@@ -674,8 +674,8 @@ pub mod drm_vblank_seq_type {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_wait_vblank_request {
     pub type_: drm_vblank_seq_type::Type,
-    pub sequence: libc::c_uint,
-    pub signal: libc::c_ulong,
+    pub sequence: core::ffi::c_uint,
+    pub signal: core::ffi::c_ulong,
 }
 impl Default for drm_wait_vblank_request {
     fn default() -> Self {
@@ -690,9 +690,9 @@ impl Default for drm_wait_vblank_request {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_wait_vblank_reply {
     pub type_: drm_vblank_seq_type::Type,
-    pub sequence: libc::c_uint,
-    pub tval_sec: libc::c_long,
-    pub tval_usec: libc::c_long,
+    pub sequence: core::ffi::c_uint,
+    pub tval_sec: core::ffi::c_long,
+    pub tval_usec: core::ffi::c_long,
 }
 impl Default for drm_wait_vblank_reply {
     fn default() -> Self {
@@ -727,48 +727,48 @@ pub struct drm_modeset_ctl {
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_agp_mode {
-    pub mode: libc::c_ulong,
+    pub mode: core::ffi::c_ulong,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_agp_buffer {
-    pub size: libc::c_ulong,
-    pub handle: libc::c_ulong,
-    pub type_: libc::c_ulong,
-    pub physical: libc::c_ulong,
+    pub size: core::ffi::c_ulong,
+    pub handle: core::ffi::c_ulong,
+    pub type_: core::ffi::c_ulong,
+    pub physical: core::ffi::c_ulong,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_agp_binding {
-    pub handle: libc::c_ulong,
-    pub offset: libc::c_ulong,
+    pub handle: core::ffi::c_ulong,
+    pub offset: core::ffi::c_ulong,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_agp_info {
-    pub agp_version_major: libc::c_int,
-    pub agp_version_minor: libc::c_int,
-    pub mode: libc::c_ulong,
-    pub aperture_base: libc::c_ulong,
-    pub aperture_size: libc::c_ulong,
-    pub memory_allowed: libc::c_ulong,
-    pub memory_used: libc::c_ulong,
-    pub id_vendor: libc::c_ushort,
-    pub id_device: libc::c_ushort,
+    pub agp_version_major: core::ffi::c_int,
+    pub agp_version_minor: core::ffi::c_int,
+    pub mode: core::ffi::c_ulong,
+    pub aperture_base: core::ffi::c_ulong,
+    pub aperture_size: core::ffi::c_ulong,
+    pub memory_allowed: core::ffi::c_ulong,
+    pub memory_used: core::ffi::c_ulong,
+    pub id_vendor: core::ffi::c_ushort,
+    pub id_device: core::ffi::c_ushort,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_scatter_gather {
-    pub size: libc::c_ulong,
-    pub handle: libc::c_ulong,
+    pub size: core::ffi::c_ulong,
+    pub handle: core::ffi::c_ulong,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_set_version {
-    pub drm_di_major: libc::c_int,
-    pub drm_di_minor: libc::c_int,
-    pub drm_dd_major: libc::c_int,
-    pub drm_dd_minor: libc::c_int,
+    pub drm_di_major: core::ffi::c_int,
+    pub drm_di_minor: core::ffi::c_int,
+    pub drm_dd_major: core::ffi::c_int,
+    pub drm_dd_minor: core::ffi::c_int,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -907,7 +907,7 @@ pub struct drm_mode_modeinfo {
     pub vrefresh: __u32,
     pub flags: __u32,
     pub type_: __u32,
-    pub name: [libc::c_char; 32usize],
+    pub name: [core::ffi::c_char; 32usize],
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -981,7 +981,7 @@ pub struct drm_mode_get_encoder {
     pub possible_clones: __u32,
 }
 pub mod drm_mode_subconnector {
-    pub type Type = libc::c_uint;
+    pub type Type = core::ffi::c_uint;
     pub const DRM_MODE_SUBCONNECTOR_Automatic: Type = 0;
     pub const DRM_MODE_SUBCONNECTOR_Unknown: Type = 0;
     pub const DRM_MODE_SUBCONNECTOR_VGA: Type = 1;
@@ -1020,7 +1020,7 @@ pub struct drm_mode_get_connector {
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_mode_property_enum {
     pub value: __u64,
-    pub name: [libc::c_char; 32usize],
+    pub name: [core::ffi::c_char; 32usize],
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
@@ -1029,7 +1029,7 @@ pub struct drm_mode_get_property {
     pub enum_blob_ptr: __u64,
     pub prop_id: __u32,
     pub flags: __u32,
-    pub name: [libc::c_char; 32usize],
+    pub name: [core::ffi::c_char; 32usize],
     pub count_values: __u32,
     pub count_enum_blobs: __u32,
 }
@@ -1338,5 +1338,5 @@ pub type drm_agp_binding_t = drm_agp_binding;
 pub type drm_agp_info_t = drm_agp_info;
 pub type drm_scatter_gather_t = drm_scatter_gather;
 pub type drm_set_version_t = drm_set_version;
-pub const DRM_MODE_PROP_SIGNED_RANGE: libc::c_uint = 128;
-pub const DRM_MODE_PROP_OBJECT: libc::c_uint = 64;
+pub const DRM_MODE_PROP_SIGNED_RANGE: core::ffi::c_uint = 128;
+pub const DRM_MODE_PROP_OBJECT: core::ffi::c_uint = 64;
