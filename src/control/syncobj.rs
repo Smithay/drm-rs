@@ -13,7 +13,6 @@
 //! [`tokio::io::unix::AsyncFd`]: <https://docs.rs/tokio/latest/tokio/io/unix/struct.AsyncFd.html>
 
 use control;
-use std::os::unix::io::{AsFd, AsRawFd, FromRawFd, RawFd};
 
 /// A handle to a specific syncobj
 #[repr(transparent)]
@@ -46,33 +45,5 @@ impl From<control::RawResourceHandle> for Handle {
 impl std::fmt::Debug for Handle {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_tuple("syncobj::Handle").field(&self.0).finish()
-    }
-}
-
-#[derive(Debug)]
-/// A simple wrapper for a syncobj fd.
-pub struct SyncFile(std::fs::File);
-
-impl FromRawFd for SyncFile {
-    unsafe fn from_raw_fd(fd: RawFd) -> Self {
-        Self(std::fs::File::from_raw_fd(fd))
-    }
-}
-
-/// Implementing [`AsFd`] is a prerequisite to implementing the traits found in this crate.
-/// Here, we are just calling [`std::fs::File::as_fd()`] on the inner File.
-impl AsFd for SyncFile {
-    fn as_fd(&self) -> std::os::unix::io::BorrowedFd<'_> {
-        self.0.as_fd()
-    }
-}
-
-/// Implementing [`AsRawFd`] allows SyncFile to be owned by [`tokio::io::unix::AsyncFd`];
-/// thereby integrating with its async/await runtime.
-///
-/// [`tokio::io::unix::AsyncFd`]: <https://docs.rs/tokio/latest/tokio/io/unix/struct.AsyncFd.html>
-impl AsRawFd for SyncFile {
-    fn as_raw_fd(&self) -> RawFd {
-        self.as_fd().as_raw_fd()
     }
 }

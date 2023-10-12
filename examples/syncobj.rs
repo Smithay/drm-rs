@@ -6,14 +6,13 @@ extern crate nix;
 pub mod utils;
 
 use nix::poll::PollFlags;
-use std::os::unix::io::AsFd;
+use std::os::unix::io::{AsFd, OwnedFd};
 use utils::*;
 
-use drm::control::syncobj::SyncFile;
 use drm::SystemError;
 
 impl Card {
-    fn simulate_command_submission(&self) -> Result<SyncFile, SystemError> {
+    fn simulate_command_submission(&self) -> Result<OwnedFd, SystemError> {
         // Create a temporary syncobj to receive the command fence.
         let syncobj = self.create_syncobj(false)?;
 
