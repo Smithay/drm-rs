@@ -38,8 +38,8 @@ pub enum SystemError {
 
     /// Unknown system error.
     Unknown {
-        /// Unknown [`nix::errno::Errno`] returned by the system call.
-        errno: Errno,
+        /// Unknown errno value returned by the system call.
+        errno: i32,
     },
 }
 
@@ -53,7 +53,7 @@ impl fmt::Display for SystemError {
             SystemError::PermissionDenied => "permission denied",
             SystemError::UnknownFourcc => "unknown fourcc",
             SystemError::Unknown { errno } => {
-                return write!(fmt, "unknown system error: {}", errno)
+                return write!(fmt, "unknown system error: {}", Errno::from_i32(*errno))
             }
         })
     }
@@ -69,7 +69,9 @@ impl From<Errno> for SystemError {
             Errno::EINVAL => SystemError::InvalidArgument,
             Errno::ENOTTY => SystemError::InvalidFileDescriptor,
             Errno::EACCES => SystemError::PermissionDenied,
-            _ => SystemError::Unknown { errno },
+            _ => SystemError::Unknown {
+                errno: errno as i32,
+            },
         }
     }
 }
