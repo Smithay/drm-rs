@@ -8,11 +8,11 @@ use drm_sys::*;
 use ioctl;
 
 use result::SystemError as Error;
-use std::os::unix::io::RawFd;
+use std::os::unix::io::{AsRawFd, BorrowedFd};
 
 /// Enumerate most card resources.
 pub fn get_resources(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     mut fbs: Option<&mut Vec<u32>>,
     mut crtcs: Option<&mut Vec<u32>>,
     mut connectors: Option<&mut Vec<u32>>,
@@ -20,7 +20,7 @@ pub fn get_resources(
 ) -> Result<drm_mode_card_res, Error> {
     let mut sizes = drm_mode_card_res::default();
     unsafe {
-        ioctl::mode::get_resources(fd, &mut sizes)?;
+        ioctl::mode::get_resources(fd.as_raw_fd(), &mut sizes)?;
     }
 
     map_reserve!(fbs, sizes.count_fbs as usize);
@@ -41,7 +41,7 @@ pub fn get_resources(
     };
 
     unsafe {
-        ioctl::mode::get_resources(fd, &mut res)?;
+        ioctl::mode::get_resources(fd.as_raw_fd(), &mut res)?;
     }
 
     map_set!(fbs, res.count_fbs as usize);
@@ -54,12 +54,12 @@ pub fn get_resources(
 
 /// Enumerate plane resources.
 pub fn get_plane_resources(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     mut planes: Option<&mut Vec<u32>>,
 ) -> Result<drm_mode_get_plane_res, Error> {
     let mut sizes = drm_mode_get_plane_res::default();
     unsafe {
-        ioctl::mode::get_plane_resources(fd, &mut sizes)?;
+        ioctl::mode::get_plane_resources(fd.as_raw_fd(), &mut sizes)?;
     }
 
     if planes.is_none() {
@@ -74,7 +74,7 @@ pub fn get_plane_resources(
     };
 
     unsafe {
-        ioctl::mode::get_plane_resources(fd, &mut res)?;
+        ioctl::mode::get_plane_resources(fd.as_raw_fd(), &mut res)?;
     }
 
     map_set!(planes, res.count_planes as usize);
@@ -83,14 +83,14 @@ pub fn get_plane_resources(
 }
 
 /// Get info about a framebuffer.
-pub fn get_framebuffer(fd: RawFd, fb_id: u32) -> Result<drm_mode_fb_cmd, Error> {
+pub fn get_framebuffer(fd: BorrowedFd<'_>, fb_id: u32) -> Result<drm_mode_fb_cmd, Error> {
     let mut info = drm_mode_fb_cmd {
         fb_id,
         ..Default::default()
     };
 
     unsafe {
-        ioctl::mode::get_fb(fd, &mut info)?;
+        ioctl::mode::get_fb(fd.as_raw_fd(), &mut info)?;
     }
 
     Ok(info)
@@ -98,7 +98,7 @@ pub fn get_framebuffer(fd: RawFd, fb_id: u32) -> Result<drm_mode_fb_cmd, Error> 
 
 /// Add a new framebuffer.
 pub fn add_fb(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     width: u32,
     height: u32,
     pitch: u32,
@@ -117,21 +117,21 @@ pub fn add_fb(
     };
 
     unsafe {
-        ioctl::mode::add_fb(fd, &mut fb)?;
+        ioctl::mode::add_fb(fd.as_raw_fd(), &mut fb)?;
     }
 
     Ok(fb)
 }
 
 /// Get info about a framebuffer (with modifiers).
-pub fn get_framebuffer2(fd: RawFd, fb_id: u32) -> Result<drm_mode_fb_cmd2, Error> {
+pub fn get_framebuffer2(fd: BorrowedFd<'_>, fb_id: u32) -> Result<drm_mode_fb_cmd2, Error> {
     let mut info = drm_mode_fb_cmd2 {
         fb_id,
         ..Default::default()
     };
 
     unsafe {
-        ioctl::mode::get_fb2(fd, &mut info)?;
+        ioctl::mode::get_fb2(fd.as_raw_fd(), &mut info)?;
     }
 
     Ok(info)
@@ -139,7 +139,7 @@ pub fn get_framebuffer2(fd: RawFd, fb_id: u32) -> Result<drm_mode_fb_cmd2, Error
 
 /// Add a new framebuffer (with modifiers)
 pub fn add_fb2(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     width: u32,
     height: u32,
     fmt: u32,
@@ -162,16 +162,16 @@ pub fn add_fb2(
     };
 
     unsafe {
-        ioctl::mode::add_fb2(fd, &mut fb)?;
+        ioctl::mode::add_fb2(fd.as_raw_fd(), &mut fb)?;
     }
 
     Ok(fb)
 }
 
 /// Remove a framebuffer.
-pub fn rm_fb(fd: RawFd, mut id: u32) -> Result<(), Error> {
+pub fn rm_fb(fd: BorrowedFd<'_>, mut id: u32) -> Result<(), Error> {
     unsafe {
-        ioctl::mode::rm_fb(fd, &mut id)?;
+        ioctl::mode::rm_fb(fd.as_raw_fd(), &mut id)?;
     }
 
     Ok(())
@@ -179,7 +179,7 @@ pub fn rm_fb(fd: RawFd, mut id: u32) -> Result<(), Error> {
 
 /// Mark a framebuffer as dirty.
 pub fn dirty_fb(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     fb_id: u32,
     clips: &[drm_clip_rect],
 ) -> Result<drm_mode_fb_dirty_cmd, Error> {
@@ -191,21 +191,21 @@ pub fn dirty_fb(
     };
 
     unsafe {
-        ioctl::mode::dirty_fb(fd, &mut dirty)?;
+        ioctl::mode::dirty_fb(fd.as_raw_fd(), &mut dirty)?;
     }
 
     Ok(dirty)
 }
 
 /// Get info about a CRTC
-pub fn get_crtc(fd: RawFd, crtc_id: u32) -> Result<drm_mode_crtc, Error> {
+pub fn get_crtc(fd: BorrowedFd<'_>, crtc_id: u32) -> Result<drm_mode_crtc, Error> {
     let mut info = drm_mode_crtc {
         crtc_id,
         ..Default::default()
     };
 
     unsafe {
-        ioctl::mode::get_crtc(fd, &mut info)?;
+        ioctl::mode::get_crtc(fd.as_raw_fd(), &mut info)?;
     }
 
     Ok(info)
@@ -213,7 +213,7 @@ pub fn get_crtc(fd: RawFd, crtc_id: u32) -> Result<drm_mode_crtc, Error> {
 
 /// Set CRTC state
 pub fn set_crtc(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     crtc_id: u32,
     fb_id: u32,
     x: u32,
@@ -237,7 +237,7 @@ pub fn set_crtc(
     };
 
     unsafe {
-        ioctl::mode::set_crtc(fd, &mut crtc)?;
+        ioctl::mode::set_crtc(fd.as_raw_fd(), &mut crtc)?;
     }
 
     Ok(crtc)
@@ -245,7 +245,7 @@ pub fn set_crtc(
 
 /// Get CRTC gamma ramp
 pub fn get_gamma(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     crtc_id: u32,
     size: usize,
     red: &mut [u16],
@@ -261,7 +261,7 @@ pub fn get_gamma(
     };
 
     unsafe {
-        ioctl::mode::get_gamma(fd, &mut lut)?;
+        ioctl::mode::get_gamma(fd.as_raw_fd(), &mut lut)?;
     }
 
     Ok(lut)
@@ -269,7 +269,7 @@ pub fn get_gamma(
 
 /// Set CRTC gamma ramp
 pub fn set_gamma(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     crtc_id: u32,
     size: usize,
     red: &[u16],
@@ -285,7 +285,7 @@ pub fn set_gamma(
     };
 
     unsafe {
-        ioctl::mode::set_gamma(fd, &mut lut)?;
+        ioctl::mode::set_gamma(fd.as_raw_fd(), &mut lut)?;
     }
 
     Ok(lut)
@@ -297,7 +297,7 @@ pub fn set_gamma(
 /// allowed to be a dumb buffer.
 #[deprecated = "use a cursor plane instead"]
 pub fn set_cursor(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     crtc_id: u32,
     buf_id: u32,
     width: u32,
@@ -313,7 +313,7 @@ pub fn set_cursor(
     };
 
     unsafe {
-        ioctl::mode::cursor(fd, &mut cursor)?;
+        ioctl::mode::cursor(fd.as_raw_fd(), &mut cursor)?;
     }
 
     Ok(cursor)
@@ -328,7 +328,7 @@ pub fn set_cursor(
 /// virtualization.
 #[deprecated = "use a cursor plane instead"]
 pub fn set_cursor2(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     crtc_id: u32,
     buf_id: u32,
     width: u32,
@@ -348,7 +348,7 @@ pub fn set_cursor2(
     };
 
     unsafe {
-        ioctl::mode::cursor2(fd, &mut cursor)?;
+        ioctl::mode::cursor2(fd.as_raw_fd(), &mut cursor)?;
     }
 
     Ok(cursor)
@@ -356,7 +356,12 @@ pub fn set_cursor2(
 
 /// Move cursor
 #[deprecated = "use a cursor plane instead"]
-pub fn move_cursor(fd: RawFd, crtc_id: u32, x: i32, y: i32) -> Result<drm_mode_cursor, Error> {
+pub fn move_cursor(
+    fd: BorrowedFd<'_>,
+    crtc_id: u32,
+    x: i32,
+    y: i32,
+) -> Result<drm_mode_cursor, Error> {
     let mut cursor = drm_mode_cursor {
         flags: DRM_MODE_CURSOR_MOVE,
         crtc_id,
@@ -366,7 +371,7 @@ pub fn move_cursor(fd: RawFd, crtc_id: u32, x: i32, y: i32) -> Result<drm_mode_c
     };
 
     unsafe {
-        ioctl::mode::cursor(fd, &mut cursor)?;
+        ioctl::mode::cursor(fd.as_raw_fd(), &mut cursor)?;
     }
 
     Ok(cursor)
@@ -374,7 +379,7 @@ pub fn move_cursor(fd: RawFd, crtc_id: u32, x: i32, y: i32) -> Result<drm_mode_c
 
 /// Get info about a connector
 pub fn get_connector(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     connector_id: u32,
     mut props: Option<&mut Vec<u32>>,
     mut prop_values: Option<&mut Vec<u64>>,
@@ -397,7 +402,7 @@ pub fn get_connector(
     };
 
     unsafe {
-        ioctl::mode::get_connector(fd, &mut sizes)?;
+        ioctl::mode::get_connector(fd.as_raw_fd(), &mut sizes)?;
     }
 
     let info = loop {
@@ -437,7 +442,7 @@ pub fn get_connector(
         };
 
         unsafe {
-            ioctl::mode::get_connector(fd, &mut info)?;
+            ioctl::mode::get_connector(fd.as_raw_fd(), &mut info)?;
         }
 
         if info.count_modes == sizes.count_modes
@@ -459,14 +464,14 @@ pub fn get_connector(
 }
 
 /// Get info about an encoder
-pub fn get_encoder(fd: RawFd, encoder_id: u32) -> Result<drm_mode_get_encoder, Error> {
+pub fn get_encoder(fd: BorrowedFd<'_>, encoder_id: u32) -> Result<drm_mode_get_encoder, Error> {
     let mut info = drm_mode_get_encoder {
         encoder_id,
         ..Default::default()
     };
 
     unsafe {
-        ioctl::mode::get_encoder(fd, &mut info)?;
+        ioctl::mode::get_encoder(fd.as_raw_fd(), &mut info)?;
     }
 
     Ok(info)
@@ -474,7 +479,7 @@ pub fn get_encoder(fd: RawFd, encoder_id: u32) -> Result<drm_mode_get_encoder, E
 
 /// Get info about a plane.
 pub fn get_plane(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     plane_id: u32,
     mut formats: Option<&mut Vec<u32>>,
 ) -> Result<drm_mode_get_plane, Error> {
@@ -484,7 +489,7 @@ pub fn get_plane(
     };
 
     unsafe {
-        ioctl::mode::get_plane(fd, &mut sizes)?;
+        ioctl::mode::get_plane(fd.as_raw_fd(), &mut sizes)?;
     }
 
     if formats.is_none() {
@@ -501,7 +506,7 @@ pub fn get_plane(
     };
 
     unsafe {
-        ioctl::mode::get_plane(fd, &mut info)?;
+        ioctl::mode::get_plane(fd.as_raw_fd(), &mut info)?;
     }
 
     map_set!(formats, info.count_format_types as usize);
@@ -511,7 +516,7 @@ pub fn get_plane(
 
 /// Set plane state.
 pub fn set_plane(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     plane_id: u32,
     crtc_id: u32,
     fb_id: u32,
@@ -541,7 +546,7 @@ pub fn set_plane(
     };
 
     unsafe {
-        ioctl::mode::set_plane(fd, &mut plane)?;
+        ioctl::mode::set_plane(fd.as_raw_fd(), &mut plane)?;
     }
 
     Ok(plane)
@@ -549,7 +554,7 @@ pub fn set_plane(
 
 /// Get property
 pub fn get_property(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     prop_id: u32,
     mut values: Option<&mut Vec<u64>>,
     mut enums: Option<&mut Vec<drm_mode_property_enum>>,
@@ -560,7 +565,7 @@ pub fn get_property(
     };
 
     unsafe {
-        ioctl::mode::get_property(fd, &mut prop)?;
+        ioctl::mode::get_property(fd.as_raw_fd(), &mut prop)?;
     }
 
     // There is no need to call get_property() twice if there is nothing else to retrieve.
@@ -575,7 +580,7 @@ pub fn get_property(
     prop.enum_blob_ptr = map_ptr!(&enums);
 
     unsafe {
-        ioctl::mode::get_property(fd, &mut prop)?;
+        ioctl::mode::get_property(fd.as_raw_fd(), &mut prop)?;
     }
 
     map_set!(values, prop.count_values as usize);
@@ -586,7 +591,7 @@ pub fn get_property(
 
 /// Set property
 pub fn set_connector_property(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     connector_id: u32,
     prop_id: u32,
     value: u64,
@@ -598,7 +603,7 @@ pub fn set_connector_property(
     };
 
     unsafe {
-        ioctl::mode::connector_set_property(fd, &mut prop)?;
+        ioctl::mode::connector_set_property(fd.as_raw_fd(), &mut prop)?;
     }
 
     Ok(prop)
@@ -606,7 +611,7 @@ pub fn set_connector_property(
 
 /// Get the value of a property blob
 pub fn get_property_blob(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     blob_id: u32,
     mut data: Option<&mut Vec<u8>>,
 ) -> Result<drm_mode_get_blob, Error> {
@@ -616,7 +621,7 @@ pub fn get_property_blob(
     };
 
     unsafe {
-        ioctl::mode::get_blob(fd, &mut sizes)?;
+        ioctl::mode::get_blob(fd.as_raw_fd(), &mut sizes)?;
     }
 
     if data.is_none() {
@@ -632,7 +637,7 @@ pub fn get_property_blob(
     };
 
     unsafe {
-        ioctl::mode::get_blob(fd, &mut blob)?;
+        ioctl::mode::get_blob(fd.as_raw_fd(), &mut blob)?;
     }
 
     map_set!(data, blob.length as usize);
@@ -641,7 +646,10 @@ pub fn get_property_blob(
 }
 
 /// Create a property blob
-pub fn create_property_blob(fd: RawFd, data: &mut [u8]) -> Result<drm_mode_create_blob, Error> {
+pub fn create_property_blob(
+    fd: BorrowedFd<'_>,
+    data: &mut [u8],
+) -> Result<drm_mode_create_blob, Error> {
     let mut blob = drm_mode_create_blob {
         data: data.as_mut_ptr() as _,
         length: data.len() as _,
@@ -649,18 +657,18 @@ pub fn create_property_blob(fd: RawFd, data: &mut [u8]) -> Result<drm_mode_creat
     };
 
     unsafe {
-        ioctl::mode::create_blob(fd, &mut blob)?;
+        ioctl::mode::create_blob(fd.as_raw_fd(), &mut blob)?;
     }
 
     Ok(blob)
 }
 
 /// Destroy a property blob
-pub fn destroy_property_blob(fd: RawFd, id: u32) -> Result<drm_mode_destroy_blob, Error> {
+pub fn destroy_property_blob(fd: BorrowedFd<'_>, id: u32) -> Result<drm_mode_destroy_blob, Error> {
     let mut blob = drm_mode_destroy_blob { blob_id: id };
 
     unsafe {
-        ioctl::mode::destroy_blob(fd, &mut blob)?;
+        ioctl::mode::destroy_blob(fd.as_raw_fd(), &mut blob)?;
     }
 
     Ok(blob)
@@ -668,7 +676,7 @@ pub fn destroy_property_blob(fd: RawFd, id: u32) -> Result<drm_mode_destroy_blob
 
 /// Get properties from an object
 pub fn get_properties(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     obj_id: u32,
     obj_type: u32,
     mut props: Option<&mut Vec<u32>>,
@@ -683,7 +691,7 @@ pub fn get_properties(
     };
 
     unsafe {
-        ioctl::mode::obj_get_properties(fd, &mut sizes)?;
+        ioctl::mode::obj_get_properties(fd.as_raw_fd(), &mut sizes)?;
     }
 
     map_reserve!(props, sizes.count_props as usize);
@@ -698,7 +706,7 @@ pub fn get_properties(
     };
 
     unsafe {
-        ioctl::mode::obj_get_properties(fd, &mut info)?;
+        ioctl::mode::obj_get_properties(fd.as_raw_fd(), &mut info)?;
     }
 
     map_set!(props, info.count_props as usize);
@@ -709,7 +717,7 @@ pub fn get_properties(
 
 /// Set the properties of an object
 pub fn set_property(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     prop_id: u32,
     obj_id: u32,
     obj_type: u32,
@@ -723,7 +731,7 @@ pub fn set_property(
     };
 
     unsafe {
-        ioctl::mode::obj_set_property(fd, &mut prop)?;
+        ioctl::mode::obj_set_property(fd.as_raw_fd(), &mut prop)?;
     }
 
     Ok(())
@@ -731,7 +739,7 @@ pub fn set_property(
 
 /// Schedule a page flip
 pub fn page_flip(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     crtc_id: u32,
     fb_id: u32,
     flags: u32,
@@ -747,7 +755,7 @@ pub fn page_flip(
     };
 
     unsafe {
-        ioctl::mode::crtc_page_flip(fd, &mut flip)?;
+        ioctl::mode::crtc_page_flip(fd.as_raw_fd(), &mut flip)?;
     }
 
     Ok(())
@@ -755,7 +763,7 @@ pub fn page_flip(
 
 /// Atomically set properties
 pub fn atomic_commit(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     flags: u32,
     objs: &mut [u32],
     prop_counts: &mut [u32],
@@ -773,7 +781,7 @@ pub fn atomic_commit(
     };
 
     unsafe {
-        ioctl::mode::atomic(fd, &mut atomic)?;
+        ioctl::mode::atomic(fd.as_raw_fd(), &mut atomic)?;
     }
 
     Ok(())
@@ -781,7 +789,7 @@ pub fn atomic_commit(
 
 /// Create a drm lease
 pub fn create_lease(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     objects: &[u32],
     flags: u32,
 ) -> Result<drm_mode_create_lease, Error> {
@@ -793,7 +801,7 @@ pub fn create_lease(
     };
 
     unsafe {
-        ioctl::mode::create_lease(fd, &mut data)?;
+        ioctl::mode::create_lease(fd.as_raw_fd(), &mut data)?;
     }
 
     Ok(data)
@@ -801,13 +809,13 @@ pub fn create_lease(
 
 /// List all active drm leases
 pub fn list_lessees(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     mut lessees: Option<&mut Vec<u32>>,
 ) -> Result<drm_mode_list_lessees, Error> {
     let mut sizes = drm_mode_list_lessees::default();
 
     unsafe {
-        ioctl::mode::list_lessees(fd, &mut sizes)?;
+        ioctl::mode::list_lessees(fd.as_raw_fd(), &mut sizes)?;
     };
 
     map_reserve!(lessees, sizes.count_lessees as usize);
@@ -819,7 +827,7 @@ pub fn list_lessees(
     };
 
     unsafe {
-        ioctl::mode::list_lessees(fd, &mut data)?;
+        ioctl::mode::list_lessees(fd.as_raw_fd(), &mut data)?;
     };
 
     map_set!(lessees, data.count_lessees as usize);
@@ -829,13 +837,13 @@ pub fn list_lessees(
 
 /// Get leased objects for a lease file descriptor
 pub fn get_lease(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     mut objects: Option<&mut Vec<u32>>,
 ) -> Result<drm_mode_get_lease, Error> {
     let mut sizes = drm_mode_get_lease::default();
 
     unsafe {
-        ioctl::mode::get_lease(fd, &mut sizes)?;
+        ioctl::mode::get_lease(fd.as_raw_fd(), &mut sizes)?;
     }
 
     map_reserve!(objects, sizes.count_objects as usize);
@@ -847,7 +855,7 @@ pub fn get_lease(
     };
 
     unsafe {
-        ioctl::mode::get_lease(fd, &mut data)?;
+        ioctl::mode::get_lease(fd.as_raw_fd(), &mut data)?;
     }
 
     map_set!(objects, data.count_objects as usize);
@@ -856,11 +864,11 @@ pub fn get_lease(
 }
 
 /// Revoke previously issued lease
-pub fn revoke_lease(fd: RawFd, lessee_id: u32) -> Result<(), Error> {
+pub fn revoke_lease(fd: BorrowedFd<'_>, lessee_id: u32) -> Result<(), Error> {
     let mut data = drm_mode_revoke_lease { lessee_id };
 
     unsafe {
-        ioctl::mode::revoke_lease(fd, &mut data)?;
+        ioctl::mode::revoke_lease(fd.as_raw_fd(), &mut data)?;
     }
 
     Ok(())
@@ -874,11 +882,11 @@ pub mod dumbbuffer {
     use ioctl;
 
     use result::SystemError as Error;
-    use std::os::unix::io::RawFd;
+    use std::os::unix::io::{AsRawFd, BorrowedFd};
 
     /// Create a dumb buffer
     pub fn create(
-        fd: RawFd,
+        fd: BorrowedFd<'_>,
         width: u32,
         height: u32,
         bpp: u32,
@@ -893,25 +901,30 @@ pub mod dumbbuffer {
         };
 
         unsafe {
-            ioctl::mode::create_dumb(fd, &mut db)?;
+            ioctl::mode::create_dumb(fd.as_raw_fd(), &mut db)?;
         }
 
         Ok(db)
     }
 
     /// Destroy a dumb buffer
-    pub fn destroy(fd: RawFd, handle: u32) -> Result<drm_mode_destroy_dumb, Error> {
+    pub fn destroy(fd: BorrowedFd<'_>, handle: u32) -> Result<drm_mode_destroy_dumb, Error> {
         let mut db = drm_mode_destroy_dumb { handle };
 
         unsafe {
-            ioctl::mode::destroy_dumb(fd, &mut db)?;
+            ioctl::mode::destroy_dumb(fd.as_raw_fd(), &mut db)?;
         }
 
         Ok(db)
     }
 
     /// Map a dump buffer and prep it for an mmap
-    pub fn map(fd: RawFd, handle: u32, pad: u32, offset: u64) -> Result<drm_mode_map_dumb, Error> {
+    pub fn map(
+        fd: BorrowedFd<'_>,
+        handle: u32,
+        pad: u32,
+        offset: u64,
+    ) -> Result<drm_mode_map_dumb, Error> {
         let mut map = drm_mode_map_dumb {
             handle,
             pad,
@@ -919,7 +932,7 @@ pub mod dumbbuffer {
         };
 
         unsafe {
-            ioctl::mode::map_dumb(fd, &mut map)?;
+            ioctl::mode::map_dumb(fd.as_raw_fd(), &mut map)?;
         }
 
         Ok(map)
