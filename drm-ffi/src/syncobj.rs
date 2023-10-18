@@ -6,10 +6,10 @@ use drm_sys::*;
 use ioctl;
 
 use result::SystemError as Error;
-use std::os::unix::io::RawFd;
+use std::os::unix::io::{AsRawFd, BorrowedFd};
 
 /// Creates a syncobj.
-pub fn create(fd: RawFd, signaled: bool) -> Result<drm_syncobj_create, Error> {
+pub fn create(fd: BorrowedFd<'_>, signaled: bool) -> Result<drm_syncobj_create, Error> {
     let mut args = drm_syncobj_create {
         handle: 0,
         flags: if signaled {
@@ -20,18 +20,18 @@ pub fn create(fd: RawFd, signaled: bool) -> Result<drm_syncobj_create, Error> {
     };
 
     unsafe {
-        ioctl::syncobj::create(fd, &mut args)?;
+        ioctl::syncobj::create(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
 }
 
 /// Destroys a syncobj.
-pub fn destroy(fd: RawFd, handle: u32) -> Result<drm_syncobj_destroy, Error> {
+pub fn destroy(fd: BorrowedFd<'_>, handle: u32) -> Result<drm_syncobj_destroy, Error> {
     let mut args = drm_syncobj_destroy { handle, pad: 0 };
 
     unsafe {
-        ioctl::syncobj::destroy(fd, &mut args)?;
+        ioctl::syncobj::destroy(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
@@ -39,7 +39,7 @@ pub fn destroy(fd: RawFd, handle: u32) -> Result<drm_syncobj_destroy, Error> {
 
 /// Exports a syncobj as an inter-process file descriptor or as a poll()-able sync file.
 pub fn handle_to_fd(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     handle: u32,
     export_sync_file: bool,
 ) -> Result<drm_syncobj_handle, Error> {
@@ -55,7 +55,7 @@ pub fn handle_to_fd(
     };
 
     unsafe {
-        ioctl::syncobj::handle_to_fd(fd, &mut args)?;
+        ioctl::syncobj::handle_to_fd(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
@@ -63,8 +63,8 @@ pub fn handle_to_fd(
 
 /// Imports a file descriptor exported by [`handle_to_fd`] back into a process-local handle.
 pub fn fd_to_handle(
-    fd: RawFd,
-    syncobj_fd: RawFd,
+    fd: BorrowedFd<'_>,
+    syncobj_fd: BorrowedFd<'_>,
     import_sync_file: bool,
 ) -> Result<drm_syncobj_handle, Error> {
     let mut args = drm_syncobj_handle {
@@ -74,12 +74,12 @@ pub fn fd_to_handle(
         } else {
             0
         },
-        fd: syncobj_fd,
+        fd: syncobj_fd.as_raw_fd(),
         pad: 0,
     };
 
     unsafe {
-        ioctl::syncobj::fd_to_handle(fd, &mut args)?;
+        ioctl::syncobj::fd_to_handle(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
@@ -87,7 +87,7 @@ pub fn fd_to_handle(
 
 /// Waits for one or more syncobjs to become signalled.
 pub fn wait(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     handles: &[u32],
     timeout_nsec: i64,
     wait_all: bool,
@@ -111,14 +111,14 @@ pub fn wait(
     };
 
     unsafe {
-        ioctl::syncobj::wait(fd, &mut args)?;
+        ioctl::syncobj::wait(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
 }
 
 /// Resets (un-signals) one or more syncobjs.
-pub fn reset(fd: RawFd, handles: &[u32]) -> Result<drm_syncobj_array, Error> {
+pub fn reset(fd: BorrowedFd<'_>, handles: &[u32]) -> Result<drm_syncobj_array, Error> {
     let mut args = drm_syncobj_array {
         handles: handles.as_ptr() as _,
         count_handles: handles.len() as _,
@@ -126,14 +126,14 @@ pub fn reset(fd: RawFd, handles: &[u32]) -> Result<drm_syncobj_array, Error> {
     };
 
     unsafe {
-        ioctl::syncobj::reset(fd, &mut args)?;
+        ioctl::syncobj::reset(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
 }
 
 /// Signals one or more syncobjs.
-pub fn signal(fd: RawFd, handles: &[u32]) -> Result<drm_syncobj_array, Error> {
+pub fn signal(fd: BorrowedFd<'_>, handles: &[u32]) -> Result<drm_syncobj_array, Error> {
     let mut args = drm_syncobj_array {
         handles: handles.as_ptr() as _,
         count_handles: handles.len() as _,
@@ -141,7 +141,7 @@ pub fn signal(fd: RawFd, handles: &[u32]) -> Result<drm_syncobj_array, Error> {
     };
 
     unsafe {
-        ioctl::syncobj::signal(fd, &mut args)?;
+        ioctl::syncobj::signal(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
@@ -149,7 +149,7 @@ pub fn signal(fd: RawFd, handles: &[u32]) -> Result<drm_syncobj_array, Error> {
 
 /// Waits for one or more specific timeline syncobj points.
 pub fn timeline_wait(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     handles: &[u32],
     points: &[u64],
     timeout_nsec: i64,
@@ -182,7 +182,7 @@ pub fn timeline_wait(
     };
 
     unsafe {
-        ioctl::syncobj::timeline_wait(fd, &mut args)?;
+        ioctl::syncobj::timeline_wait(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
@@ -190,7 +190,7 @@ pub fn timeline_wait(
 
 /// Queries for state of one or more timeline syncobjs.
 pub fn query(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     handles: &[u32],
     points: &mut [u64],
     last_submitted: bool,
@@ -209,7 +209,7 @@ pub fn query(
     };
 
     unsafe {
-        ioctl::syncobj::query(fd, &mut args)?;
+        ioctl::syncobj::query(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
@@ -217,7 +217,7 @@ pub fn query(
 
 /// Transfers one timeline syncobj point to another.
 pub fn transfer(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     src_handle: u32,
     dst_handle: u32,
     src_point: u64,
@@ -233,7 +233,7 @@ pub fn transfer(
     };
 
     unsafe {
-        ioctl::syncobj::transfer(fd, &mut args)?;
+        ioctl::syncobj::transfer(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
@@ -241,7 +241,7 @@ pub fn transfer(
 
 /// Signals one or more specific timeline syncobj points.
 pub fn timeline_signal(
-    fd: RawFd,
+    fd: BorrowedFd<'_>,
     handles: &[u32],
     points: &[u64],
 ) -> Result<drm_syncobj_timeline_array, Error> {
@@ -255,7 +255,7 @@ pub fn timeline_signal(
     };
 
     unsafe {
-        ioctl::syncobj::timeline_signal(fd, &mut args)?;
+        ioctl::syncobj::timeline_signal(fd.as_raw_fd(), &mut args)?;
     }
 
     Ok(args)
