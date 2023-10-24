@@ -199,8 +199,6 @@ pub type __s32 = core::ffi::c_int;
 pub type __u32 = core::ffi::c_uint;
 pub type __s64 = core::ffi::c_longlong;
 pub type __u64 = core::ffi::c_ulonglong;
-pub type __kernel_size_t = core::ffi::c_uint;
-pub type drm_handle_t = core::ffi::c_uint;
 pub type drm_context_t = core::ffi::c_uint;
 pub type drm_drawable_t = core::ffi::c_uint;
 pub type drm_magic_t = core::ffi::c_uint;
@@ -851,6 +849,15 @@ pub struct drm_syncobj_timeline_wait {
     pub count_handles: __u32,
     pub flags: __u32,
     pub first_signaled: __u32,
+    pub pad: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_syncobj_eventfd {
+    pub handle: __u32,
+    pub flags: __u32,
+    pub point: __u64,
+    pub fd: __s32,
     pub pad: __u32,
 }
 #[repr(C)]

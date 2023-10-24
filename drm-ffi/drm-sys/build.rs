@@ -3,9 +3,31 @@ mod use_bindgen {
     extern crate bindgen;
     extern crate pkg_config;
 
-    use self::bindgen::{Builder, CodegenConfig};
+    use self::bindgen::{
+        callbacks::{DeriveTrait, ImplementsTrait, ParseCallbacks},
+        Builder, CodegenConfig,
+    };
     use std::env::var;
     use std::path::PathBuf;
+
+    #[derive(Debug)]
+    struct Callbacks;
+
+    impl ParseCallbacks for Callbacks {
+        // These types are integers, and implement `Copy`, `Eq`, etc.
+        // So structs including them can derive those.
+        fn blocklisted_type_implements_trait(
+            &self,
+            name: &str,
+            _derive_trait: DeriveTrait,
+        ) -> Option<ImplementsTrait> {
+            if name == "__kernel_size_t" || name == "drm_handle_t" {
+                Some(ImplementsTrait::Yes)
+            } else {
+                None
+            }
+        }
+    }
 
     fn create_builder(contents: &str) -> Builder {
         println!("{}", contents);
@@ -33,6 +55,9 @@ mod use_bindgen {
             .derive_hash(true)
             .derive_eq(true)
             .allowlist_recursively(true)
+            .blocklist_type("__kernel_.*")
+            .blocklist_type("drm_handle_t")
+            .parse_callbacks(Box::new(Callbacks))
             .use_core()
     }
 
@@ -133,15 +158,10 @@ mod use_bindgen {
 
         let out_path = var("OUT_DIR").unwrap();
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
-        let dest_dir = PathBuf::from("src")
-            .join("platforms")
-            .join(var("CARGO_CFG_TARGET_OS").unwrap())
-            .join(var("CARGO_CFG_TARGET_ARCH").unwrap());
-        let dest_file = dest_dir.join("bindings.rs");
+        let dest_file = PathBuf::from("src/bindings.rs");
 
         println!("cargo:rerun-if-changed={}", dest_file.display());
 
-        fs::create_dir_all(&dest_dir).unwrap();
         fs::copy(bind_file, &dest_file).unwrap();
 
         if let Ok(github_env) = var("GITHUB_ENV") {
@@ -164,27 +184,4 @@ pub fn main() {
 }
 
 #[cfg(not(feature = "use_bindgen"))]
-pub fn main() {
-    use std::{env::var, path::Path};
-
-    let target_os = var("CARGO_CFG_TARGET_OS").unwrap();
-    let target_arch = var("CARGO_CFG_TARGET_ARCH").unwrap();
-
-    let bindings_file = Path::new("src")
-        .join("platforms")
-        .join(&target_os)
-        .join(&target_arch)
-        .join("bindings.rs");
-
-    if bindings_file.is_file() {
-        println!(
-            "cargo:rustc-env=DRM_SYS_BINDINGS_PATH={}/{}",
-            target_os, target_arch
-        );
-    } else {
-        panic!(
-            "No prebuilt bindings for target OS `{}` and/or architecture `{}`. Try `use_bindgen` feature.",
-            target_os, target_arch
-        );
-    }
-}
+pub fn main() {}
