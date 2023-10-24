@@ -161,6 +161,10 @@ jobs:
             os: ubuntu-22.04
             rust: stable
             target: aarch64-unknown-linux-gnu
+          - task: bindings
+            os: ubuntu-22.04
+            rust: stable
+            target: riscv64gc-unknown-linux-gnu
           # Test channels
           - task: channels
             os: ubuntu-22.04
@@ -189,13 +193,14 @@ jobs:
             i686-*) SYSTEM_ARCH=i386 ;;
             arm*) SYSTEM_ARCH=armhf ;;
             aarch64*) SYSTEM_ARCH=arm64 ;;
+            riscv64*) SYSTEM_ARCH=riscv64 ;;
           esac
-          GCC_TARGET=$(printf "${{ matrix.target }}" | sed 's/-unknown-/-/' | sed 's/arm[^-]*/arm/g')
+          GCC_TARGET=$(printf "${{ matrix.target }}" | sed 's/-unknown-/-/' | sed 's/arm[^-]*/arm/g' | sed 's/riscv[^-]*/riscv64/g')
           ENV_TARGET=$(printf "${{ matrix.target }}" | tr '-' '_')
           ENV_TARGET_UC=$(printf "${ENV_TARGET}" | tr '[[:lower:]]' '[[:upper:]]')
           sudo rm -f /etc/apt/sources.list.d/*.list
           case "${{ matrix.target }}" in
-            arm* | aarch64*)
+            arm* | aarch64* | riscv64*)
           sudo tee /etc/apt/sources.list << EOF
           deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy main universe
           deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main universe
@@ -203,6 +208,9 @@ jobs:
           deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main universe
           deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main universe
           deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main universe
+          deb [arch=riscv64] http://ports.ubuntu.com/ubuntu-ports/ jammy main universe
+          deb [arch=riscv64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main universe
+          deb [arch=riscv64] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main universe
           EOF
               ;;
           esac
