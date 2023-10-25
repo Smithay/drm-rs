@@ -33,13 +33,17 @@ mod use_bindgen {
         println!("{}", contents);
 
         let pkgconf = pkg_config::Config::new();
-        let lib = pkgconf.probe("libdrm").unwrap();
+        let include_paths = if let Ok(value) = var("LIBDRM_INCLUDE_PATH") {
+            vec![PathBuf::from(value)]
+        } else {
+            pkgconf.probe("libdrm").unwrap().include_paths
+        };
 
         let config = CodegenConfig::all();
 
         Builder::default()
             .clang_args(
-                lib.include_paths
+                include_paths
                     .into_iter()
                     .map(|path| "-I".to_string() + &path.into_os_string().into_string().unwrap()),
             )
@@ -154,7 +158,7 @@ mod use_bindgen {
 
     #[cfg(feature = "update_bindings")]
     pub fn update_bindings() {
-        use std::{fs, io::Write};
+        use std::fs;
 
         let out_path = var("OUT_DIR").unwrap();
         let bind_file = PathBuf::from(out_path).join("bindings.rs");
@@ -163,15 +167,6 @@ mod use_bindgen {
         println!("cargo:rerun-if-changed={}", dest_file.display());
 
         fs::copy(bind_file, &dest_file).unwrap();
-
-        if let Ok(github_env) = var("GITHUB_ENV") {
-            let mut env_file = fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(github_env)
-                .unwrap();
-            writeln!(env_file, "DRM_SYS_BINDINGS_FILE={}", dest_file.display()).unwrap();
-        }
     }
 }
 
