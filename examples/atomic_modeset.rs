@@ -1,8 +1,5 @@
-extern crate drm;
-extern crate image;
-
 mod utils;
-use utils::*;
+use crate::utils::*;
 
 use drm::control::Device as ControlDevice;
 use drm::Device as BasicDevice;

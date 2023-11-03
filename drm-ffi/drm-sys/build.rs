@@ -1,9 +1,6 @@
 #[cfg(feature = "use_bindgen")]
 mod use_bindgen {
-    extern crate bindgen;
-    extern crate pkg_config;
-
-    use self::bindgen::{
+    use bindgen::{
         callbacks::{DeriveTrait, ImplementsTrait, ParseCallbacks},
         Builder, CodegenConfig,
     };

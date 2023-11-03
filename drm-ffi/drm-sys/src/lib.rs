@@ -4,12 +4,6 @@
 #![allow(non_snake_case)]
 
 #[cfg(any(target_os = "android", target_os = "linux"))]
-extern crate linux_raw_sys;
-
-#[cfg(not(any(target_os = "android", target_os = "linux")))]
-extern crate libc;
-
-#[cfg(any(target_os = "android", target_os = "linux"))]
 pub use linux_raw_sys::general::__kernel_size_t;
 #[cfg(any(target_os = "android", target_os = "linux"))]
 pub type drm_handle_t = core::ffi::c_uint;

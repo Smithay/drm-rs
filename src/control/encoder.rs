@@ -3,7 +3,7 @@
 //! An encoder is a bridge between a CRTC and a connector that takes the pixel
 //! data of the CRTC and encodes it into a format the connector understands.
 
-use control;
+use crate::control;
 use drm_ffi as ffi;
 
 /// A handle to an encoder

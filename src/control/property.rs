@@ -11,7 +11,7 @@
 //! directly changing the property value itself, or by batching property changes
 //! together and executing them all atomically.
 
-use control::{RawResourceHandle, ResourceHandle};
+use crate::control::{RawResourceHandle, ResourceHandle};
 use drm_ffi as ffi;
 
 /// A raw property value that does not have a specific property type

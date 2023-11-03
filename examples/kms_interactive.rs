@@ -1,11 +1,7 @@
-extern crate drm;
-extern crate image;
-extern crate rustyline;
-
 /// Check the `util` module to see how the `Card` structure is implemented.
 pub mod utils;
+use crate::utils::*;
 use drm::control::{from_u32, RawResourceHandle};
-use utils::*;
 
 pub fn main() {
     let card = Card::open_global();

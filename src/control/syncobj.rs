@@ -12,7 +12,7 @@
 //!
 //! [`tokio::io::unix::AsyncFd`]: <https://docs.rs/tokio/latest/tokio/io/unix/struct.AsyncFd.html>
 
-use control;
+use crate::control;
 
 /// A handle to a specific syncobj
 #[repr(transparent)]

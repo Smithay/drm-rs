@@ -7,6 +7,7 @@ authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 license = "MIT"
 build = "build.rs"
 rust-version = "1.65"
+edition = "2021"
 
 [features]
 default = []

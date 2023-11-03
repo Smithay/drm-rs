@@ -15,7 +15,7 @@
 //! * Cursor - Similar to an overlay plane, these are typically used to display
 //! cursor type objects.
 
-use control;
+use crate::control;
 use drm_ffi as ffi;
 
 /// A handle to a plane

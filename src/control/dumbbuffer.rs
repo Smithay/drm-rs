@@ -4,7 +4,7 @@
 //! Memory-supported, slow, but easy & cross-platform buffer implementation
 //!
 
-use buffer;
+use crate::buffer;
 
 use std::borrow::{Borrow, BorrowMut};
 use std::ops::{Deref, DerefMut};
