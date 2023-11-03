@@ -7,7 +7,7 @@ license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>", "Victoria Brekenfeld <crates-io@drakulix.de>"]
 exclude = [".gitignore", ".github"]
 rust-version = "1.65"
-resolver = "2" # Required to separate dev-dependencies.nix features
+edition = "2021"
 
 [dependencies]
 bitflags = "2"

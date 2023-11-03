@@ -27,14 +27,6 @@
 //!
 
 #![warn(missing_docs)]
-extern crate core;
-
-extern crate drm_ffi;
-
-extern crate drm_fourcc;
-extern crate nix;
-
-extern crate bytemuck;
 
 pub(crate) mod util;
 
@@ -45,8 +37,8 @@ use std::ffi::{OsStr, OsString};
 use std::os::unix::{ffi::OsStringExt, io::AsFd};
 use std::time::Duration;
 
+use crate::util::*;
 pub use drm_ffi::result::SystemError;
-use util::*;
 
 /// This trait should be implemented by any object that acts as a DRM device. It
 /// is a prerequisite for using any DRM functionality.
@@ -59,8 +51,6 @@ use util::*;
 /// # Example
 ///
 /// ```
-/// extern crate drm;
-///
 /// use drm::Device;
 ///
 /// use std::fs::File;

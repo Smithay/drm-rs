@@ -2,10 +2,10 @@
 //! Bindings to the Graphics Execution Manager
 //!
 
+use crate::ioctl;
 use drm_sys::*;
-use ioctl;
 
-use result::SystemError as Error;
+use crate::result::SystemError as Error;
 
 use std::os::unix::io::{AsRawFd, BorrowedFd};
 

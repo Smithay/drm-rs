@@ -24,7 +24,7 @@
 //! like a regular one. This allows better control and security, and is the
 //! recommended method of sharing buffers.
 
-use control;
+use crate::control;
 pub use drm_fourcc::{DrmFourcc, DrmModifier, DrmVendor, UnrecognizedFourcc, UnrecognizedVendor};
 
 /// A handle to a GEM buffer

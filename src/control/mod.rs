@@ -46,7 +46,7 @@ pub mod syncobj;
 pub mod property;
 
 use self::dumbbuffer::*;
-use buffer;
+use crate::buffer;
 
 use super::util::*;
 

@@ -1,13 +1,9 @@
-extern crate drm;
-extern crate image;
-extern crate nix;
-
 /// Check the `util` module to see how the `Card` structure is implemented.
 pub mod utils;
 
+use crate::utils::*;
 use nix::poll::PollFlags;
 use std::os::unix::io::{AsFd, OwnedFd};
-use utils::*;
 
 use drm::SystemError;
 

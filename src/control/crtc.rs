@@ -12,7 +12,7 @@
 //! but they can also use pixel data from other planes to perform hardware
 //! compositing.
 
-use control;
+use crate::control;
 use drm_ffi as ffi;
 
 /// A handle to a specific CRTC

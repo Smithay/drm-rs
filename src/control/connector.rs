@@ -6,7 +6,7 @@
 //! a display. These objects keep track of connection information and state,
 //! including the modes that the current display supports.
 
-use control;
+use crate::control;
 use drm_ffi as ffi;
 
 /// A handle to a connector

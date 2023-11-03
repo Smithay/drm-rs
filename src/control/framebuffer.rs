@@ -2,8 +2,8 @@
 //!
 //! Process specific GPU buffers that can be attached to a plane.
 
-use buffer;
-use control;
+use crate::buffer;
+use crate::control;
 use drm_ffi as ffi;
 use drm_fourcc::{DrmFourcc, DrmModifier};
 

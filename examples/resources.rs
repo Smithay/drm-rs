@@ -1,9 +1,6 @@
-extern crate drm;
-extern crate image;
-
 /// Check the `util` module to see how the `Card` structure is implemented.
 pub mod utils;
-use utils::*;
+use crate::utils::*;
 
 pub fn main() {
     let card = Card::open_global();

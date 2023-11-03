@@ -1,9 +1,6 @@
-extern crate drm;
-extern crate image;
-
 /// Check the `util` module to see how the `Card` structure is implemented.
 pub mod utils;
-use utils::*;
+use crate::utils::*;
 
 fn print_properties<T: drm::control::ResourceHandle>(card: &Card, handle: T) {
     let props = card.get_properties(handle).unwrap();

@@ -4,10 +4,10 @@
 
 #![allow(clippy::too_many_arguments)]
 
+use crate::ioctl;
 use drm_sys::*;
-use ioctl;
 
-use result::SystemError as Error;
+use crate::result::SystemError as Error;
 use std::os::unix::io::{AsRawFd, BorrowedFd};
 
 /// Enumerate most card resources.
@@ -878,10 +878,10 @@ pub fn revoke_lease(fd: BorrowedFd<'_>, lessee_id: u32) -> Result<(), Error> {
 /// Dumbbuffers are basic buffers that can be used for scanout.
 ///
 pub mod dumbbuffer {
+    use crate::ioctl;
     use drm_sys::*;
-    use ioctl;
 
-    use result::SystemError as Error;
+    use crate::result::SystemError as Error;
     use std::os::unix::io::{AsRawFd, BorrowedFd};
 
     /// Create a dumb buffer

@@ -1,5 +1,3 @@
-extern crate drm_ffi;
-
 use drm_ffi as ffi;
 
 use std::fs::{File, OpenOptions};

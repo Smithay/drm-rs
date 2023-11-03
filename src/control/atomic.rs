@@ -1,6 +1,6 @@
 //! Helpers for atomic modesetting.
 
-use control;
+use crate::control;
 
 /// Helper struct to construct atomic commit requests
 #[derive(Debug, Clone, Default)]
