@@ -32,12 +32,12 @@ pub fn main() {
         .expect("No connected connectors");
 
     // Get the first (usually best) mode
-    let &mode = con.modes().get(0).expect("No modes found on connector");
+    let &mode = con.modes().first().expect("No modes found on connector");
 
     let (disp_width, disp_height) = mode.size();
 
     // Find a crtc and FB
-    let crtc = crtcinfo.get(0).expect("No crtcs found");
+    let crtc = crtcinfo.first().expect("No crtcs found");
 
     // Select the pixel format
     let fmt = DrmFourcc::Xrgb8888;
