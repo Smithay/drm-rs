@@ -3,9 +3,6 @@
 pub use drm::control::Device as ControlDevice;
 pub use drm::Device;
 
-pub use drm::control::property::*;
-pub use drm::control::ResourceHandle;
-
 #[derive(Debug)]
 /// A simple wrapper for a device node.
 pub struct Card(std::fs::File);
