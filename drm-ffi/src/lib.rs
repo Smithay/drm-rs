@@ -15,7 +15,7 @@ pub(crate) mod utils;
 
 use crate::result::SystemError as Error;
 pub mod gem;
-pub mod ioctl;
+mod ioctl;
 pub mod mode;
 pub mod result;
 pub mod syncobj;
