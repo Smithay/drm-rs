@@ -13,15 +13,16 @@ extern crate nix;
 #[macro_use]
 pub(crate) mod utils;
 
-use crate::result::SystemError as Error;
 pub mod gem;
 mod ioctl;
 pub mod mode;
-pub mod result;
 pub mod syncobj;
 
 use nix::libc::{c_int, c_ulong};
-use std::os::unix::io::{AsRawFd, BorrowedFd};
+use std::{
+    io,
+    os::unix::io::{AsRawFd, BorrowedFd},
+};
 
 ///
 /// Bindings to the methods of authentication the DRM provides.
@@ -30,11 +31,13 @@ pub mod auth {
     use crate::ioctl;
     use drm_sys::*;
 
-    use nix::Error;
-    use std::os::unix::io::{AsRawFd, BorrowedFd};
+    use std::{
+        io,
+        os::unix::io::{AsRawFd, BorrowedFd},
+    };
 
     /// Get the 'Magic Authentication Token' for this file descriptor.
-    pub fn get_magic_token(fd: BorrowedFd<'_>) -> Result<drm_auth, Error> {
+    pub fn get_magic_token(fd: BorrowedFd<'_>) -> io::Result<drm_auth> {
         let mut auth = drm_auth::default();
 
         unsafe {
@@ -45,7 +48,7 @@ pub mod auth {
     }
 
     /// Authorize another process' 'Magic Authentication Token'.
-    pub fn auth_magic_token(fd: BorrowedFd<'_>, auth: u32) -> Result<drm_auth, Error> {
+    pub fn auth_magic_token(fd: BorrowedFd<'_>, auth: u32) -> io::Result<drm_auth> {
         let token = drm_auth { magic: auth };
 
         unsafe {
@@ -56,7 +59,7 @@ pub mod auth {
     }
 
     /// Acquire the 'Master DRM Lock' for this file descriptor.
-    pub fn acquire_master(fd: BorrowedFd<'_>) -> Result<(), Error> {
+    pub fn acquire_master(fd: BorrowedFd<'_>) -> io::Result<()> {
         unsafe {
             ioctl::acquire_master(fd.as_raw_fd())?;
         }
@@ -65,7 +68,7 @@ pub mod auth {
     }
 
     /// Release the 'Master DRM Lock' for this file descriptor.
-    pub fn release_master(fd: BorrowedFd<'_>) -> Result<(), Error> {
+    pub fn release_master(fd: BorrowedFd<'_>) -> io::Result<()> {
         unsafe {
             ioctl::release_master(fd.as_raw_fd())?;
         }
@@ -75,7 +78,7 @@ pub mod auth {
 }
 
 /// Load this device's Bus ID into a buffer.
-pub fn get_bus_id(fd: BorrowedFd<'_>, mut buf: Option<&mut Vec<u8>>) -> Result<drm_unique, Error> {
+pub fn get_bus_id(fd: BorrowedFd<'_>, mut buf: Option<&mut Vec<u8>>) -> io::Result<drm_unique> {
     let mut sizes = drm_unique::default();
     unsafe {
         ioctl::get_bus_id(fd.as_raw_fd(), &mut sizes)?;
@@ -107,7 +110,7 @@ pub fn get_interrupt_from_bus_id(
     bus: c_int,
     dev: c_int,
     func: c_int,
-) -> Result<drm_irq_busid, Error> {
+) -> io::Result<drm_irq_busid> {
     let mut irq = drm_irq_busid {
         busnum: bus,
         devnum: dev,
@@ -123,7 +126,7 @@ pub fn get_interrupt_from_bus_id(
 }
 
 /// Get client information given a client's ID.
-pub fn get_client(fd: BorrowedFd<'_>, idx: c_int) -> Result<drm_client, Error> {
+pub fn get_client(fd: BorrowedFd<'_>, idx: c_int) -> io::Result<drm_client> {
     let mut client = drm_client {
         idx,
         ..Default::default()
@@ -137,7 +140,7 @@ pub fn get_client(fd: BorrowedFd<'_>, idx: c_int) -> Result<drm_client, Error> {
 }
 
 /// Check if a capability is set.
-pub fn get_capability(fd: BorrowedFd<'_>, cty: u64) -> Result<drm_get_cap, Error> {
+pub fn get_capability(fd: BorrowedFd<'_>, cty: u64) -> io::Result<drm_get_cap> {
     let mut cap = drm_get_cap {
         capability: cty,
         ..Default::default()
@@ -151,11 +154,7 @@ pub fn get_capability(fd: BorrowedFd<'_>, cty: u64) -> Result<drm_get_cap, Error
 }
 
 /// Attempt to enable/disable a client's capability.
-pub fn set_capability(
-    fd: BorrowedFd<'_>,
-    cty: u64,
-    val: bool,
-) -> Result<drm_set_client_cap, Error> {
+pub fn set_capability(fd: BorrowedFd<'_>, cty: u64, val: bool) -> io::Result<drm_set_client_cap> {
     let cap = drm_set_client_cap {
         capability: cty,
         value: val as u64,
@@ -174,7 +173,7 @@ pub fn get_version(
     mut name_buf: Option<&mut Vec<i8>>,
     mut date_buf: Option<&mut Vec<i8>>,
     mut desc_buf: Option<&mut Vec<i8>>,
-) -> Result<drm_version, Error> {
+) -> io::Result<drm_version> {
     let mut sizes = drm_version::default();
     unsafe {
         ioctl::get_version(fd.as_raw_fd(), &mut sizes)?;
@@ -211,7 +210,7 @@ pub fn wait_vblank(
     type_: u32,
     sequence: u32,
     signal: usize,
-) -> Result<drm_wait_vblank_reply, Error> {
+) -> io::Result<drm_wait_vblank_reply> {
     // We can't assume the kernel will completely fill the reply in the union
     // with valid data (it won't populate the timestamp if the event flag is
     // set, for example), so use `default` to ensure the structure is completely

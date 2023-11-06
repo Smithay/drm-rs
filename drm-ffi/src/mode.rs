@@ -7,8 +7,10 @@
 use crate::ioctl;
 use drm_sys::*;
 
-use crate::result::SystemError as Error;
-use std::os::unix::io::{AsRawFd, BorrowedFd};
+use std::{
+    io,
+    os::unix::io::{AsRawFd, BorrowedFd},
+};
 
 /// Enumerate most card resources.
 pub fn get_resources(
@@ -17,7 +19,7 @@ pub fn get_resources(
     mut crtcs: Option<&mut Vec<u32>>,
     mut connectors: Option<&mut Vec<u32>>,
     mut encoders: Option<&mut Vec<u32>>,
-) -> Result<drm_mode_card_res, Error> {
+) -> io::Result<drm_mode_card_res> {
     let mut sizes = drm_mode_card_res::default();
     unsafe {
         ioctl::mode::get_resources(fd.as_raw_fd(), &mut sizes)?;
@@ -56,7 +58,7 @@ pub fn get_resources(
 pub fn get_plane_resources(
     fd: BorrowedFd<'_>,
     mut planes: Option<&mut Vec<u32>>,
-) -> Result<drm_mode_get_plane_res, Error> {
+) -> io::Result<drm_mode_get_plane_res> {
     let mut sizes = drm_mode_get_plane_res::default();
     unsafe {
         ioctl::mode::get_plane_resources(fd.as_raw_fd(), &mut sizes)?;
@@ -83,7 +85,7 @@ pub fn get_plane_resources(
 }
 
 /// Get info about a framebuffer.
-pub fn get_framebuffer(fd: BorrowedFd<'_>, fb_id: u32) -> Result<drm_mode_fb_cmd, Error> {
+pub fn get_framebuffer(fd: BorrowedFd<'_>, fb_id: u32) -> io::Result<drm_mode_fb_cmd> {
     let mut info = drm_mode_fb_cmd {
         fb_id,
         ..Default::default()
@@ -105,7 +107,7 @@ pub fn add_fb(
     bpp: u32,
     depth: u32,
     handle: u32,
-) -> Result<drm_mode_fb_cmd, Error> {
+) -> io::Result<drm_mode_fb_cmd> {
     let mut fb = drm_mode_fb_cmd {
         width,
         height,
@@ -124,7 +126,7 @@ pub fn add_fb(
 }
 
 /// Get info about a framebuffer (with modifiers).
-pub fn get_framebuffer2(fd: BorrowedFd<'_>, fb_id: u32) -> Result<drm_mode_fb_cmd2, Error> {
+pub fn get_framebuffer2(fd: BorrowedFd<'_>, fb_id: u32) -> io::Result<drm_mode_fb_cmd2> {
     let mut info = drm_mode_fb_cmd2 {
         fb_id,
         ..Default::default()
@@ -148,7 +150,7 @@ pub fn add_fb2(
     offsets: &[u32; 4],
     modifier: &[u64; 4],
     flags: u32,
-) -> Result<drm_mode_fb_cmd2, Error> {
+) -> io::Result<drm_mode_fb_cmd2> {
     let mut fb = drm_mode_fb_cmd2 {
         width,
         height,
@@ -169,7 +171,7 @@ pub fn add_fb2(
 }
 
 /// Remove a framebuffer.
-pub fn rm_fb(fd: BorrowedFd<'_>, mut id: u32) -> Result<(), Error> {
+pub fn rm_fb(fd: BorrowedFd<'_>, mut id: u32) -> io::Result<()> {
     unsafe {
         ioctl::mode::rm_fb(fd.as_raw_fd(), &mut id)?;
     }
@@ -182,7 +184,7 @@ pub fn dirty_fb(
     fd: BorrowedFd<'_>,
     fb_id: u32,
     clips: &[drm_clip_rect],
-) -> Result<drm_mode_fb_dirty_cmd, Error> {
+) -> io::Result<drm_mode_fb_dirty_cmd> {
     let mut dirty = drm_mode_fb_dirty_cmd {
         fb_id,
         num_clips: clips.len() as _,
@@ -198,7 +200,7 @@ pub fn dirty_fb(
 }
 
 /// Get info about a CRTC
-pub fn get_crtc(fd: BorrowedFd<'_>, crtc_id: u32) -> Result<drm_mode_crtc, Error> {
+pub fn get_crtc(fd: BorrowedFd<'_>, crtc_id: u32) -> io::Result<drm_mode_crtc> {
     let mut info = drm_mode_crtc {
         crtc_id,
         ..Default::default()
@@ -220,7 +222,7 @@ pub fn set_crtc(
     y: u32,
     conns: &[u32],
     mode: Option<drm_mode_modeinfo>,
-) -> Result<drm_mode_crtc, Error> {
+) -> io::Result<drm_mode_crtc> {
     let mut crtc = drm_mode_crtc {
         set_connectors_ptr: conns.as_ptr() as _,
         count_connectors: conns.len() as _,
@@ -251,7 +253,7 @@ pub fn get_gamma(
     red: &mut [u16],
     green: &mut [u16],
     blue: &mut [u16],
-) -> Result<drm_mode_crtc_lut, Error> {
+) -> io::Result<drm_mode_crtc_lut> {
     let mut lut = drm_mode_crtc_lut {
         crtc_id,
         gamma_size: size as _,
@@ -275,7 +277,7 @@ pub fn set_gamma(
     red: &[u16],
     green: &[u16],
     blue: &[u16],
-) -> Result<drm_mode_crtc_lut, Error> {
+) -> io::Result<drm_mode_crtc_lut> {
     let mut lut = drm_mode_crtc_lut {
         crtc_id,
         gamma_size: size as _,
@@ -302,7 +304,7 @@ pub fn set_cursor(
     buf_id: u32,
     width: u32,
     height: u32,
-) -> Result<drm_mode_cursor, Error> {
+) -> io::Result<drm_mode_cursor> {
     let mut cursor = drm_mode_cursor {
         flags: DRM_MODE_CURSOR_BO,
         crtc_id,
@@ -335,7 +337,7 @@ pub fn set_cursor2(
     height: u32,
     hot_x: i32,
     hot_y: i32,
-) -> Result<drm_mode_cursor2, Error> {
+) -> io::Result<drm_mode_cursor2> {
     let mut cursor = drm_mode_cursor2 {
         flags: DRM_MODE_CURSOR_BO,
         crtc_id,
@@ -361,7 +363,7 @@ pub fn move_cursor(
     crtc_id: u32,
     x: i32,
     y: i32,
-) -> Result<drm_mode_cursor, Error> {
+) -> io::Result<drm_mode_cursor> {
     let mut cursor = drm_mode_cursor {
         flags: DRM_MODE_CURSOR_MOVE,
         crtc_id,
@@ -386,7 +388,7 @@ pub fn get_connector(
     mut modes: Option<&mut Vec<drm_mode_modeinfo>>,
     mut encoders: Option<&mut Vec<u32>>,
     force_probe: bool,
-) -> Result<drm_mode_get_connector, Error> {
+) -> io::Result<drm_mode_get_connector> {
     assert_eq!(props.is_some(), prop_values.is_some());
 
     let tmp_mode = drm_mode_modeinfo::default();
@@ -464,7 +466,7 @@ pub fn get_connector(
 }
 
 /// Get info about an encoder
-pub fn get_encoder(fd: BorrowedFd<'_>, encoder_id: u32) -> Result<drm_mode_get_encoder, Error> {
+pub fn get_encoder(fd: BorrowedFd<'_>, encoder_id: u32) -> io::Result<drm_mode_get_encoder> {
     let mut info = drm_mode_get_encoder {
         encoder_id,
         ..Default::default()
@@ -482,7 +484,7 @@ pub fn get_plane(
     fd: BorrowedFd<'_>,
     plane_id: u32,
     mut formats: Option<&mut Vec<u32>>,
-) -> Result<drm_mode_get_plane, Error> {
+) -> io::Result<drm_mode_get_plane> {
     let mut sizes = drm_mode_get_plane {
         plane_id,
         ..Default::default()
@@ -529,7 +531,7 @@ pub fn set_plane(
     src_y: u32,
     src_w: u32,
     src_h: u32,
-) -> Result<drm_mode_set_plane, Error> {
+) -> io::Result<drm_mode_set_plane> {
     let mut plane = drm_mode_set_plane {
         plane_id,
         crtc_id,
@@ -558,7 +560,7 @@ pub fn get_property(
     prop_id: u32,
     mut values: Option<&mut Vec<u64>>,
     mut enums: Option<&mut Vec<drm_mode_property_enum>>,
-) -> Result<drm_mode_get_property, Error> {
+) -> io::Result<drm_mode_get_property> {
     let mut prop = drm_mode_get_property {
         prop_id,
         ..Default::default()
@@ -595,7 +597,7 @@ pub fn set_connector_property(
     connector_id: u32,
     prop_id: u32,
     value: u64,
-) -> Result<drm_mode_connector_set_property, Error> {
+) -> io::Result<drm_mode_connector_set_property> {
     let mut prop = drm_mode_connector_set_property {
         value,
         prop_id,
@@ -614,7 +616,7 @@ pub fn get_property_blob(
     fd: BorrowedFd<'_>,
     blob_id: u32,
     mut data: Option<&mut Vec<u8>>,
-) -> Result<drm_mode_get_blob, Error> {
+) -> io::Result<drm_mode_get_blob> {
     let mut sizes = drm_mode_get_blob {
         blob_id,
         ..Default::default()
@@ -649,7 +651,7 @@ pub fn get_property_blob(
 pub fn create_property_blob(
     fd: BorrowedFd<'_>,
     data: &mut [u8],
-) -> Result<drm_mode_create_blob, Error> {
+) -> io::Result<drm_mode_create_blob> {
     let mut blob = drm_mode_create_blob {
         data: data.as_mut_ptr() as _,
         length: data.len() as _,
@@ -664,7 +666,7 @@ pub fn create_property_blob(
 }
 
 /// Destroy a property blob
-pub fn destroy_property_blob(fd: BorrowedFd<'_>, id: u32) -> Result<drm_mode_destroy_blob, Error> {
+pub fn destroy_property_blob(fd: BorrowedFd<'_>, id: u32) -> io::Result<drm_mode_destroy_blob> {
     let mut blob = drm_mode_destroy_blob { blob_id: id };
 
     unsafe {
@@ -681,7 +683,7 @@ pub fn get_properties(
     obj_type: u32,
     mut props: Option<&mut Vec<u32>>,
     mut values: Option<&mut Vec<u64>>,
-) -> Result<drm_mode_obj_get_properties, Error> {
+) -> io::Result<drm_mode_obj_get_properties> {
     assert_eq!(props.is_some(), values.is_some());
 
     let mut sizes = drm_mode_obj_get_properties {
@@ -722,7 +724,7 @@ pub fn set_property(
     obj_id: u32,
     obj_type: u32,
     value: u64,
-) -> Result<(), Error> {
+) -> io::Result<()> {
     let mut prop = drm_mode_obj_set_property {
         value,
         prop_id,
@@ -744,7 +746,7 @@ pub fn page_flip(
     fb_id: u32,
     flags: u32,
     sequence: u32,
-) -> Result<(), Error> {
+) -> io::Result<()> {
     let mut flip = drm_mode_crtc_page_flip {
         crtc_id,
         fb_id,
@@ -769,7 +771,7 @@ pub fn atomic_commit(
     prop_counts: &mut [u32],
     props: &mut [u32],
     values: &mut [u64],
-) -> Result<(), Error> {
+) -> io::Result<()> {
     let mut atomic = drm_mode_atomic {
         flags,
         count_objs: objs.len() as _,
@@ -792,7 +794,7 @@ pub fn create_lease(
     fd: BorrowedFd<'_>,
     objects: &[u32],
     flags: u32,
-) -> Result<drm_mode_create_lease, Error> {
+) -> io::Result<drm_mode_create_lease> {
     let mut data = drm_mode_create_lease {
         object_ids: objects.as_ptr() as _,
         object_count: objects.len() as u32,
@@ -811,7 +813,7 @@ pub fn create_lease(
 pub fn list_lessees(
     fd: BorrowedFd<'_>,
     mut lessees: Option<&mut Vec<u32>>,
-) -> Result<drm_mode_list_lessees, Error> {
+) -> io::Result<drm_mode_list_lessees> {
     let mut sizes = drm_mode_list_lessees::default();
 
     unsafe {
@@ -839,7 +841,7 @@ pub fn list_lessees(
 pub fn get_lease(
     fd: BorrowedFd<'_>,
     mut objects: Option<&mut Vec<u32>>,
-) -> Result<drm_mode_get_lease, Error> {
+) -> io::Result<drm_mode_get_lease> {
     let mut sizes = drm_mode_get_lease::default();
 
     unsafe {
@@ -864,7 +866,7 @@ pub fn get_lease(
 }
 
 /// Revoke previously issued lease
-pub fn revoke_lease(fd: BorrowedFd<'_>, lessee_id: u32) -> Result<(), Error> {
+pub fn revoke_lease(fd: BorrowedFd<'_>, lessee_id: u32) -> io::Result<()> {
     let mut data = drm_mode_revoke_lease { lessee_id };
 
     unsafe {
@@ -881,8 +883,10 @@ pub mod dumbbuffer {
     use crate::ioctl;
     use drm_sys::*;
 
-    use crate::result::SystemError as Error;
-    use std::os::unix::io::{AsRawFd, BorrowedFd};
+    use std::{
+        io,
+        os::unix::io::{AsRawFd, BorrowedFd},
+    };
 
     /// Create a dumb buffer
     pub fn create(
@@ -891,7 +895,7 @@ pub mod dumbbuffer {
         height: u32,
         bpp: u32,
         flags: u32,
-    ) -> Result<drm_mode_create_dumb, Error> {
+    ) -> io::Result<drm_mode_create_dumb> {
         let mut db = drm_mode_create_dumb {
             height,
             width,
@@ -908,7 +912,7 @@ pub mod dumbbuffer {
     }
 
     /// Destroy a dumb buffer
-    pub fn destroy(fd: BorrowedFd<'_>, handle: u32) -> Result<drm_mode_destroy_dumb, Error> {
+    pub fn destroy(fd: BorrowedFd<'_>, handle: u32) -> io::Result<drm_mode_destroy_dumb> {
         let mut db = drm_mode_destroy_dumb { handle };
 
         unsafe {
@@ -924,7 +928,7 @@ pub mod dumbbuffer {
         handle: u32,
         pad: u32,
         offset: u64,
-    ) -> Result<drm_mode_map_dumb, Error> {
+    ) -> io::Result<drm_mode_map_dumb> {
         let mut map = drm_mode_map_dumb {
             handle,
             pad,
