@@ -34,11 +34,15 @@ pub mod buffer;
 pub mod control;
 
 use std::ffi::{OsStr, OsString};
-use std::os::unix::{ffi::OsStringExt, io::AsFd};
 use std::time::Duration;
+use std::{
+    io,
+    os::unix::{ffi::OsStringExt, io::AsFd},
+};
+
+use nix::libc::EINVAL;
 
 use crate::util::*;
-pub use drm_ffi::result::SystemError;
 
 /// This trait should be implemented by any object that acts as a DRM device. It
 /// is a prerequisite for using any DRM functionality.
@@ -98,43 +102,39 @@ pub trait Device: AsFd {
     ///
     /// This function is only available to processes with CAP_SYS_ADMIN
     /// privileges (usually as root)
-    fn acquire_master_lock(&self) -> Result<(), SystemError> {
+    fn acquire_master_lock(&self) -> io::Result<()> {
         drm_ffi::auth::acquire_master(self.as_fd())?;
         Ok(())
     }
 
     /// Releases the DRM Master lock for another process to use.
-    fn release_master_lock(&self) -> Result<(), SystemError> {
+    fn release_master_lock(&self) -> io::Result<()> {
         drm_ffi::auth::release_master(self.as_fd())?;
         Ok(())
     }
 
     /// Generates an [`AuthToken`] for this process.
     #[deprecated(note = "Consider opening a render node instead.")]
-    fn generate_auth_token(&self) -> Result<AuthToken, SystemError> {
+    fn generate_auth_token(&self) -> io::Result<AuthToken> {
         let token = drm_ffi::auth::get_magic_token(self.as_fd())?;
         Ok(AuthToken(token.magic))
     }
 
     /// Authenticates an [`AuthToken`] from another process.
-    fn authenticate_auth_token(&self, token: AuthToken) -> Result<(), SystemError> {
+    fn authenticate_auth_token(&self, token: AuthToken) -> io::Result<()> {
         drm_ffi::auth::auth_magic_token(self.as_fd(), token.0)?;
         Ok(())
     }
 
     /// Requests the driver to expose or hide certain capabilities. See
     /// [`ClientCapability`] for more information.
-    fn set_client_capability(
-        &self,
-        cap: ClientCapability,
-        enable: bool,
-    ) -> Result<(), SystemError> {
+    fn set_client_capability(&self, cap: ClientCapability, enable: bool) -> io::Result<()> {
         drm_ffi::set_capability(self.as_fd(), cap as u64, enable)?;
         Ok(())
     }
 
     /// Gets the bus ID of this device.
-    fn get_bus_id(&self) -> Result<OsString, SystemError> {
+    fn get_bus_id(&self) -> io::Result<OsString> {
         let mut buffer = Vec::new();
         let _ = drm_ffi::get_bus_id(self.as_fd(), Some(&mut buffer))?;
         let bus_id = OsString::from_vec(buffer);
@@ -144,21 +144,21 @@ pub trait Device: AsFd {
 
     /// Check to see if our [`AuthToken`] has been authenticated
     /// by the DRM Master
-    fn authenticated(&self) -> Result<bool, SystemError> {
+    fn authenticated(&self) -> io::Result<bool> {
         let client = drm_ffi::get_client(self.as_fd(), 0)?;
         Ok(client.auth == 1)
     }
 
     /// Gets the value of a capability.
-    fn get_driver_capability(&self, cap: DriverCapability) -> Result<u64, SystemError> {
+    fn get_driver_capability(&self, cap: DriverCapability) -> io::Result<u64> {
         let cap = drm_ffi::get_capability(self.as_fd(), cap as u64)?;
         Ok(cap.value)
     }
 
     /// # Possible errors:
-    ///   - [`SystemError::MemoryFault`]: Kernel could not copy fields into userspace
+    ///   - `EFAULT`: Kernel could not copy fields into userspace
     #[allow(missing_docs)]
-    fn get_driver(&self) -> Result<Driver, SystemError> {
+    fn get_driver(&self) -> io::Result<Driver> {
         let mut name = Vec::new();
         let mut date = Vec::new();
         let mut desc = Vec::new();
@@ -186,13 +186,13 @@ pub trait Device: AsFd {
         flags: VblankWaitFlags,
         high_crtc: u32,
         user_data: usize,
-    ) -> Result<VblankWaitReply, SystemError> {
+    ) -> io::Result<VblankWaitReply> {
         use drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_HIGH_CRTC_MASK;
         use drm_ffi::_DRM_VBLANK_HIGH_CRTC_SHIFT;
 
         let high_crtc_mask = _DRM_VBLANK_HIGH_CRTC_MASK >> _DRM_VBLANK_HIGH_CRTC_SHIFT;
         if (high_crtc & !high_crtc_mask) != 0 {
-            return Err(SystemError::InvalidArgument);
+            return Err(io::Error::from_raw_os_error(EINVAL));
         }
 
         let (sequence, wait_type) = match target_sequence {

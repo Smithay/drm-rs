@@ -5,12 +5,13 @@
 use crate::ioctl;
 use drm_sys::*;
 
-use crate::result::SystemError as Error;
-
-use std::os::unix::io::{AsRawFd, BorrowedFd};
+use std::{
+    io,
+    os::unix::io::{AsRawFd, BorrowedFd},
+};
 
 /// Open a GEM object given it's 32-bit name, returning the handle.
-pub fn open(fd: BorrowedFd<'_>, name: u32) -> Result<drm_gem_open, Error> {
+pub fn open(fd: BorrowedFd<'_>, name: u32) -> io::Result<drm_gem_open> {
     let mut gem = drm_gem_open {
         name,
         ..Default::default()
@@ -24,7 +25,7 @@ pub fn open(fd: BorrowedFd<'_>, name: u32) -> Result<drm_gem_open, Error> {
 }
 
 /// Closes a GEM object given it's handle.
-pub fn close(fd: BorrowedFd<'_>, handle: u32) -> Result<drm_gem_close, Error> {
+pub fn close(fd: BorrowedFd<'_>, handle: u32) -> io::Result<drm_gem_close> {
     let gem = drm_gem_close {
         handle,
         ..Default::default()
@@ -38,11 +39,7 @@ pub fn close(fd: BorrowedFd<'_>, handle: u32) -> Result<drm_gem_close, Error> {
 }
 
 /// Converts a GEM object's handle to a PRIME file descriptor.
-pub fn handle_to_fd(
-    fd: BorrowedFd<'_>,
-    handle: u32,
-    flags: u32,
-) -> Result<drm_prime_handle, Error> {
+pub fn handle_to_fd(fd: BorrowedFd<'_>, handle: u32, flags: u32) -> io::Result<drm_prime_handle> {
     let mut prime = drm_prime_handle {
         handle,
         flags,
@@ -57,10 +54,7 @@ pub fn handle_to_fd(
 }
 
 /// Converts a PRIME file descriptor to a GEM object's handle.
-pub fn fd_to_handle(
-    fd: BorrowedFd<'_>,
-    primefd: BorrowedFd<'_>,
-) -> Result<drm_prime_handle, Error> {
+pub fn fd_to_handle(fd: BorrowedFd<'_>, primefd: BorrowedFd<'_>) -> io::Result<drm_prime_handle> {
     let mut prime = drm_prime_handle {
         fd: primefd.as_raw_fd(),
         ..Default::default()

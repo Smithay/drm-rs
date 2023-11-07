@@ -3,12 +3,13 @@ pub mod utils;
 
 use crate::utils::*;
 use nix::poll::PollFlags;
-use std::os::unix::io::{AsFd, OwnedFd};
-
-use drm::SystemError;
+use std::{
+    io,
+    os::unix::io::{AsFd, OwnedFd},
+};
 
 impl Card {
-    fn simulate_command_submission(&self) -> Result<OwnedFd, SystemError> {
+    fn simulate_command_submission(&self) -> io::Result<OwnedFd> {
         // Create a temporary syncobj to receive the command fence.
         let syncobj = self.create_syncobj(false)?;
 

@@ -5,11 +5,13 @@
 use crate::ioctl;
 use drm_sys::*;
 
-use crate::result::SystemError as Error;
-use std::os::unix::io::{AsRawFd, BorrowedFd};
+use std::{
+    io,
+    os::unix::io::{AsRawFd, BorrowedFd},
+};
 
 /// Creates a syncobj.
-pub fn create(fd: BorrowedFd<'_>, signaled: bool) -> Result<drm_syncobj_create, Error> {
+pub fn create(fd: BorrowedFd<'_>, signaled: bool) -> io::Result<drm_syncobj_create> {
     let mut args = drm_syncobj_create {
         handle: 0,
         flags: if signaled {
@@ -27,7 +29,7 @@ pub fn create(fd: BorrowedFd<'_>, signaled: bool) -> Result<drm_syncobj_create, 
 }
 
 /// Destroys a syncobj.
-pub fn destroy(fd: BorrowedFd<'_>, handle: u32) -> Result<drm_syncobj_destroy, Error> {
+pub fn destroy(fd: BorrowedFd<'_>, handle: u32) -> io::Result<drm_syncobj_destroy> {
     let mut args = drm_syncobj_destroy { handle, pad: 0 };
 
     unsafe {
@@ -42,7 +44,7 @@ pub fn handle_to_fd(
     fd: BorrowedFd<'_>,
     handle: u32,
     export_sync_file: bool,
-) -> Result<drm_syncobj_handle, Error> {
+) -> io::Result<drm_syncobj_handle> {
     let mut args = drm_syncobj_handle {
         handle,
         flags: if export_sync_file {
@@ -66,7 +68,7 @@ pub fn fd_to_handle(
     fd: BorrowedFd<'_>,
     syncobj_fd: BorrowedFd<'_>,
     import_sync_file: bool,
-) -> Result<drm_syncobj_handle, Error> {
+) -> io::Result<drm_syncobj_handle> {
     let mut args = drm_syncobj_handle {
         handle: 0,
         flags: if import_sync_file {
@@ -92,7 +94,7 @@ pub fn wait(
     timeout_nsec: i64,
     wait_all: bool,
     wait_for_submit: bool,
-) -> Result<drm_syncobj_wait, Error> {
+) -> io::Result<drm_syncobj_wait> {
     let mut args = drm_syncobj_wait {
         handles: handles.as_ptr() as _,
         timeout_nsec,
@@ -118,7 +120,7 @@ pub fn wait(
 }
 
 /// Resets (un-signals) one or more syncobjs.
-pub fn reset(fd: BorrowedFd<'_>, handles: &[u32]) -> Result<drm_syncobj_array, Error> {
+pub fn reset(fd: BorrowedFd<'_>, handles: &[u32]) -> io::Result<drm_syncobj_array> {
     let mut args = drm_syncobj_array {
         handles: handles.as_ptr() as _,
         count_handles: handles.len() as _,
@@ -133,7 +135,7 @@ pub fn reset(fd: BorrowedFd<'_>, handles: &[u32]) -> Result<drm_syncobj_array, E
 }
 
 /// Signals one or more syncobjs.
-pub fn signal(fd: BorrowedFd<'_>, handles: &[u32]) -> Result<drm_syncobj_array, Error> {
+pub fn signal(fd: BorrowedFd<'_>, handles: &[u32]) -> io::Result<drm_syncobj_array> {
     let mut args = drm_syncobj_array {
         handles: handles.as_ptr() as _,
         count_handles: handles.len() as _,
@@ -156,7 +158,7 @@ pub fn timeline_wait(
     wait_all: bool,
     wait_for_submit: bool,
     wait_available: bool,
-) -> Result<drm_syncobj_timeline_wait, Error> {
+) -> io::Result<drm_syncobj_timeline_wait> {
     debug_assert_eq!(handles.len(), points.len());
 
     let mut args = drm_syncobj_timeline_wait {
@@ -194,7 +196,7 @@ pub fn query(
     handles: &[u32],
     points: &mut [u64],
     last_submitted: bool,
-) -> Result<drm_syncobj_timeline_array, Error> {
+) -> io::Result<drm_syncobj_timeline_array> {
     debug_assert_eq!(handles.len(), points.len());
 
     let mut args = drm_syncobj_timeline_array {
@@ -222,7 +224,7 @@ pub fn transfer(
     dst_handle: u32,
     src_point: u64,
     dst_point: u64,
-) -> Result<drm_syncobj_transfer, Error> {
+) -> io::Result<drm_syncobj_transfer> {
     let mut args = drm_syncobj_transfer {
         src_handle,
         dst_handle,
@@ -244,7 +246,7 @@ pub fn timeline_signal(
     fd: BorrowedFd<'_>,
     handles: &[u32],
     points: &[u64],
-) -> Result<drm_syncobj_timeline_array, Error> {
+) -> io::Result<drm_syncobj_timeline_array> {
     debug_assert_eq!(handles.len(), points.len());
 
     let mut args = drm_syncobj_timeline_array {

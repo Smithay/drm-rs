@@ -29,10 +29,10 @@
 //! must be implemented on top of the basic [`super::Device`] trait.
 
 use drm_ffi as ffi;
-use drm_ffi::result::SystemError;
 use drm_fourcc::{DrmFourcc, DrmModifier, UnrecognizedFourcc};
 
 use bytemuck::allocation::TransparentWrapperAlloc;
+use nix::libc::EINVAL;
 
 pub mod atomic;
 pub mod connector;
@@ -52,6 +52,9 @@ use super::util::*;
 
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::error;
+use std::fmt;
+use std::io;
 use std::iter::Zip;
 use std::mem;
 use std::num::NonZeroUsize;
@@ -84,6 +87,45 @@ pub fn from_u32<T: From<RawResourceHandle>>(raw: u32) -> Option<T> {
     RawResourceHandle::new(raw).map(T::from)
 }
 
+/// Error from [`Device::get_planar_framebuffer`]
+#[derive(Debug)]
+pub enum GetPlanarFramebufferError {
+    /// IO error
+    Io(io::Error),
+    /// Unrecognized fourcc format
+    UnrecognizedFourcc(drm_fourcc::UnrecognizedFourcc),
+}
+
+impl fmt::Display for GetPlanarFramebufferError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Io(err) => write!(f, "{}", err),
+            Self::UnrecognizedFourcc(err) => write!(f, "{}", err),
+        }
+    }
+}
+
+impl error::Error for GetPlanarFramebufferError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match self {
+            Self::Io(err) => Some(err),
+            Self::UnrecognizedFourcc(err) => Some(err),
+        }
+    }
+}
+
+impl From<io::Error> for GetPlanarFramebufferError {
+    fn from(err: io::Error) -> Self {
+        Self::Io(err)
+    }
+}
+
+impl From<UnrecognizedFourcc> for GetPlanarFramebufferError {
+    fn from(err: UnrecognizedFourcc) -> Self {
+        Self::UnrecognizedFourcc(err)
+    }
+}
+
 /// This trait should be implemented by any object that acts as a DRM device and
 /// provides modesetting functionality.
 ///
@@ -99,7 +141,7 @@ pub fn from_u32<T: From<RawResourceHandle>>(raw: u32) -> Option<T> {
 /// ```
 pub trait Device: super::Device {
     /// Gets the set of resource handles that this device currently controls
-    fn resource_handles(&self) -> Result<ResourceHandles, SystemError> {
+    fn resource_handles(&self) -> io::Result<ResourceHandles> {
         let mut fbs = Vec::new();
         let mut crtcs = Vec::new();
         let mut connectors = Vec::new();
@@ -128,7 +170,7 @@ pub trait Device: super::Device {
     }
 
     /// Gets the set of plane handles that this device currently has
-    fn plane_handles(&self) -> Result<Vec<plane::Handle>, SystemError> {
+    fn plane_handles(&self) -> io::Result<Vec<plane::Handle>> {
         let mut planes = Vec::new();
         let _ = ffi::mode::get_plane_resources(self.as_fd(), Some(&mut planes))?;
         Ok(unsafe { transmute_vec_from_u32(planes) })
@@ -149,7 +191,7 @@ pub trait Device: super::Device {
         &self,
         handle: connector::Handle,
         force_probe: bool,
-    ) -> Result<connector::Info, SystemError> {
+    ) -> io::Result<connector::Info> {
         // Maximum number of encoders is 3 due to kernel restrictions
         let mut encoders = Vec::new();
         let mut modes = Vec::new();
@@ -183,7 +225,7 @@ pub trait Device: super::Device {
     }
 
     /// Returns information about a specific encoder
-    fn get_encoder(&self, handle: encoder::Handle) -> Result<encoder::Info, SystemError> {
+    fn get_encoder(&self, handle: encoder::Handle) -> io::Result<encoder::Info> {
         let info = ffi::mode::get_encoder(self.as_fd(), handle.into())?;
 
         let enc = encoder::Info {
@@ -198,7 +240,7 @@ pub trait Device: super::Device {
     }
 
     /// Returns information about a specific CRTC
-    fn get_crtc(&self, handle: crtc::Handle) -> Result<crtc::Info, SystemError> {
+    fn get_crtc(&self, handle: crtc::Handle) -> io::Result<crtc::Info> {
         let info = ffi::mode::get_crtc(self.as_fd(), handle.into())?;
 
         let crtc = crtc::Info {
@@ -223,7 +265,7 @@ pub trait Device: super::Device {
         pos: (u32, u32),
         conns: &[connector::Handle],
         mode: Option<Mode>,
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         let _info = ffi::mode::set_crtc(
             self.as_fd(),
             handle.into(),
@@ -238,10 +280,7 @@ pub trait Device: super::Device {
     }
 
     /// Returns information about a specific framebuffer
-    fn get_framebuffer(
-        &self,
-        handle: framebuffer::Handle,
-    ) -> Result<framebuffer::Info, SystemError> {
+    fn get_framebuffer(&self, handle: framebuffer::Handle) -> io::Result<framebuffer::Info> {
         let info = ffi::mode::get_framebuffer(self.as_fd(), handle.into())?;
 
         let fb = framebuffer::Info {
@@ -260,13 +299,10 @@ pub trait Device: super::Device {
     fn get_planar_framebuffer(
         &self,
         handle: framebuffer::Handle,
-    ) -> Result<framebuffer::PlanarInfo, SystemError> {
+    ) -> Result<framebuffer::PlanarInfo, GetPlanarFramebufferError> {
         let info = ffi::mode::get_framebuffer2(self.as_fd(), handle.into())?;
 
-        let pixel_format = match DrmFourcc::try_from(info.pixel_format) {
-            Ok(pixel_format) => pixel_format,
-            Err(UnrecognizedFourcc(_)) => return Err(SystemError::UnknownFourcc),
-        };
+        let pixel_format = DrmFourcc::try_from(info.pixel_format)?;
 
         let flags = FbCmd2Flags::from_bits_truncate(info.flags);
         let modifier = flags
@@ -293,7 +329,7 @@ pub trait Device: super::Device {
         buffer: &B,
         depth: u32,
         bpp: u32,
-    ) -> Result<framebuffer::Handle, SystemError>
+    ) -> io::Result<framebuffer::Handle>
     where
         B: buffer::Buffer + ?Sized,
     {
@@ -316,7 +352,7 @@ pub trait Device: super::Device {
         &self,
         planar_buffer: &B,
         flags: FbCmd2Flags,
-    ) -> Result<framebuffer::Handle, SystemError>
+    ) -> io::Result<framebuffer::Handle>
     where
         B: buffer::PlanarBuffer + ?Sized,
     {
@@ -356,11 +392,7 @@ pub trait Device: super::Device {
     }
 
     /// Mark parts of a framebuffer dirty
-    fn dirty_framebuffer(
-        &self,
-        handle: framebuffer::Handle,
-        clips: &[ClipRect],
-    ) -> Result<(), SystemError> {
+    fn dirty_framebuffer(&self, handle: framebuffer::Handle, clips: &[ClipRect]) -> io::Result<()> {
         ffi::mode::dirty_fb(self.as_fd(), handle.into(), unsafe {
             // SAFETY: ClipRect is repr(transparent) for drm_clip_rect
             core::slice::from_raw_parts(clips.as_ptr() as *const ffi::drm_clip_rect, clips.len())
@@ -369,12 +401,12 @@ pub trait Device: super::Device {
     }
 
     /// Destroy a framebuffer
-    fn destroy_framebuffer(&self, handle: framebuffer::Handle) -> Result<(), SystemError> {
+    fn destroy_framebuffer(&self, handle: framebuffer::Handle) -> io::Result<()> {
         ffi::mode::rm_fb(self.as_fd(), handle.into())
     }
 
     /// Returns information about a specific plane
-    fn get_plane(&self, handle: plane::Handle) -> Result<plane::Info, SystemError> {
+    fn get_plane(&self, handle: plane::Handle) -> io::Result<plane::Info> {
         let mut formats = Vec::new();
 
         let info = ffi::mode::get_plane(self.as_fd(), handle.into(), Some(&mut formats))?;
@@ -401,7 +433,7 @@ pub trait Device: super::Device {
         flags: u32,
         crtc_rect: (i32, i32, u32, u32),
         src_rect: (u32, u32, u32, u32),
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         let _info = ffi::mode::set_plane(
             self.as_fd(),
             handle.into(),
@@ -422,7 +454,7 @@ pub trait Device: super::Device {
     }
 
     /// Returns information about a specific property.
-    fn get_property(&self, handle: property::Handle) -> Result<property::Info, SystemError> {
+    fn get_property(&self, handle: property::Handle) -> io::Result<property::Info> {
         let mut values = Vec::new();
         let mut enums = Vec::new();
 
@@ -496,14 +528,14 @@ pub trait Device: super::Device {
         handle: T,
         prop: property::Handle,
         value: property::RawValue,
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         ffi::mode::set_property(self.as_fd(), prop.into(), handle.into(), T::FFI_TYPE, value)?;
 
         Ok(())
     }
 
     /// Create a property blob value from a given data blob
-    fn create_property_blob<T>(&self, data: &T) -> Result<property::Value<'static>, SystemError> {
+    fn create_property_blob<T>(&self, data: &T) -> io::Result<property::Value<'static>> {
         let data = unsafe {
             std::slice::from_raw_parts_mut(data as *const _ as *mut u8, mem::size_of::<T>())
         };
@@ -513,21 +545,21 @@ pub trait Device: super::Device {
     }
 
     /// Get a property blob's data
-    fn get_property_blob(&self, blob: u64) -> Result<Vec<u8>, SystemError> {
+    fn get_property_blob(&self, blob: u64) -> io::Result<Vec<u8>> {
         let mut data = Vec::new();
         let _ = ffi::mode::get_property_blob(self.as_fd(), blob as u32, Some(&mut data))?;
         Ok(data)
     }
 
     /// Destroy a given property blob value
-    fn destroy_property_blob(&self, blob: u64) -> Result<(), SystemError> {
+    fn destroy_property_blob(&self, blob: u64) -> io::Result<()> {
         ffi::mode::destroy_property_blob(self.as_fd(), blob as u32)?;
 
         Ok(())
     }
 
     /// Returns the set of [`Mode`]s that a particular connector supports.
-    fn get_modes(&self, handle: connector::Handle) -> Result<Vec<Mode>, SystemError> {
+    fn get_modes(&self, handle: connector::Handle) -> io::Result<Vec<Mode>> {
         let mut modes = Vec::new();
 
         let _ffi_info = ffi::mode::get_connector(
@@ -544,10 +576,7 @@ pub trait Device: super::Device {
     }
 
     /// Gets a list of property handles and values for this resource.
-    fn get_properties<T: ResourceHandle>(
-        &self,
-        handle: T,
-    ) -> Result<PropertyValueSet, SystemError> {
+    fn get_properties<T: ResourceHandle>(&self, handle: T) -> io::Result<PropertyValueSet> {
         let mut prop_ids = Vec::new();
         let mut prop_vals = Vec::new();
 
@@ -574,13 +603,13 @@ pub trait Device: super::Device {
         red: &mut [u16],
         green: &mut [u16],
         blue: &mut [u16],
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         let crtc_info = self.get_crtc(crtc)?;
         if crtc_info.gamma_length as usize > red.len()
             || crtc_info.gamma_length as usize > green.len()
             || crtc_info.gamma_length as usize > blue.len()
         {
-            return Err(SystemError::InvalidArgument);
+            return Err(io::Error::from_raw_os_error(EINVAL));
         }
 
         ffi::mode::get_gamma(
@@ -602,13 +631,13 @@ pub trait Device: super::Device {
         red: &[u16],
         green: &[u16],
         blue: &[u16],
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         let crtc_info = self.get_crtc(crtc)?;
         if crtc_info.gamma_length as usize > red.len()
             || crtc_info.gamma_length as usize > green.len()
             || crtc_info.gamma_length as usize > blue.len()
         {
-            return Err(SystemError::InvalidArgument);
+            return Err(io::Error::from_raw_os_error(EINVAL));
         }
 
         ffi::mode::set_gamma(
@@ -624,13 +653,13 @@ pub trait Device: super::Device {
     }
 
     /// Open a GEM buffer handle by name
-    fn open_buffer(&self, name: buffer::Name) -> Result<buffer::Handle, SystemError> {
+    fn open_buffer(&self, name: buffer::Name) -> io::Result<buffer::Handle> {
         let info = drm_ffi::gem::open(self.as_fd(), name.into())?;
         Ok(from_u32(info.handle).unwrap())
     }
 
     /// Close a GEM buffer handle
-    fn close_buffer(&self, handle: buffer::Handle) -> Result<(), SystemError> {
+    fn close_buffer(&self, handle: buffer::Handle) -> io::Result<()> {
         let _info = drm_ffi::gem::close(self.as_fd(), handle.into())?;
         Ok(())
     }
@@ -641,7 +670,7 @@ pub trait Device: super::Device {
         size: (u32, u32),
         format: buffer::DrmFourcc,
         bpp: u32,
-    ) -> Result<DumbBuffer, SystemError> {
+    ) -> io::Result<DumbBuffer> {
         let info = drm_ffi::mode::dumbbuffer::create(self.as_fd(), size.0, size.1, bpp, 0)?;
 
         let dumb = DumbBuffer {
@@ -655,17 +684,15 @@ pub trait Device: super::Device {
         Ok(dumb)
     }
     /// Map the buffer for access
-    fn map_dumb_buffer<'a>(
-        &self,
-        buffer: &'a mut DumbBuffer,
-    ) -> Result<DumbMapping<'a>, SystemError> {
+    fn map_dumb_buffer<'a>(&self, buffer: &'a mut DumbBuffer) -> io::Result<DumbMapping<'a>> {
         let info = drm_ffi::mode::dumbbuffer::map(self.as_fd(), buffer.handle.into(), 0, 0)?;
 
         let map = {
             use nix::sys::mman;
             let prot = mman::ProtFlags::PROT_READ | mman::ProtFlags::PROT_WRITE;
             let flags = mman::MapFlags::MAP_SHARED;
-            let length = NonZeroUsize::new(buffer.length).ok_or(SystemError::InvalidArgument)?;
+            let length = NonZeroUsize::new(buffer.length)
+                .ok_or_else(|| io::Error::from_raw_os_error(EINVAL))?;
             let fd = self.as_fd();
             let offset = info.offset as _;
             unsafe { mman::mmap(None, length, prot, flags, Some(fd), offset)? }
@@ -680,7 +707,7 @@ pub trait Device: super::Device {
     }
 
     /// Free the memory resources of a dumb buffer
-    fn destroy_dumb_buffer(&self, buffer: DumbBuffer) -> Result<(), SystemError> {
+    fn destroy_dumb_buffer(&self, buffer: DumbBuffer) -> io::Result<()> {
         let _info = drm_ffi::mode::dumbbuffer::destroy(self.as_fd(), buffer.handle.into())?;
 
         Ok(())
@@ -691,7 +718,7 @@ pub trait Device: super::Device {
     /// A buffer argument of [`None`] will clear the cursor.
     #[deprecated(note = "Usage of deprecated ioctl set_cursor: use a cursor plane instead")]
     #[allow(deprecated)]
-    fn set_cursor<B>(&self, crtc: crtc::Handle, buffer: Option<&B>) -> Result<(), SystemError>
+    fn set_cursor<B>(&self, crtc: crtc::Handle, buffer: Option<&B>) -> io::Result<()>
     where
         B: buffer::Buffer + ?Sized,
     {
@@ -717,7 +744,7 @@ pub trait Device: super::Device {
         crtc: crtc::Handle,
         buffer: Option<&B>,
         hotspot: (i32, i32),
-    ) -> Result<(), SystemError>
+    ) -> io::Result<()>
     where
         B: buffer::Buffer + ?Sized,
     {
@@ -735,7 +762,7 @@ pub trait Device: super::Device {
     /// Moves a set cursor on a given crtc
     #[deprecated(note = "Usage of deprecated ioctl move_cursor: use a cursor plane instead")]
     #[allow(deprecated)]
-    fn move_cursor(&self, crtc: crtc::Handle, pos: (i32, i32)) -> Result<(), SystemError> {
+    fn move_cursor(&self, crtc: crtc::Handle, pos: (i32, i32)) -> io::Result<()> {
         drm_ffi::mode::move_cursor(self.as_fd(), crtc.into(), pos.0, pos.1)?;
 
         Ok(())
@@ -746,7 +773,7 @@ pub trait Device: super::Device {
         &self,
         flags: AtomicCommitFlags,
         mut req: atomic::AtomicModeReq,
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         drm_ffi::mode::atomic_commit(
             self.as_fd(),
             flags.bits(),
@@ -758,17 +785,13 @@ pub trait Device: super::Device {
     }
 
     /// Convert a prime file descriptor to a GEM buffer handle
-    fn prime_fd_to_buffer(&self, fd: BorrowedFd<'_>) -> Result<buffer::Handle, SystemError> {
+    fn prime_fd_to_buffer(&self, fd: BorrowedFd<'_>) -> io::Result<buffer::Handle> {
         let info = ffi::gem::fd_to_handle(self.as_fd(), fd)?;
         Ok(from_u32(info.handle).unwrap())
     }
 
     /// Convert a GEM buffer handle to a prime file descriptor
-    fn buffer_to_prime_fd(
-        &self,
-        handle: buffer::Handle,
-        flags: u32,
-    ) -> Result<OwnedFd, SystemError> {
+    fn buffer_to_prime_fd(&self, handle: buffer::Handle, flags: u32) -> io::Result<OwnedFd> {
         let info = ffi::gem::handle_to_fd(self.as_fd(), handle.into(), flags)?;
         Ok(unsafe { OwnedFd::from_raw_fd(info.fd) })
     }
@@ -780,7 +803,7 @@ pub trait Device: super::Device {
         framebuffer: framebuffer::Handle,
         flags: PageFlipFlags,
         target_sequence: Option<PageFlipTarget>,
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         let mut flags = flags.bits();
 
         let sequence = match target_sequence {
@@ -807,13 +830,13 @@ pub trait Device: super::Device {
     }
 
     /// Creates a syncobj.
-    fn create_syncobj(&self, signalled: bool) -> Result<syncobj::Handle, SystemError> {
+    fn create_syncobj(&self, signalled: bool) -> io::Result<syncobj::Handle> {
         let info = ffi::syncobj::create(self.as_fd(), signalled)?;
         Ok(from_u32(info.handle).unwrap())
     }
 
     /// Destroys a syncobj.
-    fn destroy_syncobj(&self, handle: syncobj::Handle) -> Result<(), SystemError> {
+    fn destroy_syncobj(&self, handle: syncobj::Handle) -> io::Result<()> {
         ffi::syncobj::destroy(self.as_fd(), handle.into())?;
         Ok(())
     }
@@ -823,7 +846,7 @@ pub trait Device: super::Device {
         &self,
         handle: syncobj::Handle,
         export_sync_file: bool,
-    ) -> Result<OwnedFd, SystemError> {
+    ) -> io::Result<OwnedFd> {
         let info = ffi::syncobj::handle_to_fd(self.as_fd(), handle.into(), export_sync_file)?;
         Ok(unsafe { OwnedFd::from_raw_fd(info.fd) })
     }
@@ -833,7 +856,7 @@ pub trait Device: super::Device {
         &self,
         fd: BorrowedFd<'_>,
         import_sync_file: bool,
-    ) -> Result<syncobj::Handle, SystemError> {
+    ) -> io::Result<syncobj::Handle> {
         let info = ffi::syncobj::fd_to_handle(self.as_fd(), fd, import_sync_file)?;
         Ok(from_u32(info.handle).unwrap())
     }
@@ -845,7 +868,7 @@ pub trait Device: super::Device {
         timeout_nsec: i64,
         wait_all: bool,
         wait_for_submit: bool,
-    ) -> Result<u32, SystemError> {
+    ) -> io::Result<u32> {
         let info = ffi::syncobj::wait(
             self.as_fd(),
             bytemuck::cast_slice(handles),
@@ -857,13 +880,13 @@ pub trait Device: super::Device {
     }
 
     /// Resets (un-signals) one or more syncobjs.
-    fn syncobj_reset(&self, handles: &[syncobj::Handle]) -> Result<(), SystemError> {
+    fn syncobj_reset(&self, handles: &[syncobj::Handle]) -> io::Result<()> {
         ffi::syncobj::reset(self.as_fd(), bytemuck::cast_slice(handles))?;
         Ok(())
     }
 
     /// Signals one or more syncobjs.
-    fn syncobj_signal(&self, handles: &[syncobj::Handle]) -> Result<(), SystemError> {
+    fn syncobj_signal(&self, handles: &[syncobj::Handle]) -> io::Result<()> {
         ffi::syncobj::signal(self.as_fd(), bytemuck::cast_slice(handles))?;
         Ok(())
     }
@@ -877,7 +900,7 @@ pub trait Device: super::Device {
         wait_all: bool,
         wait_for_submit: bool,
         wait_available: bool,
-    ) -> Result<u32, SystemError> {
+    ) -> io::Result<u32> {
         let info = ffi::syncobj::timeline_wait(
             self.as_fd(),
             bytemuck::cast_slice(handles),
@@ -896,7 +919,7 @@ pub trait Device: super::Device {
         handles: &[syncobj::Handle],
         points: &mut [u64],
         last_submitted: bool,
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         ffi::syncobj::query(
             self.as_fd(),
             bytemuck::cast_slice(handles),
@@ -913,7 +936,7 @@ pub trait Device: super::Device {
         dst_handle: syncobj::Handle,
         src_point: u64,
         dst_point: u64,
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         ffi::syncobj::transfer(
             self.as_fd(),
             src_handle.into(),
@@ -929,7 +952,7 @@ pub trait Device: super::Device {
         &self,
         handles: &[syncobj::Handle],
         points: &[u64],
-    ) -> Result<(), SystemError> {
+    ) -> io::Result<()> {
         ffi::syncobj::timeline_signal(self.as_fd(), bytemuck::cast_slice(handles), points)?;
         Ok(())
     }
@@ -939,7 +962,7 @@ pub trait Device: super::Device {
         &self,
         objects: &[RawResourceHandle],
         flags: OFlag,
-    ) -> Result<(LeaseId, OwnedFd), SystemError> {
+    ) -> io::Result<(LeaseId, OwnedFd)> {
         let lease = ffi::mode::create_lease(
             self.as_fd(),
             bytemuck::cast_slice(objects),
@@ -952,19 +975,19 @@ pub trait Device: super::Device {
     }
 
     /// List active lessees
-    fn list_lessees(&self) -> Result<Vec<LeaseId>, SystemError> {
+    fn list_lessees(&self) -> io::Result<Vec<LeaseId>> {
         let mut lessees = Vec::new();
         ffi::mode::list_lessees(self.as_fd(), Some(&mut lessees))?;
         Ok(unsafe { transmute_vec_from_u32(lessees) })
     }
 
     /// Revoke a previously issued drm lease
-    fn revoke_lease(&self, lessee_id: LeaseId) -> Result<(), SystemError> {
+    fn revoke_lease(&self, lessee_id: LeaseId) -> io::Result<()> {
         ffi::mode::revoke_lease(self.as_fd(), lessee_id.get())
     }
 
     /// Receive pending events
-    fn receive_events(&self) -> Result<Events, SystemError>
+    fn receive_events(&self) -> io::Result<Events>
     where
         Self: Sized,
     {
@@ -986,7 +1009,7 @@ pub struct LeaseResources {
 }
 
 /// Query lease resources
-pub fn get_lease<D: AsFd>(lease: D) -> Result<LeaseResources, SystemError> {
+pub fn get_lease<D: AsFd>(lease: D) -> io::Result<LeaseResources> {
     let mut crtcs = Vec::new();
     let mut connectors = Vec::new();
     let mut planes = Vec::new();
@@ -1292,8 +1315,8 @@ impl From<Mode> for ffi::drm_mode_modeinfo {
     }
 }
 
-impl std::fmt::Debug for Mode {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Mode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Mode")
             .field("name", &self.name())
             .field("clock", &self.clock())
@@ -1409,10 +1432,7 @@ pub struct PropertyValueSet {
 
 impl PropertyValueSet {
     /// Returns a HashMap mapping property names to info
-    pub fn as_hashmap(
-        &self,
-        device: &impl Device,
-    ) -> Result<HashMap<String, property::Info>, SystemError> {
+    pub fn as_hashmap(&self, device: &impl Device) -> io::Result<HashMap<String, property::Info>> {
         let mut map = HashMap::new();
         for id in self.prop_ids.iter() {
             let info = device.get_property(*id)?;
