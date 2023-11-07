@@ -7,10 +7,7 @@
 use crate::ioctl;
 use drm_sys::*;
 
-use std::{
-    io,
-    os::unix::io::{AsRawFd, BorrowedFd},
-};
+use std::{io, os::unix::io::BorrowedFd};
 
 /// Enumerate most card resources.
 pub fn get_resources(
@@ -22,7 +19,7 @@ pub fn get_resources(
 ) -> io::Result<drm_mode_card_res> {
     let mut sizes = drm_mode_card_res::default();
     unsafe {
-        ioctl::mode::get_resources(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::mode::get_resources(fd, &mut sizes)?;
     }
 
     map_reserve!(fbs, sizes.count_fbs as usize);
@@ -43,7 +40,7 @@ pub fn get_resources(
     };
 
     unsafe {
-        ioctl::mode::get_resources(fd.as_raw_fd(), &mut res)?;
+        ioctl::mode::get_resources(fd, &mut res)?;
     }
 
     map_set!(fbs, res.count_fbs as usize);
@@ -61,7 +58,7 @@ pub fn get_plane_resources(
 ) -> io::Result<drm_mode_get_plane_res> {
     let mut sizes = drm_mode_get_plane_res::default();
     unsafe {
-        ioctl::mode::get_plane_resources(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::mode::get_plane_resources(fd, &mut sizes)?;
     }
 
     if planes.is_none() {
@@ -76,7 +73,7 @@ pub fn get_plane_resources(
     };
 
     unsafe {
-        ioctl::mode::get_plane_resources(fd.as_raw_fd(), &mut res)?;
+        ioctl::mode::get_plane_resources(fd, &mut res)?;
     }
 
     map_set!(planes, res.count_planes as usize);
@@ -92,7 +89,7 @@ pub fn get_framebuffer(fd: BorrowedFd<'_>, fb_id: u32) -> io::Result<drm_mode_fb
     };
 
     unsafe {
-        ioctl::mode::get_fb(fd.as_raw_fd(), &mut info)?;
+        ioctl::mode::get_fb(fd, &mut info)?;
     }
 
     Ok(info)
@@ -119,7 +116,7 @@ pub fn add_fb(
     };
 
     unsafe {
-        ioctl::mode::add_fb(fd.as_raw_fd(), &mut fb)?;
+        ioctl::mode::add_fb(fd, &mut fb)?;
     }
 
     Ok(fb)
@@ -133,7 +130,7 @@ pub fn get_framebuffer2(fd: BorrowedFd<'_>, fb_id: u32) -> io::Result<drm_mode_f
     };
 
     unsafe {
-        ioctl::mode::get_fb2(fd.as_raw_fd(), &mut info)?;
+        ioctl::mode::get_fb2(fd, &mut info)?;
     }
 
     Ok(info)
@@ -164,7 +161,7 @@ pub fn add_fb2(
     };
 
     unsafe {
-        ioctl::mode::add_fb2(fd.as_raw_fd(), &mut fb)?;
+        ioctl::mode::add_fb2(fd, &mut fb)?;
     }
 
     Ok(fb)
@@ -173,7 +170,7 @@ pub fn add_fb2(
 /// Remove a framebuffer.
 pub fn rm_fb(fd: BorrowedFd<'_>, mut id: u32) -> io::Result<()> {
     unsafe {
-        ioctl::mode::rm_fb(fd.as_raw_fd(), &mut id)?;
+        ioctl::mode::rm_fb(fd, &mut id)?;
     }
 
     Ok(())
@@ -193,7 +190,7 @@ pub fn dirty_fb(
     };
 
     unsafe {
-        ioctl::mode::dirty_fb(fd.as_raw_fd(), &mut dirty)?;
+        ioctl::mode::dirty_fb(fd, &mut dirty)?;
     }
 
     Ok(dirty)
@@ -207,7 +204,7 @@ pub fn get_crtc(fd: BorrowedFd<'_>, crtc_id: u32) -> io::Result<drm_mode_crtc> {
     };
 
     unsafe {
-        ioctl::mode::get_crtc(fd.as_raw_fd(), &mut info)?;
+        ioctl::mode::get_crtc(fd, &mut info)?;
     }
 
     Ok(info)
@@ -239,7 +236,7 @@ pub fn set_crtc(
     };
 
     unsafe {
-        ioctl::mode::set_crtc(fd.as_raw_fd(), &mut crtc)?;
+        ioctl::mode::set_crtc(fd, &mut crtc)?;
     }
 
     Ok(crtc)
@@ -263,7 +260,7 @@ pub fn get_gamma(
     };
 
     unsafe {
-        ioctl::mode::get_gamma(fd.as_raw_fd(), &mut lut)?;
+        ioctl::mode::get_gamma(fd, &mut lut)?;
     }
 
     Ok(lut)
@@ -287,7 +284,7 @@ pub fn set_gamma(
     };
 
     unsafe {
-        ioctl::mode::set_gamma(fd.as_raw_fd(), &mut lut)?;
+        ioctl::mode::set_gamma(fd, &mut lut)?;
     }
 
     Ok(lut)
@@ -315,7 +312,7 @@ pub fn set_cursor(
     };
 
     unsafe {
-        ioctl::mode::cursor(fd.as_raw_fd(), &mut cursor)?;
+        ioctl::mode::cursor(fd, &mut cursor)?;
     }
 
     Ok(cursor)
@@ -350,7 +347,7 @@ pub fn set_cursor2(
     };
 
     unsafe {
-        ioctl::mode::cursor2(fd.as_raw_fd(), &mut cursor)?;
+        ioctl::mode::cursor2(fd, &mut cursor)?;
     }
 
     Ok(cursor)
@@ -373,7 +370,7 @@ pub fn move_cursor(
     };
 
     unsafe {
-        ioctl::mode::cursor(fd.as_raw_fd(), &mut cursor)?;
+        ioctl::mode::cursor(fd, &mut cursor)?;
     }
 
     Ok(cursor)
@@ -404,7 +401,7 @@ pub fn get_connector(
     };
 
     unsafe {
-        ioctl::mode::get_connector(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::mode::get_connector(fd, &mut sizes)?;
     }
 
     let info = loop {
@@ -444,7 +441,7 @@ pub fn get_connector(
         };
 
         unsafe {
-            ioctl::mode::get_connector(fd.as_raw_fd(), &mut info)?;
+            ioctl::mode::get_connector(fd, &mut info)?;
         }
 
         if info.count_modes == sizes.count_modes
@@ -473,7 +470,7 @@ pub fn get_encoder(fd: BorrowedFd<'_>, encoder_id: u32) -> io::Result<drm_mode_g
     };
 
     unsafe {
-        ioctl::mode::get_encoder(fd.as_raw_fd(), &mut info)?;
+        ioctl::mode::get_encoder(fd, &mut info)?;
     }
 
     Ok(info)
@@ -491,7 +488,7 @@ pub fn get_plane(
     };
 
     unsafe {
-        ioctl::mode::get_plane(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::mode::get_plane(fd, &mut sizes)?;
     }
 
     if formats.is_none() {
@@ -508,7 +505,7 @@ pub fn get_plane(
     };
 
     unsafe {
-        ioctl::mode::get_plane(fd.as_raw_fd(), &mut info)?;
+        ioctl::mode::get_plane(fd, &mut info)?;
     }
 
     map_set!(formats, info.count_format_types as usize);
@@ -548,7 +545,7 @@ pub fn set_plane(
     };
 
     unsafe {
-        ioctl::mode::set_plane(fd.as_raw_fd(), &mut plane)?;
+        ioctl::mode::set_plane(fd, &mut plane)?;
     }
 
     Ok(plane)
@@ -567,7 +564,7 @@ pub fn get_property(
     };
 
     unsafe {
-        ioctl::mode::get_property(fd.as_raw_fd(), &mut prop)?;
+        ioctl::mode::get_property(fd, &mut prop)?;
     }
 
     // There is no need to call get_property() twice if there is nothing else to retrieve.
@@ -582,7 +579,7 @@ pub fn get_property(
     prop.enum_blob_ptr = map_ptr!(&enums);
 
     unsafe {
-        ioctl::mode::get_property(fd.as_raw_fd(), &mut prop)?;
+        ioctl::mode::get_property(fd, &mut prop)?;
     }
 
     map_set!(values, prop.count_values as usize);
@@ -605,7 +602,7 @@ pub fn set_connector_property(
     };
 
     unsafe {
-        ioctl::mode::connector_set_property(fd.as_raw_fd(), &mut prop)?;
+        ioctl::mode::connector_set_property(fd, &mut prop)?;
     }
 
     Ok(prop)
@@ -623,7 +620,7 @@ pub fn get_property_blob(
     };
 
     unsafe {
-        ioctl::mode::get_blob(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::mode::get_blob(fd, &mut sizes)?;
     }
 
     if data.is_none() {
@@ -639,7 +636,7 @@ pub fn get_property_blob(
     };
 
     unsafe {
-        ioctl::mode::get_blob(fd.as_raw_fd(), &mut blob)?;
+        ioctl::mode::get_blob(fd, &mut blob)?;
     }
 
     map_set!(data, blob.length as usize);
@@ -659,7 +656,7 @@ pub fn create_property_blob(
     };
 
     unsafe {
-        ioctl::mode::create_blob(fd.as_raw_fd(), &mut blob)?;
+        ioctl::mode::create_blob(fd, &mut blob)?;
     }
 
     Ok(blob)
@@ -670,7 +667,7 @@ pub fn destroy_property_blob(fd: BorrowedFd<'_>, id: u32) -> io::Result<drm_mode
     let mut blob = drm_mode_destroy_blob { blob_id: id };
 
     unsafe {
-        ioctl::mode::destroy_blob(fd.as_raw_fd(), &mut blob)?;
+        ioctl::mode::destroy_blob(fd, &mut blob)?;
     }
 
     Ok(blob)
@@ -693,7 +690,7 @@ pub fn get_properties(
     };
 
     unsafe {
-        ioctl::mode::obj_get_properties(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::mode::obj_get_properties(fd, &mut sizes)?;
     }
 
     map_reserve!(props, sizes.count_props as usize);
@@ -708,7 +705,7 @@ pub fn get_properties(
     };
 
     unsafe {
-        ioctl::mode::obj_get_properties(fd.as_raw_fd(), &mut info)?;
+        ioctl::mode::obj_get_properties(fd, &mut info)?;
     }
 
     map_set!(props, info.count_props as usize);
@@ -733,7 +730,7 @@ pub fn set_property(
     };
 
     unsafe {
-        ioctl::mode::obj_set_property(fd.as_raw_fd(), &mut prop)?;
+        ioctl::mode::obj_set_property(fd, &mut prop)?;
     }
 
     Ok(())
@@ -757,7 +754,7 @@ pub fn page_flip(
     };
 
     unsafe {
-        ioctl::mode::crtc_page_flip(fd.as_raw_fd(), &mut flip)?;
+        ioctl::mode::crtc_page_flip(fd, &mut flip)?;
     }
 
     Ok(())
@@ -783,7 +780,7 @@ pub fn atomic_commit(
     };
 
     unsafe {
-        ioctl::mode::atomic(fd.as_raw_fd(), &mut atomic)?;
+        ioctl::mode::atomic(fd, &mut atomic)?;
     }
 
     Ok(())
@@ -803,7 +800,7 @@ pub fn create_lease(
     };
 
     unsafe {
-        ioctl::mode::create_lease(fd.as_raw_fd(), &mut data)?;
+        ioctl::mode::create_lease(fd, &mut data)?;
     }
 
     Ok(data)
@@ -817,7 +814,7 @@ pub fn list_lessees(
     let mut sizes = drm_mode_list_lessees::default();
 
     unsafe {
-        ioctl::mode::list_lessees(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::mode::list_lessees(fd, &mut sizes)?;
     };
 
     map_reserve!(lessees, sizes.count_lessees as usize);
@@ -829,7 +826,7 @@ pub fn list_lessees(
     };
 
     unsafe {
-        ioctl::mode::list_lessees(fd.as_raw_fd(), &mut data)?;
+        ioctl::mode::list_lessees(fd, &mut data)?;
     };
 
     map_set!(lessees, data.count_lessees as usize);
@@ -845,7 +842,7 @@ pub fn get_lease(
     let mut sizes = drm_mode_get_lease::default();
 
     unsafe {
-        ioctl::mode::get_lease(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::mode::get_lease(fd, &mut sizes)?;
     }
 
     map_reserve!(objects, sizes.count_objects as usize);
@@ -857,7 +854,7 @@ pub fn get_lease(
     };
 
     unsafe {
-        ioctl::mode::get_lease(fd.as_raw_fd(), &mut data)?;
+        ioctl::mode::get_lease(fd, &mut data)?;
     }
 
     map_set!(objects, data.count_objects as usize);
@@ -870,7 +867,7 @@ pub fn revoke_lease(fd: BorrowedFd<'_>, lessee_id: u32) -> io::Result<()> {
     let mut data = drm_mode_revoke_lease { lessee_id };
 
     unsafe {
-        ioctl::mode::revoke_lease(fd.as_raw_fd(), &mut data)?;
+        ioctl::mode::revoke_lease(fd, &mut data)?;
     }
 
     Ok(())
@@ -883,10 +880,7 @@ pub mod dumbbuffer {
     use crate::ioctl;
     use drm_sys::*;
 
-    use std::{
-        io,
-        os::unix::io::{AsRawFd, BorrowedFd},
-    };
+    use std::{io, os::unix::io::BorrowedFd};
 
     /// Create a dumb buffer
     pub fn create(
@@ -905,7 +899,7 @@ pub mod dumbbuffer {
         };
 
         unsafe {
-            ioctl::mode::create_dumb(fd.as_raw_fd(), &mut db)?;
+            ioctl::mode::create_dumb(fd, &mut db)?;
         }
 
         Ok(db)
@@ -916,7 +910,7 @@ pub mod dumbbuffer {
         let mut db = drm_mode_destroy_dumb { handle };
 
         unsafe {
-            ioctl::mode::destroy_dumb(fd.as_raw_fd(), &mut db)?;
+            ioctl::mode::destroy_dumb(fd, &mut db)?;
         }
 
         Ok(db)
@@ -936,7 +930,7 @@ pub mod dumbbuffer {
         };
 
         unsafe {
-            ioctl::mode::map_dumb(fd.as_raw_fd(), &mut map)?;
+            ioctl::mode::map_dumb(fd, &mut map)?;
         }
 
         Ok(map)

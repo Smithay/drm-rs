@@ -32,7 +32,7 @@ use drm_ffi as ffi;
 use drm_fourcc::{DrmFourcc, DrmModifier, UnrecognizedFourcc};
 
 use bytemuck::allocation::TransparentWrapperAlloc;
-use nix::libc::EINVAL;
+use rustix::io::Errno;
 
 pub mod atomic;
 pub mod connector;
@@ -57,14 +57,13 @@ use std::fmt;
 use std::io;
 use std::iter::Zip;
 use std::mem;
-use std::num::NonZeroUsize;
 use std::ops::RangeBounds;
-use std::os::unix::io::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
+use std::os::unix::io::{AsFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 use std::time::Duration;
 
 use core::num::NonZeroU32;
 
-pub use nix::fcntl::OFlag;
+pub use rustix::fs::OFlags;
 
 /// Raw handle for a drm resource
 pub type RawResourceHandle = NonZeroU32;
@@ -609,7 +608,7 @@ pub trait Device: super::Device {
             || crtc_info.gamma_length as usize > green.len()
             || crtc_info.gamma_length as usize > blue.len()
         {
-            return Err(io::Error::from_raw_os_error(EINVAL));
+            return Err(Errno::INVAL.into());
         }
 
         ffi::mode::get_gamma(
@@ -637,7 +636,7 @@ pub trait Device: super::Device {
             || crtc_info.gamma_length as usize > green.len()
             || crtc_info.gamma_length as usize > blue.len()
         {
-            return Err(io::Error::from_raw_os_error(EINVAL));
+            return Err(Errno::INVAL.into());
         }
 
         ffi::mode::set_gamma(
@@ -688,19 +687,17 @@ pub trait Device: super::Device {
         let info = drm_ffi::mode::dumbbuffer::map(self.as_fd(), buffer.handle.into(), 0, 0)?;
 
         let map = {
-            use nix::sys::mman;
-            let prot = mman::ProtFlags::PROT_READ | mman::ProtFlags::PROT_WRITE;
-            let flags = mman::MapFlags::MAP_SHARED;
-            let length = NonZeroUsize::new(buffer.length)
-                .ok_or_else(|| io::Error::from_raw_os_error(EINVAL))?;
+            use rustix::mm;
+            let prot = mm::ProtFlags::READ | mm::ProtFlags::WRITE;
+            let flags = mm::MapFlags::SHARED;
             let fd = self.as_fd();
             let offset = info.offset as _;
-            unsafe { mman::mmap(None, length, prot, flags, Some(fd), offset)? }
+            unsafe { mm::mmap(std::ptr::null_mut(), buffer.length, prot, flags, fd, offset)? }
         };
 
         let mapping = DumbMapping {
-            _phantom: ::std::marker::PhantomData,
-            map: unsafe { ::std::slice::from_raw_parts_mut(map as *mut _, buffer.length) },
+            _phantom: std::marker::PhantomData,
+            map: unsafe { std::slice::from_raw_parts_mut(map as *mut _, buffer.length) },
         };
 
         Ok(mapping)
@@ -961,7 +958,7 @@ pub trait Device: super::Device {
     fn create_lease(
         &self,
         objects: &[RawResourceHandle],
-        flags: OFlag,
+        flags: OFlags,
     ) -> io::Result<(LeaseId, OwnedFd)> {
         let lease = ffi::mode::create_lease(
             self.as_fd(),
@@ -992,7 +989,7 @@ pub trait Device: super::Device {
         Self: Sized,
     {
         let mut event_buf: [u8; 1024] = [0; 1024];
-        let amount = ::nix::unistd::read(self.as_fd().as_raw_fd(), &mut event_buf)?;
+        let amount = rustix::io::read(self.as_fd(), &mut event_buf)?;
 
         Ok(Events::with_event_buf(event_buf, amount))
     }

@@ -2,7 +2,7 @@
 pub mod utils;
 
 use crate::utils::*;
-use nix::poll::PollFlags;
+use rustix::event::PollFlags;
 use std::{
     io,
     os::unix::io::{AsFd, OwnedFd},
@@ -48,6 +48,6 @@ fn main() {
     // let afd = AsyncFd::with_interest(sync_file, Interest::READABLE).unwrap();
     // let future = async move { afd.readable().await.unwrap().retain_ready() };
     // future.await;
-    let mut poll_fds = [nix::poll::PollFd::new(&fd, PollFlags::POLLIN)];
-    nix::poll::poll(&mut poll_fds, -1).unwrap();
+    let mut poll_fds = [rustix::event::PollFd::new(&fd, PollFlags::IN)];
+    rustix::event::poll(&mut poll_fds, -1).unwrap();
 }

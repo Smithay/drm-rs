@@ -18,7 +18,7 @@ pub fn open(fd: BorrowedFd<'_>, name: u32) -> io::Result<drm_gem_open> {
     };
 
     unsafe {
-        ioctl::gem::open(fd.as_raw_fd(), &mut gem)?;
+        ioctl::gem::open(fd, &mut gem)?;
     }
 
     Ok(gem)
@@ -32,7 +32,7 @@ pub fn close(fd: BorrowedFd<'_>, handle: u32) -> io::Result<drm_gem_close> {
     };
 
     unsafe {
-        ioctl::gem::close(fd.as_raw_fd(), &gem)?;
+        ioctl::gem::close(fd, &gem)?;
     }
 
     Ok(gem)
@@ -47,7 +47,7 @@ pub fn handle_to_fd(fd: BorrowedFd<'_>, handle: u32, flags: u32) -> io::Result<d
     };
 
     unsafe {
-        ioctl::gem::prime_handle_to_fd(fd.as_raw_fd(), &mut prime)?;
+        ioctl::gem::prime_handle_to_fd(fd, &mut prime)?;
     }
 
     Ok(prime)
@@ -61,7 +61,7 @@ pub fn fd_to_handle(fd: BorrowedFd<'_>, primefd: BorrowedFd<'_>) -> io::Result<d
     };
 
     unsafe {
-        ioctl::gem::prime_fd_to_handle(fd.as_raw_fd(), &mut prime)?;
+        ioctl::gem::prime_fd_to_handle(fd, &mut prime)?;
     }
 
     Ok(prime)

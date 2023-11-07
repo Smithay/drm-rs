@@ -65,10 +65,9 @@ impl DerefMut for DumbMapping<'_> {
 
 impl<'a> Drop for DumbMapping<'a> {
     fn drop(&mut self) {
-        use nix::sys::mman;
-
         unsafe {
-            mman::munmap(self.map.as_mut_ptr() as *mut _, self.map.len()).expect("Unmap failed");
+            rustix::mm::munmap(self.map.as_mut_ptr() as *mut _, self.map.len())
+                .expect("Unmap failed");
         }
     }
 }

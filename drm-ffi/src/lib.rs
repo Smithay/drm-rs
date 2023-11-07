@@ -8,9 +8,6 @@
 pub use drm_sys::{self, *};
 
 #[macro_use]
-extern crate nix;
-
-#[macro_use]
 pub(crate) mod utils;
 
 pub mod gem;
@@ -18,10 +15,10 @@ mod ioctl;
 pub mod mode;
 pub mod syncobj;
 
-use nix::libc::{c_int, c_ulong};
 use std::{
+    ffi::{c_int, c_ulong},
     io,
-    os::unix::io::{AsRawFd, BorrowedFd},
+    os::unix::io::BorrowedFd,
 };
 
 ///
@@ -31,20 +28,11 @@ pub mod auth {
     use crate::ioctl;
     use drm_sys::*;
 
-    use std::{
-        io,
-        os::unix::io::{AsRawFd, BorrowedFd},
-    };
+    use std::{io, os::unix::io::BorrowedFd};
 
     /// Get the 'Magic Authentication Token' for this file descriptor.
     pub fn get_magic_token(fd: BorrowedFd<'_>) -> io::Result<drm_auth> {
-        let mut auth = drm_auth::default();
-
-        unsafe {
-            ioctl::get_token(fd.as_raw_fd(), &mut auth)?;
-        }
-
-        Ok(auth)
+        unsafe { ioctl::get_token(fd) }
     }
 
     /// Authorize another process' 'Magic Authentication Token'.
@@ -52,7 +40,7 @@ pub mod auth {
         let token = drm_auth { magic: auth };
 
         unsafe {
-            ioctl::auth_token(fd.as_raw_fd(), &token)?;
+            ioctl::auth_token(fd, &token)?;
         }
 
         Ok(token)
@@ -60,20 +48,12 @@ pub mod auth {
 
     /// Acquire the 'Master DRM Lock' for this file descriptor.
     pub fn acquire_master(fd: BorrowedFd<'_>) -> io::Result<()> {
-        unsafe {
-            ioctl::acquire_master(fd.as_raw_fd())?;
-        }
-
-        Ok(())
+        unsafe { ioctl::acquire_master(fd) }
     }
 
     /// Release the 'Master DRM Lock' for this file descriptor.
     pub fn release_master(fd: BorrowedFd<'_>) -> io::Result<()> {
-        unsafe {
-            ioctl::release_master(fd.as_raw_fd())?;
-        }
-
-        Ok(())
+        unsafe { ioctl::release_master(fd) }
     }
 }
 
@@ -81,7 +61,7 @@ pub mod auth {
 pub fn get_bus_id(fd: BorrowedFd<'_>, mut buf: Option<&mut Vec<u8>>) -> io::Result<drm_unique> {
     let mut sizes = drm_unique::default();
     unsafe {
-        ioctl::get_bus_id(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::get_bus_id(fd, &mut sizes)?;
     }
 
     if buf.is_none() {
@@ -96,7 +76,7 @@ pub fn get_bus_id(fd: BorrowedFd<'_>, mut buf: Option<&mut Vec<u8>>) -> io::Resu
     };
 
     unsafe {
-        ioctl::get_bus_id(fd.as_raw_fd(), &mut busid)?;
+        ioctl::get_bus_id(fd, &mut busid)?;
     }
 
     map_set!(buf, busid.unique_len as usize);
@@ -119,7 +99,7 @@ pub fn get_interrupt_from_bus_id(
     };
 
     unsafe {
-        ioctl::get_irq_from_bus_id(fd.as_raw_fd(), &mut irq)?;
+        ioctl::get_irq_from_bus_id(fd, &mut irq)?;
     }
 
     Ok(irq)
@@ -133,7 +113,7 @@ pub fn get_client(fd: BorrowedFd<'_>, idx: c_int) -> io::Result<drm_client> {
     };
 
     unsafe {
-        ioctl::get_client(fd.as_raw_fd(), &mut client)?;
+        ioctl::get_client(fd, &mut client)?;
     }
 
     Ok(client)
@@ -147,7 +127,7 @@ pub fn get_capability(fd: BorrowedFd<'_>, cty: u64) -> io::Result<drm_get_cap> {
     };
 
     unsafe {
-        ioctl::get_cap(fd.as_raw_fd(), &mut cap)?;
+        ioctl::get_cap(fd, &mut cap)?;
     }
 
     Ok(cap)
@@ -161,7 +141,7 @@ pub fn set_capability(fd: BorrowedFd<'_>, cty: u64, val: bool) -> io::Result<drm
     };
 
     unsafe {
-        ioctl::set_cap(fd.as_raw_fd(), &cap)?;
+        ioctl::set_cap(fd, &cap)?;
     }
 
     Ok(cap)
@@ -176,7 +156,7 @@ pub fn get_version(
 ) -> io::Result<drm_version> {
     let mut sizes = drm_version::default();
     unsafe {
-        ioctl::get_version(fd.as_raw_fd(), &mut sizes)?;
+        ioctl::get_version(fd, &mut sizes)?;
     }
 
     map_reserve!(name_buf, sizes.name_len as usize);
@@ -194,7 +174,7 @@ pub fn get_version(
     };
 
     unsafe {
-        ioctl::get_version(fd.as_raw_fd(), &mut version)?;
+        ioctl::get_version(fd, &mut version)?;
     }
 
     map_set!(name_buf, version.name_len as usize);
@@ -223,7 +203,7 @@ pub fn wait_vblank(
     };
 
     unsafe {
-        ioctl::wait_vblank(fd.as_raw_fd(), &mut wait_vblank)?;
+        ioctl::wait_vblank(fd, &mut wait_vblank)?;
     };
 
     Ok(unsafe { wait_vblank.reply })

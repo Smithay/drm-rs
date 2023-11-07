@@ -10,11 +10,7 @@ edition = "2021"
 
 [dependencies]
 drm-sys = { path = "drm-sys", version = "0.5.0" }
-
-[dependencies.nix]
-version = "0.27"
-default-features = false
-features = ["ioctl"]
+rustix = { version = "0.38.22" }
 
 [features]
 use_bindgen = ["drm-sys/use_bindgen"]
