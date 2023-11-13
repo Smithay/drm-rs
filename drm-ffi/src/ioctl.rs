@@ -55,13 +55,6 @@ ioctl_readwrite!(get_bus_id, DRM_IOCTL_BASE, 0x01, drm_unique);
 /// # Nodes: Primary
 ioctl_readwrite!(get_client, DRM_IOCTL_BASE, 0x05, drm_client);
 
-/// Gets statistical information from the device
-///
-/// # Locks DRM mutex: No
-/// # Permissions: None
-/// # Nodes: Primary
-ioctl_read!(get_stats, DRM_IOCTL_BASE, 0x06, drm_stats);
-
 /// Get capabilities of the device.
 ///
 /// # Locks DRM mutex: No
