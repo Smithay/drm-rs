@@ -63,8 +63,6 @@ use std::time::Duration;
 
 use core::num::NonZeroU32;
 
-pub use rustix::fs::OFlags;
-
 /// Raw handle for a drm resource
 pub type RawResourceHandle = NonZeroU32;
 
@@ -958,13 +956,9 @@ pub trait Device: super::Device {
     fn create_lease(
         &self,
         objects: &[RawResourceHandle],
-        flags: OFlags,
+        flags: u32,
     ) -> io::Result<(LeaseId, OwnedFd)> {
-        let lease = ffi::mode::create_lease(
-            self.as_fd(),
-            bytemuck::cast_slice(objects),
-            flags.bits() as u32,
-        )?;
+        let lease = ffi::mode::create_lease(self.as_fd(), bytemuck::cast_slice(objects), flags)?;
         Ok((
             unsafe { NonZeroU32::new_unchecked(lease.lessee_id) },
             unsafe { OwnedFd::from_raw_fd(lease.fd as RawFd) },
