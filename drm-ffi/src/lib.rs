@@ -147,6 +147,11 @@ pub fn set_capability(fd: BorrowedFd<'_>, cty: u64, val: bool) -> io::Result<drm
     Ok(cap)
 }
 
+/// Sets the requested interface version
+pub fn set_version(fd: BorrowedFd<'_>, version: &mut drm_set_version) -> io::Result<()> {
+    unsafe { ioctl::set_version(fd, version) }
+}
+
 /// Gets the driver version for this device.
 pub fn get_version(
     fd: BorrowedFd<'_>,
