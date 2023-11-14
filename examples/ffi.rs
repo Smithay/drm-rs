@@ -63,13 +63,6 @@ fn print_token(fd: BorrowedFd<'_>) {
     println!("{:#?}", token);
 }
 
-/*
-fn print_stats(fd: BorrowedFd<'_>) {
-    let stats = ffi::basic::get_stats(fd);
-    println!("{:#?}", stats);
-}
-*/
-
 fn main() {
     let card = Card::open_global();
     let fd = card.as_fd();

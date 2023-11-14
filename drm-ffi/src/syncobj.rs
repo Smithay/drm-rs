@@ -22,7 +22,7 @@ pub fn create(fd: BorrowedFd<'_>, signaled: bool) -> io::Result<drm_syncobj_crea
     };
 
     unsafe {
-        ioctl::syncobj::create(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::create(fd, &mut args)?;
     }
 
     Ok(args)
@@ -33,7 +33,7 @@ pub fn destroy(fd: BorrowedFd<'_>, handle: u32) -> io::Result<drm_syncobj_destro
     let mut args = drm_syncobj_destroy { handle, pad: 0 };
 
     unsafe {
-        ioctl::syncobj::destroy(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::destroy(fd, &mut args)?;
     }
 
     Ok(args)
@@ -57,7 +57,7 @@ pub fn handle_to_fd(
     };
 
     unsafe {
-        ioctl::syncobj::handle_to_fd(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::handle_to_fd(fd, &mut args)?;
     }
 
     Ok(args)
@@ -81,7 +81,7 @@ pub fn fd_to_handle(
     };
 
     unsafe {
-        ioctl::syncobj::fd_to_handle(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::fd_to_handle(fd, &mut args)?;
     }
 
     Ok(args)
@@ -113,7 +113,7 @@ pub fn wait(
     };
 
     unsafe {
-        ioctl::syncobj::wait(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::wait(fd, &mut args)?;
     }
 
     Ok(args)
@@ -128,7 +128,7 @@ pub fn reset(fd: BorrowedFd<'_>, handles: &[u32]) -> io::Result<drm_syncobj_arra
     };
 
     unsafe {
-        ioctl::syncobj::reset(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::reset(fd, &mut args)?;
     }
 
     Ok(args)
@@ -143,7 +143,7 @@ pub fn signal(fd: BorrowedFd<'_>, handles: &[u32]) -> io::Result<drm_syncobj_arr
     };
 
     unsafe {
-        ioctl::syncobj::signal(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::signal(fd, &mut args)?;
     }
 
     Ok(args)
@@ -184,7 +184,7 @@ pub fn timeline_wait(
     };
 
     unsafe {
-        ioctl::syncobj::timeline_wait(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::timeline_wait(fd, &mut args)?;
     }
 
     Ok(args)
@@ -211,7 +211,7 @@ pub fn query(
     };
 
     unsafe {
-        ioctl::syncobj::query(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::query(fd, &mut args)?;
     }
 
     Ok(args)
@@ -235,7 +235,7 @@ pub fn transfer(
     };
 
     unsafe {
-        ioctl::syncobj::transfer(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::transfer(fd, &mut args)?;
     }
 
     Ok(args)
@@ -257,7 +257,7 @@ pub fn timeline_signal(
     };
 
     unsafe {
-        ioctl::syncobj::timeline_signal(fd.as_raw_fd(), &mut args)?;
+        ioctl::syncobj::timeline_signal(fd, &mut args)?;
     }
 
     Ok(args)

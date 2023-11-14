@@ -40,7 +40,7 @@ use std::{
     os::unix::{ffi::OsStringExt, io::AsFd},
 };
 
-use nix::libc::EINVAL;
+use rustix::io::Errno;
 
 use crate::util::*;
 
@@ -192,7 +192,7 @@ pub trait Device: AsFd {
 
         let high_crtc_mask = _DRM_VBLANK_HIGH_CRTC_MASK >> _DRM_VBLANK_HIGH_CRTC_SHIFT;
         if (high_crtc & !high_crtc_mask) != 0 {
-            return Err(io::Error::from_raw_os_error(EINVAL));
+            return Err(Errno::INVAL.into());
         }
 
         let (sequence, wait_type) = match target_sequence {

@@ -1,6 +1,45 @@
-#![allow(missing_docs)]
+use std::{ffi::c_uint, io, os::unix::io::BorrowedFd};
 
 use drm_sys::*;
+use rustix::ioctl::{
+    ioctl, Getter, NoArg, NoneOpcode, ReadOpcode, ReadWriteOpcode, Setter, Updater, WriteOpcode,
+};
+
+macro_rules! ioctl_readwrite {
+    ($name:ident, $ioty:expr, $nr:expr, $ty:ty) => {
+        pub unsafe fn $name(fd: BorrowedFd, data: &mut $ty) -> io::Result<()> {
+            type Opcode = ReadWriteOpcode<$ioty, $nr, $ty>;
+            Ok(ioctl(fd, Updater::<Opcode, $ty>::new(data))?)
+        }
+    };
+}
+
+macro_rules! ioctl_read {
+    ($name:ident, $ioty:expr, $nr:expr, $ty:ty) => {
+        pub unsafe fn $name(fd: BorrowedFd) -> io::Result<$ty> {
+            type Opcode = ReadOpcode<$ioty, $nr, $ty>;
+            Ok(ioctl(fd, Getter::<Opcode, $ty>::new())?)
+        }
+    };
+}
+
+macro_rules! ioctl_write_ptr {
+    ($name:ident, $ioty:expr, $nr:expr, $ty:ty) => {
+        pub unsafe fn $name(fd: BorrowedFd, data: &$ty) -> io::Result<()> {
+            type Opcode = WriteOpcode<$ioty, $nr, $ty>;
+            Ok(ioctl(fd, Setter::<Opcode, $ty>::new(*data))?)
+        }
+    };
+}
+
+macro_rules! ioctl_none {
+    ($name:ident, $ioty:expr, $nr:expr) => {
+        pub unsafe fn $name(fd: BorrowedFd) -> io::Result<()> {
+            type Opcode = NoneOpcode<$ioty, $nr, ()>;
+            Ok(ioctl(fd, NoArg::<Opcode>::new())?)
+        }
+    };
+}
 
 /// Gets the bus ID of the device
 ///
@@ -15,13 +54,6 @@ ioctl_readwrite!(get_bus_id, DRM_IOCTL_BASE, 0x01, drm_unique);
 /// # Permissions: None
 /// # Nodes: Primary
 ioctl_readwrite!(get_client, DRM_IOCTL_BASE, 0x05, drm_client);
-
-/// Gets statistical information from the device
-///
-/// # Locks DRM mutex: No
-/// # Permissions: None
-/// # Nodes: Primary
-ioctl_read!(get_stats, DRM_IOCTL_BASE, 0x06, drm_stats);
 
 /// Get capabilities of the device.
 ///
@@ -94,8 +126,7 @@ ioctl_readwrite!(get_irq_from_bus_id, DRM_IOCTL_BASE, 0x03, drm_irq_busid);
 ioctl_readwrite!(wait_vblank, DRM_IOCTL_BASE, 0x3a, drm_wait_vblank);
 
 pub(crate) mod mode {
-    use drm_sys::*;
-    use nix::libc::c_uint;
+    use super::*;
 
     /// Modesetting resources
     ioctl_readwrite!(get_resources, DRM_IOCTL_BASE, 0xA0, drm_mode_card_res);
@@ -198,7 +229,7 @@ pub(crate) mod mode {
 }
 
 pub(crate) mod gem {
-    use drm_sys::*;
+    use super::*;
 
     /// GEM related functions
     ioctl_readwrite!(open, DRM_IOCTL_BASE, 0x0b, drm_gem_open);
@@ -212,7 +243,7 @@ pub(crate) mod gem {
 }
 
 pub(crate) mod syncobj {
-    use drm_sys::*;
+    use super::*;
 
     /// Creates a syncobj.
     ioctl_readwrite!(create, DRM_IOCTL_BASE, 0xBF, drm_syncobj_create);
