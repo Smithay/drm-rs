@@ -14,11 +14,11 @@ bitflags = "2"
 bytemuck = { version = "1.12", features = ["extern_crate_alloc", "derive"] }
 drm-ffi = { path = "drm-ffi", version = "0.7.0" }
 drm-fourcc = "^2.2.0"
-rustix = { version = "0.38.22", features = ["mm", "fs"] }
+rustix = { version = "0.38", features = ["mm", "fs"] }
 
 [dev-dependencies]
 image = { version = "0.24", default-features = false, features = ["png"] }
-rustix = { version = "0.38.22", features = ["event", "mm"] }
+rustix = { version = "0.38", features = ["event", "mm"] }
 rustyline = "12"
 
 [features]
