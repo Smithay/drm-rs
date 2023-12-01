@@ -10,7 +10,7 @@ edition = "2021"
 
 [dependencies]
 drm-sys = { path = "drm-sys", version = "0.6.0" }
-rustix = { version = "0.38.22" }
+rustix = { version = "0.38" }
 
 [features]
 use_bindgen = ["drm-sys/use_bindgen"]
