@@ -15,7 +15,7 @@ use_bindgen = ["bindgen", "pkg-config"]
 update_bindings = ["use_bindgen"]
 
 [build-dependencies]
-bindgen = { version = "0.66", optional = true }
+bindgen = { version = "0.69.1", optional = true }
 pkg-config = { version = "0.3.19", optional = true }
 
 [target.'cfg(any(target_os = "android", target_os = "linux"))'.dependencies]
