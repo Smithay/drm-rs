@@ -4,14 +4,22 @@
 #![allow(non_snake_case)]
 
 #[cfg(any(target_os = "android", target_os = "linux"))]
-pub use linux_raw_sys::general::__kernel_size_t;
-#[cfg(any(target_os = "android", target_os = "linux"))]
-pub type drm_handle_t = core::ffi::c_uint;
+mod platform {
+    pub use linux_raw_sys::general::__kernel_size_t;
+    pub type drm_handle_t = core::ffi::c_uint;
+    pub const DRM_RDWR: u32 = linux_raw_sys::general::O_RDWR;
+    pub const DRM_CLOEXEC: u32 = linux_raw_sys::general::O_CLOEXEC;
+}
 
 #[cfg(not(any(target_os = "android", target_os = "linux")))]
-type __kernel_size_t = libc::size_t;
-#[cfg(not(any(target_os = "android", target_os = "linux")))]
-pub type drm_handle_t = core::ffi::c_ulong;
+mod platform {
+    pub type __kernel_size_t = libc::size_t;
+    pub type drm_handle_t = core::ffi::c_ulong;
+    pub const DRM_RDWR: u32 = libc::O_RDWR as u32;
+    pub const DRM_CLOEXEC: u32 = libc::O_CLOEXEC as u32;
+}
+
+pub use platform::*;
 
 #[cfg(feature = "use_bindgen")]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));

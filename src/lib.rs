@@ -44,6 +44,8 @@ use rustix::io::Errno;
 
 use crate::util::*;
 
+pub use drm_ffi::{DRM_CLOEXEC as CLOEXEC, DRM_RDWR as RDWR};
+
 /// This trait should be implemented by any object that acts as a DRM device. It
 /// is a prerequisite for using any DRM functionality.
 ///
