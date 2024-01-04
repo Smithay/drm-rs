@@ -19,7 +19,7 @@ rustix = { version = "0.38.22", features = ["mm", "fs"] }
 [dev-dependencies]
 image = { version = "0.24", default-features = false, features = ["png"] }
 rustix = { version = "0.38.22", features = ["event", "mm"] }
-rustyline = "12"
+rustyline = "13"
 
 [features]
 use_bindgen = ["drm-ffi/use_bindgen"]
