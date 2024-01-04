@@ -78,6 +78,8 @@ jobs:
           components: clippy
           default: true
           override: true
+      - name: Downgrade home
+        run: cargo update -p home --precise 0.5.5
       - name: Cargo cache
         uses: actions/cache@v3
         with:
