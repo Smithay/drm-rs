@@ -282,6 +282,8 @@ pub enum DriverCapability {
     MonotonicTimestamp = drm_ffi::DRM_CAP_TIMESTAMP_MONOTONIC as u64,
     /// Asynchronous page flipping support
     ASyncPageFlip = drm_ffi::DRM_CAP_ASYNC_PAGE_FLIP as u64,
+    /// Asynchronous page flipping support for atomic API
+    AtomicASyncPageFlip = drm_ffi::DRM_CAP_ATOMIC_ASYNC_PAGE_FLIP as u64,
     /// Width of cursor buffers
     CursorWidth = drm_ffi::DRM_CAP_CURSOR_WIDTH as u64,
     /// Height of cursor buffers
