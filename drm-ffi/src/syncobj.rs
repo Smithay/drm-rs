@@ -110,6 +110,7 @@ pub fn wait(
         },
         first_signaled: 0,
         pad: 0,
+        deadline_nsec: 0,
     };
 
     unsafe {
@@ -181,6 +182,7 @@ pub fn timeline_wait(
         },
         first_signaled: 0,
         pad: 0,
+        deadline_nsec: 0,
     };
 
     unsafe {
