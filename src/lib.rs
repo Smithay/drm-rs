@@ -310,6 +310,24 @@ pub enum ClientCapability {
     UniversalPlanes = drm_ffi::DRM_CLIENT_CAP_UNIVERSAL_PLANES as u64,
     /// The driver provides atomic modesetting
     Atomic = drm_ffi::DRM_CLIENT_CAP_ATOMIC as u64,
+    /// If set to 1, the DRM core will provide aspect ratio information in modes.
+    AspectRatio = drm_ffi::DRM_CLIENT_CAP_ASPECT_RATIO as u64,
+    /// If set to 1, the DRM core will expose special connectors to be used for
+    /// writing back to memory the scene setup in the commit.
+    ///
+    /// The client must enable [`Self::Atomic`] first.
+    WritebackConnectors = drm_ffi::DRM_CLIENT_CAP_WRITEBACK_CONNECTORS as u64,
+    /// Drivers for para-virtualized hardware have additional restrictions for cursor planes e.g.
+    /// they need cursor planes to act like one would expect from a mouse
+    /// cursor and have correctly set hotspot properties.
+    /// If this client cap is not set the DRM core will hide cursor plane on
+    /// those virtualized drivers because not setting it implies that the
+    /// client is not capable of dealing with those extra restictions.
+    /// Clients which do set cursor hotspot and treat the cursor plane
+    /// like a mouse cursor should set this property.
+    ///
+    /// The client must enable [`Self::Atomic`] first.
+    CursorPlaneHotspot = drm_ffi::DRM_CLIENT_CAP_CURSOR_PLANE_HOTSPOT as u64,
 }
 
 /// Used to specify a vblank sequence to wait for
