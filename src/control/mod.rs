@@ -1129,6 +1129,8 @@ impl Iterator for Events {
             self.i += event.length as usize;
             match event.type_ {
                 ffi::DRM_EVENT_VBLANK => {
+                    #[allow(unknown_lints)]
+                    #[allow(invalid_reference_casting)]
                     let vblank_event =
                         unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
                     Some(Event::Vblank(VblankEvent {
@@ -1143,6 +1145,8 @@ impl Iterator for Events {
                     }))
                 }
                 ffi::DRM_EVENT_FLIP_COMPLETE => {
+                    #[allow(unknown_lints)]
+                    #[allow(invalid_reference_casting)]
                     let vblank_event =
                         unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
                     Some(Event::PageFlip(PageFlipEvent {
