@@ -1139,14 +1139,16 @@ impl Iterator for Events {
 
     fn next(&mut self) -> Option<Event> {
         if self.amount > 0 && self.i < self.amount {
-            let event = unsafe { &*(self.event_buf.as_ptr().add(self.i) as *const ffi::drm_event) };
+            let event_ptr = unsafe { self.event_buf.as_ptr().add(self.i) as *const ffi::drm_event };
+            let event = unsafe { std::ptr::read_unaligned(event_ptr) };
             self.i += event.length as usize;
             match event.type_ {
                 ffi::DRM_EVENT_VBLANK => {
                     #[allow(unknown_lints)]
                     #[allow(invalid_reference_casting)]
-                    let vblank_event =
-                        unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
+                    let vblank_event = unsafe {
+                        std::ptr::read_unaligned(event_ptr as *const ffi::drm_event_vblank)
+                    };
                     Some(Event::Vblank(VblankEvent {
                         frame: vblank_event.sequence,
                         time: Duration::new(
@@ -1161,8 +1163,9 @@ impl Iterator for Events {
                 ffi::DRM_EVENT_FLIP_COMPLETE => {
                     #[allow(unknown_lints)]
                     #[allow(invalid_reference_casting)]
-                    let vblank_event =
-                        unsafe { &*(event as *const _ as *const ffi::drm_event_vblank) };
+                    let vblank_event = unsafe {
+                        std::ptr::read_unaligned(event_ptr as *const ffi::drm_event_vblank)
+                    };
                     Some(Event::PageFlip(PageFlipEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(
