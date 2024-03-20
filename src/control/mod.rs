@@ -353,7 +353,9 @@ pub trait Device: super::Device {
     where
         B: buffer::PlanarBuffer + ?Sized,
     {
-        let modifier = planar_buffer.modifier();
+        let modifier = planar_buffer
+            .modifier()
+            .filter(|modifier| !matches!(modifier, DrmModifier::Invalid));
         let has_modifier = flags.contains(FbCmd2Flags::MODIFIERS);
         assert!((has_modifier && modifier.is_some()) || (!has_modifier && modifier.is_none()));
         let modifier = if let Some(modifier) = modifier {
