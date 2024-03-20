@@ -264,3 +264,31 @@ pub fn timeline_signal(
 
     Ok(args)
 }
+
+/// Register an eventfd to be signalled by a syncobj.
+pub fn eventfd(
+    fd: BorrowedFd<'_>,
+    handle: u32,
+    point: u64,
+    eventfd: BorrowedFd<'_>,
+    wait_available: bool,
+) -> io::Result<drm_syncobj_eventfd> {
+    let flags = if wait_available {
+        DRM_SYNCOBJ_WAIT_FLAGS_WAIT_AVAILABLE
+    } else {
+        0
+    };
+    let mut args = drm_syncobj_eventfd {
+        handle,
+        point,
+        flags,
+        fd: eventfd.as_raw_fd(),
+        pad: 0,
+    };
+
+    unsafe {
+        ioctl::syncobj::eventfd(fd, &mut args)?;
+    }
+
+    Ok(args)
+}

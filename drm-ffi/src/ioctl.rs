@@ -278,4 +278,6 @@ pub(crate) mod syncobj {
         0xCD,
         drm_syncobj_timeline_array
     );
+    /// Register an eventfd to be signalled by a syncobj.
+    ioctl_readwrite!(eventfd, DRM_IOCTL_BASE, 0xCF, drm_syncobj_eventfd);
 }
