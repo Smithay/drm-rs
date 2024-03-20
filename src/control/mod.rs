@@ -954,6 +954,18 @@ pub trait Device: super::Device {
         Ok(())
     }
 
+    /// Register an eventfd to be signalled by a syncobj.
+    fn syncobj_eventfd(
+        &self,
+        handle: syncobj::Handle,
+        point: u64,
+        eventfd: BorrowedFd<'_>,
+        wait_available: bool,
+    ) -> io::Result<()> {
+        ffi::syncobj::eventfd(self.as_fd(), handle.into(), point, eventfd, wait_available)?;
+        Ok(())
+    }
+
     /// Create a drm lease
     fn create_lease(
         &self,
