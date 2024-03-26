@@ -67,6 +67,8 @@ jobs:
       - run: |
           sudo apt-get update -y
           sudo apt-get install -y libdrm-dev
+      - name: Fetch drm headers
+        run: ./.github/workflows/fetch_headers.sh
       - name: Update deps
         uses: actions-rs/cargo@v1
         with:
@@ -105,6 +107,8 @@ jobs:
       - run: |
           sudo apt-get update -y
           sudo apt-get install -y libdrm-dev
+      - name: Fetch drm headers
+        run: ./.github/workflows/fetch_headers.sh
       - name: Update deps
         uses: actions-rs/cargo@v1
         with:
@@ -193,12 +197,7 @@ jobs:
           echo "CARGO_TARGET_${ENV_TARGET}_LINKER=${GCC_TARGET}-gcc" >> $GITHUB_ENV
           echo "BINDGEN_EXTRA_CLANG_ARGS=--sysroot=/usr/${GCC_TARGET}" >> $GITHUB_ENV
       - name: Fetch drm headers
-        run: |
-          mkdir drm
-          wget -O drm/drm.h https://github.com/torvalds/linux/raw/master/include/uapi/drm/drm.h
-          wget -O drm/drm_mode.h https://github.com/torvalds/linux/raw/master/include/uapi/drm/drm_mode.h
-          echo "LIBDRM_INCLUDE_PATH=${PWD}/drm" >> $GITHUB_ENV
-          echo "BINDGEN_EXTRA_CLANG_ARGS=-D __user= ${BINDGEN_EXTRA_CLANG_ARGS}" >> $GITHUB_ENV
+        run: ./.github/workflows/fetch_headers.sh
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
