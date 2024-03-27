@@ -1149,6 +1149,11 @@ pub struct drm_color_ctm {
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_color_ctm_3x4 {
+    pub matrix: [__u64; 12usize],
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_color_lut {
     pub red: __u16,
     pub green: __u16,
