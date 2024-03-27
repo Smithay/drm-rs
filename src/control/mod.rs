@@ -1144,8 +1144,6 @@ impl Iterator for Events {
             self.i += event.length as usize;
             match event.type_ {
                 ffi::DRM_EVENT_VBLANK => {
-                    #[allow(unknown_lints)]
-                    #[allow(invalid_reference_casting)]
                     let vblank_event = unsafe {
                         std::ptr::read_unaligned(event_ptr as *const ffi::drm_event_vblank)
                     };
@@ -1161,8 +1159,6 @@ impl Iterator for Events {
                     }))
                 }
                 ffi::DRM_EVENT_FLIP_COMPLETE => {
-                    #[allow(unknown_lints)]
-                    #[allow(invalid_reference_casting)]
                     let vblank_event = unsafe {
                         std::ptr::read_unaligned(event_ptr as *const ffi::drm_event_vblank)
                     };
