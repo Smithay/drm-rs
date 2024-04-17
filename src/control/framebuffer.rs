@@ -55,6 +55,12 @@ pub struct Info {
     pub(crate) buffer: Option<buffer::Handle>,
 }
 
+impl std::fmt::Display for Info {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Framebuffer {}", self.handle.0)
+    }
+}
+
 impl Info {
     /// Returns the handle to this framebuffer.
     pub fn handle(&self) -> Handle {
