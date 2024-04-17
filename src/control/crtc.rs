@@ -62,6 +62,12 @@ pub struct Info {
     pub(crate) gamma_length: u32,
 }
 
+impl std::fmt::Display for Info {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CRTC {}", self.handle.0)
+    }
+}
+
 impl Info {
     /// Returns the handle to this CRTC.
     pub fn handle(&self) -> Handle {

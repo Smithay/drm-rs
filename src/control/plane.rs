@@ -65,6 +65,12 @@ pub struct Info {
     pub(crate) formats: Vec<u32>,
 }
 
+impl std::fmt::Display for Info {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Plane {}", self.handle.0)
+    }
+}
+
 impl Info {
     /// Returns the handle to this plane.
     pub fn handle(&self) -> Handle {
