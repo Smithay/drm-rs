@@ -60,6 +60,12 @@ pub struct Info {
     pub(crate) subpixel: SubPixel,
 }
 
+impl std::fmt::Display for Info {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}-{}", self.interface.as_str(), self.interface_id)
+    }
+}
+
 impl Info {
     /// Returns the handle to this connector.
     pub fn handle(&self) -> Handle {
