@@ -18,15 +18,30 @@ macro_rules! map_len {
     };
 }
 
-/// Takes an `Option<&mut Vec<T>>` style buffer and shrinks it.
+/// Takes an `Option<&mut Vec<T>>` style buffer and reserves space.
 macro_rules! map_reserve {
     ($buffer:expr, $size:expr) => {
         match $buffer {
-            Some(ref mut b) => b.reserve_exact($size - b.len()),
+            Some(ref mut b) => crate::utils::map_reserve_inner(b, $size),
             _ => (),
         }
     };
 }
+
+pub(crate) fn map_reserve_inner<T>(b: &mut Vec<T>, size: usize) {
+    let old_len = b.len();
+    if size <= old_len {
+        return;
+    }
+    b.reserve_exact(size - old_len);
+
+    // `memset` to 0, at least so Valgrind doesn't complain
+    unsafe {
+        let ptr = b.as_mut_ptr().add(old_len) as *mut u8;
+        ptr.write_bytes(0, (size - old_len) * std::mem::size_of::<T>());
+    }
+}
+
 /// Takes an `Option<&mut Vec<T>>` style buffer and shrinks it.
 macro_rules! map_set {
     ($buffer:expr, $min:expr) => {
