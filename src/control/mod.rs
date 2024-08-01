@@ -805,11 +805,11 @@ pub trait Device: super::Device {
 
         let sequence = match target_sequence {
             Some(PageFlipTarget::Absolute(n)) => {
-                flags |= ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE;
+                flags |= ffi::DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE;
                 n
             }
             Some(PageFlipTarget::Relative(n)) => {
-                flags |= ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET_RELATIVE;
+                flags |= ffi::DRM_MODE_PAGE_FLIP_TARGET_RELATIVE;
                 n
             }
             None => 0,
@@ -824,6 +824,50 @@ pub trait Device: super::Device {
         )?;
 
         Ok(())
+    }
+
+    /// Returns the most recent vblank sequence, and its time of first pixel out.
+    // TODO: Move to lib.rs or is this a control device?
+    fn crtc_get_sequence(&self, handle: crtc::Handle) -> io::Result<CrtcGetSequence> {
+        let seq = ffi::crtc_get_sequence(self.as_fd(), handle.into())?;
+
+        Ok(CrtcGetSequence {
+            active: seq.active != 0,
+            sequence: seq.sequence,
+            timestamp: Duration::from_nanos(seq.sequence_ns as u64),
+        })
+    }
+
+    /// Request [`Event::QueueSequence`] to be received via [`Device::receive_events()`] when the
+    /// given `target_sequence` is reached.
+    ///
+    /// # Returns
+    /// The absolute sequence/frame number that this event will fire on.
+    // TODO: Can we receive this event without "control"?
+    fn crtc_queue_sequence(
+        &self,
+        handle: crtc::Handle,
+        flags: CrtcQueueSequenceFlags,
+        target_sequence: PageFlipTarget,
+    ) -> io::Result<u64> {
+        let mut flags = flags.bits();
+        let sequence = match target_sequence {
+            PageFlipTarget::Absolute(n) => n,
+            PageFlipTarget::Relative(n) => {
+                flags |= ffi::DRM_CRTC_SEQUENCE_RELATIVE;
+                n
+            }
+        };
+
+        let seq = ffi::crtc_queue_sequence(
+            self.as_fd(),
+            handle.into(),
+            flags,
+            sequence as u64,
+            u32::from(handle) as u64,
+        )?;
+
+        Ok(seq.sequence)
     }
 
     /// Creates a syncobj.
@@ -1058,28 +1102,34 @@ pub fn get_lease<D: AsFd>(lease: D) -> io::Result<LeaseResources> {
 bitflags::bitflags! {
     /// Flags to alter the behaviour of a page flip
     ///
-    /// Limited to the values in [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_FLAGS`],
-    /// minus [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET`] bits which are
+    /// Limited to the values in [`ffi::DRM_MODE_PAGE_FLIP_FLAGS`],
+    /// minus [`ffi::DRM_MODE_PAGE_FLIP_TARGET`] bits which are
     /// passed through [`PageFlipTarget`].
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct PageFlipFlags : u32 {
-        /// Request a vblank event on page flip
-        const EVENT = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT;
+        /// Request a [`Event::Vblank`] event on page flip
+        #[doc(alias = "DRM_MODE_PAGE_FLIP_EVENT")]
+        const EVENT = ffi::DRM_MODE_PAGE_FLIP_EVENT;
         /// Request page flip as soon as possible, not waiting for vblank
-        const ASYNC = ffi::drm_sys::DRM_MODE_PAGE_FLIP_ASYNC;
+        #[doc(alias = "DRM_MODE_PAGE_FLIP_ASYNC")]
+        const ASYNC = ffi::DRM_MODE_PAGE_FLIP_ASYNC;
     }
 }
 
+// TODO: merge with `WaitVblankTarget`?
 /// Target to alter the sequence of page flips
 ///
-/// These represent the [`ffi::drm_sys::DRM_MODE_PAGE_FLIP_TARGET`] bits
+/// These represent the [`ffi::DRM_MODE_PAGE_FLIP_TARGET`] bits
 /// of [`PageFlipFlags`] wrapped in a regular `enum` due to their
 /// mutual-exclusiveness.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PageFlipTarget {
     /// Absolute Vblank Sequence
+    #[doc(alias = "DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE")]
     Absolute(u32),
     /// Relative Vblank Sequence (to the current, when calling)
+    #[doc(alias = "DRM_MODE_PAGE_FLIP_TARGET_RELATIVE")]
+    #[doc(alias = "DRM_CRTC_SEQUENCE_RELATIVE")]
     Relative(u32),
 }
 
@@ -1103,16 +1153,28 @@ impl Events {
 }
 
 /// An event from a device.
+///
+/// Received by iterating [`Events`] from [`Device::receive_events()`].
+#[derive(Debug)]
 pub enum Event {
     /// A vblank happened
+    ///
+    /// Request via [`super::Device::wait_vblank()`] with [`super::WaitVblankFlags::EVENT`].
     Vblank(VblankEvent),
     /// A page flip happened
+    ///
+    /// Request via [`Device::page_flip()`] with [`PageFlipFlags::EVENT`].
     PageFlip(PageFlipEvent),
+    /// Event delivered at sequence
+    ///
+    /// Request via [`Device::crtc_queue_sequence()`].
+    QueueSequence(QueueSequenceEvent),
     /// Unknown event, raw data provided
     Unknown(Vec<u8>),
 }
 
 /// Vblank event
+#[derive(Debug)]
 pub struct VblankEvent {
     /// sequence of the frame
     pub frame: u32,
@@ -1125,11 +1187,24 @@ pub struct VblankEvent {
 }
 
 /// Page Flip event
+#[derive(Debug)]
 pub struct PageFlipEvent {
     /// sequence of the frame
     pub frame: u32,
     /// duration between events
     pub duration: Duration,
+    /// crtc that did throw the event
+    pub crtc: crtc::Handle,
+}
+
+/// Queue Sequence event
+#[derive(Debug)]
+pub struct QueueSequenceEvent {
+    /// sequence of the frame
+    // TODO: Rename to `sequence`, here and above?
+    pub frame: u64,
+    /// marks when the first pixel of the refresh cycle leaves the display engine for the display
+    pub time: Duration,
     /// crtc that did throw the event
     pub crtc: crtc::Handle,
 }
@@ -1141,7 +1216,9 @@ impl Iterator for Events {
         if self.amount > 0 && self.i < self.amount {
             let event_ptr = unsafe { self.event_buf.as_ptr().add(self.i) as *const ffi::drm_event };
             let event = unsafe { std::ptr::read_unaligned(event_ptr) };
+            // dbg!(self.i, event.length);
             self.i += event.length as usize;
+            assert!(self.i <= self.amount);
             match event.type_ {
                 ffi::DRM_EVENT_VBLANK => {
                     let vblank_event = unsafe {
@@ -1154,6 +1231,8 @@ impl Iterator for Events {
                             vblank_event.tv_usec * 1000,
                         ),
                         #[allow(clippy::unnecessary_cast)]
+                        // TODO: Just like for FLIP_COMPLETE, fall back to user_data?
+                        // https://github.com/torvalds/linux/blob/21b136cc63d2a9ddd60d4699552b69c214b32964/include/uapi/drm/drm.h#L754-L763
                         crtc: from_u32(vblank_event.crtc_id as u32).unwrap(),
                         user_data: vblank_event.user_data as usize,
                     }))
@@ -1173,6 +1252,23 @@ impl Iterator for Events {
                         } else {
                             vblank_event.user_data as u32
                         })
+                        .unwrap(),
+                    }))
+                }
+                ffi::DRM_EVENT_CRTC_SEQUENCE => {
+                    let seq_event = unsafe {
+                        std::ptr::read_unaligned(event_ptr as *const ffi::drm_event_crtc_sequence)
+                    };
+
+                    Some(Event::QueueSequence(QueueSequenceEvent {
+                        frame: seq_event.sequence,
+                        time: Duration::from_nanos(seq_event.time_ns as u64),
+                        crtc: from_u32(
+                            //     if seq_event.crtc_id != 0 {
+                            //     seq_event.crtc_id
+                            // } else {
+                            seq_event.user_data as u32, // }
+                        )
                         .unwrap(),
                     }))
                 }
@@ -1484,12 +1580,12 @@ impl IntoIterator for PropertyValueSet {
 /// Describes a rectangular region of a buffer
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Default)]
-pub struct ClipRect(ffi::drm_sys::drm_clip_rect);
+pub struct ClipRect(ffi::drm_clip_rect);
 
 impl ClipRect {
     /// Create a new clipping rectangle.
     pub fn new(x1: u16, y1: u16, x2: u16, y2: u16) -> Self {
-        Self(ffi::drm_sys::drm_clip_rect { x1, y1, x2, y2 })
+        Self(ffi::drm_clip_rect { x1, y1, x2, y2 })
     }
 
     /// Get the X coordinate of the top left corner of the rectangle.
@@ -1516,21 +1612,21 @@ impl ClipRect {
 bitflags::bitflags! {
     /// Commit flags for atomic mode setting
     ///
-    /// Limited to the values in [`ffi::drm_sys::DRM_MODE_ATOMIC_FLAGS`].
+    /// Limited to the values in [`ffi::DRM_MODE_ATOMIC_FLAGS`].
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct AtomicCommitFlags : u32 {
         /// Generate a page flip event, when the changes are applied
-        const PAGE_FLIP_EVENT = ffi::drm_sys::DRM_MODE_PAGE_FLIP_EVENT;
+        const PAGE_FLIP_EVENT = ffi::DRM_MODE_PAGE_FLIP_EVENT;
         /// Request page flip when the changes are applied, not waiting for vblank
-        const PAGE_FLIP_ASYNC = ffi::drm_sys::DRM_MODE_PAGE_FLIP_ASYNC;
+        const PAGE_FLIP_ASYNC = ffi::DRM_MODE_PAGE_FLIP_ASYNC;
         /// Test only validity of the request, do not actually apply the requested changes
-        const TEST_ONLY = ffi::drm_sys::DRM_MODE_ATOMIC_TEST_ONLY;
+        const TEST_ONLY = ffi::DRM_MODE_ATOMIC_TEST_ONLY;
         /// Do not block on the request and return early
-        const NONBLOCK = ffi::drm_sys::DRM_MODE_ATOMIC_NONBLOCK;
+        const NONBLOCK = ffi::DRM_MODE_ATOMIC_NONBLOCK;
         /// Allow the changes to trigger a modeset, if necessary
         ///
         /// Changes requiring a modeset are rejected otherwise.
-        const ALLOW_MODESET = ffi::drm_sys::DRM_MODE_ATOMIC_ALLOW_MODESET;
+        const ALLOW_MODESET = ffi::DRM_MODE_ATOMIC_ALLOW_MODESET;
     }
 }
 
@@ -1581,4 +1677,28 @@ bitflags::bitflags! {
         /// Enables .modifier
         const MODIFIERS = ffi::DRM_MODE_FB_MODIFIERS;
     }
+}
+
+bitflags::bitflags! {
+    /// Flags for [`Display::crtc_queue_sequence()`]
+    ///
+    /// Minus [`ffi::DRM_CRTC_SEQUENCE_RELATIVE`] bits which is
+    /// passed through [`PageFlipTarget`].
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct CrtcQueueSequenceFlags : u32 {
+        /// Use next sequence if we've missed
+        #[doc(alias = "DRM_CRTC_SEQUENCE_NEXT_ON_MISS")]
+        const NEXT_ON_MISS = ffi::DRM_CRTC_SEQUENCE_NEXT_ON_MISS;
+    }
+}
+
+/// Result from [`Device::crtc_get_sequence()`]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct CrtcGetSequence {
+    /// CRTC output is active
+    pub active: bool,
+    /// Most recent vblank sequence
+    pub sequence: u64,
+    /// Most recent time of first pixel out
+    pub timestamp: Duration,
 }

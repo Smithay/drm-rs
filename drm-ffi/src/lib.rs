@@ -207,9 +207,40 @@ pub fn wait_vblank(
         signal: signal as c_ulong,
     };
 
-    unsafe {
-        ioctl::wait_vblank(fd, &mut wait_vblank)?;
-    };
+    unsafe { ioctl::wait_vblank(fd, &mut wait_vblank) }?;
 
     Ok(unsafe { wait_vblank.reply })
+}
+
+/// Query current scanout sequence number.
+pub fn crtc_get_sequence(fd: BorrowedFd<'_>, crtc_id: u32) -> io::Result<drm_crtc_get_sequence> {
+    let mut get_seq = drm_crtc_get_sequence {
+        crtc_id,
+        ..Default::default()
+    };
+
+    unsafe { ioctl::crtc_get_sequence(fd, &mut get_seq) }?;
+
+    Ok(get_seq)
+}
+
+/// Queue event to be delivered at specified sequence. Time stamp marks when the first pixel of the
+/// refresh cycle leaves the display engine for the display
+pub fn crtc_queue_sequence(
+    fd: BorrowedFd<'_>,
+    crtc_id: u32,
+    flags: u32,
+    sequence: u64,
+    user_data: u64,
+) -> io::Result<drm_crtc_queue_sequence> {
+    let mut queue_seq = drm_crtc_queue_sequence {
+        crtc_id,
+        flags,
+        sequence,
+        user_data,
+    };
+
+    unsafe { ioctl::crtc_queue_sequence(fd, &mut queue_seq) }?;
+
+    Ok(queue_seq)
 }

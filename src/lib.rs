@@ -181,44 +181,61 @@ pub trait Device: AsFd {
         Ok(driver)
     }
 
+    // TODO: Event receiving is implemented in control. Should wait_vblank() be moved there too,
+    // or should receiving of events be moved here?
     /// Waits for a vblank.
+    ///
+    /// If [`WaitVblankFlags::EVENT`] is set, the returned [`WaitVblankReply::time`] is [`None`]
+    /// and [`control::Event::Vblank`] will be delivered via [`control::Device::receive_events()`]
+    /// instead.
+    ///
+    /// If [`Self::get_driver_capability()`] for [`DriverCapability::VBlankHighCRTC`]
+    /// returns [`true`], `crtc_index` can be set to the [index of a CRTC] in
+    /// [`control::ResourceHandles::crtcs()`].  Set it to `0` otherwise.
+    ///
+    /// [index of a CRTC]: https://docs.kernel.org/gpu/drm-uapi.html#crtc-index
     fn wait_vblank(
         &self,
-        target_sequence: VblankWaitTarget,
-        flags: VblankWaitFlags,
-        high_crtc: u32,
+        target_sequence: WaitVblankTarget,
+        flags: WaitVblankFlags,
+        crtc_index: u32,
         user_data: usize,
-    ) -> io::Result<VblankWaitReply> {
+    ) -> io::Result<WaitVblankReply> {
         use drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_HIGH_CRTC_MASK;
         use drm_ffi::_DRM_VBLANK_HIGH_CRTC_SHIFT;
 
-        let high_crtc_mask = _DRM_VBLANK_HIGH_CRTC_MASK >> _DRM_VBLANK_HIGH_CRTC_SHIFT;
-        if (high_crtc & !high_crtc_mask) != 0 {
+        let high_crtc = crtc_index << _DRM_VBLANK_HIGH_CRTC_SHIFT;
+        if (high_crtc & _DRM_VBLANK_HIGH_CRTC_MASK) != 0 {
             return Err(Errno::INVAL.into());
         }
 
         let (sequence, wait_type) = match target_sequence {
-            VblankWaitTarget::Absolute(n) => {
+            WaitVblankTarget::Absolute(n) => {
                 (n, drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_ABSOLUTE)
             }
-            VblankWaitTarget::Relative(n) => {
+            WaitVblankTarget::Relative(n) => {
                 (n, drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_RELATIVE)
             }
         };
 
-        let type_ = wait_type | (high_crtc << _DRM_VBLANK_HIGH_CRTC_SHIFT) | flags.bits();
+        let type_ = wait_type | high_crtc | flags.bits();
         let reply = drm_ffi::wait_vblank(self.as_fd(), type_, sequence, user_data)?;
+
+        // Always absolute
+        assert_eq!(type_ & !wait_type, reply.type_);
 
         let time = match (reply.tval_sec, reply.tval_usec) {
             (0, 0) => None,
             (sec, usec) => Some(Duration::new(sec as u64, (usec * 1000) as u32)),
         };
 
-        Ok(VblankWaitReply {
+        Ok(WaitVblankReply {
             frame: reply.sequence,
             time,
         })
     }
+
+    // TODO: Do crtc_get/queue_sequence belong here?
 }
 
 /// An authentication token, unique to the file descriptor of the device.
@@ -270,7 +287,12 @@ impl Driver {
 pub enum DriverCapability {
     /// DumbBuffer support for scanout
     DumbBuffer = drm_ffi::DRM_CAP_DUMB_BUFFER as u64,
-    /// Unknown
+    /// If set to [`true`], the kernel supports specifying a [CRTC index] in
+    /// [`Device::wait_vblank()`].
+    ///
+    /// Starting from kernel version `2.6.39`, this capability is always set to [`true`].
+    ///
+    /// [CRTC index]: https://www.kernel.org/doc/html/latest/gpu/drm-uapi.html#crtc-index
     VBlankHighCRTC = drm_ffi::DRM_CAP_VBLANK_HIGH_CRTC as u64,
     /// Preferred depth to use for dumb buffers
     DumbPreferredDepth = drm_ffi::DRM_CAP_DUMB_PREFERRED_DEPTH as u64,
@@ -278,7 +300,12 @@ pub enum DriverCapability {
     DumbPreferShadow = drm_ffi::DRM_CAP_DUMB_PREFER_SHADOW as u64,
     /// PRIME handles are supported
     Prime = drm_ffi::DRM_CAP_PRIME as u64,
-    /// Unknown
+    /// If set to [`false`], the kernel will report timestamps with `CLOCK_REALTIME` in
+    /// [`control::VblankEvent::time`]. If set to [`true`], the kernel will report timestamps with
+    /// `CLOCK_MONOTONIC`.
+    ///
+    /// Starting from kernel version `2.6.39`, the default value for this capability is [`true`].
+    /// Starting from kernel version `4.15`, this capability is always set to [`true`].
     MonotonicTimestamp = drm_ffi::DRM_CAP_TIMESTAMP_MONOTONIC as u64,
     /// Asynchronous page flipping support
     ASyncPageFlip = drm_ffi::DRM_CAP_ASYNC_PAGE_FLIP as u64,
@@ -290,9 +317,19 @@ pub enum DriverCapability {
     CursorHeight = drm_ffi::DRM_CAP_CURSOR_HEIGHT as u64,
     /// Create framebuffers with modifiers
     AddFB2Modifiers = drm_ffi::DRM_CAP_ADDFB2_MODIFIERS as u64,
-    /// Unknown
+    /// If set to [`true`], the driver supports the [`control::PageFlipTarget`] flags for
+    /// [`control::Device::page_flip()`].
     PageFlipTarget = drm_ffi::DRM_CAP_PAGE_FLIP_TARGET as u64,
-    /// Uses the CRTC's ID in vblank events
+    /// If set to [`true`], the kernel supports reporting the CRTC ID in [`drm_ffi::drm_event_vblank::crtc_id`]
+    /// for the [`control::Event::Vblank`] and [`control::Event::PageFlip`] events.
+    ///
+    // TODO:
+    /// Note that [`control::Event::Vblank`] always unconditionally reads this field and
+    /// leaves `user_data` for the caller to set (via [`Device::wait_vblank()`]), whereas
+    /// [`control::Device::page_flip()`] unconditionally sets the `user_data` field to the `crtc_id`
+    /// to fall back to when delivering [`control::Event::PageFlip`].
+    ///
+    /// Starting from kernel version `4.12`, this capability is always set to [`true`].
     CRTCInVBlankEvent = drm_ffi::DRM_CAP_CRTC_IN_VBLANK_EVENT as u64,
     /// SyncObj support
     SyncObj = drm_ffi::DRM_CAP_SYNCOBJ as u64,
@@ -332,32 +369,42 @@ pub enum ClientCapability {
 
 /// Used to specify a vblank sequence to wait for
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum VblankWaitTarget {
+#[doc(alias = "drm_vblank_seq_type")]
+pub enum WaitVblankTarget {
     /// Wait for a specific vblank sequence number
+    #[doc(alias = "_DRM_VBLANK_ABSOLUTE")]
     Absolute(u32),
     /// Wait for a given number of vblanks
+    #[doc(alias = "_DRM_VBLANK_RELATIVE")]
     Relative(u32),
 }
 
 bitflags::bitflags! {
     /// Flags to alter the behaviour when waiting for a vblank
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-    pub struct VblankWaitFlags : u32 {
-        /// Send event instead of blocking
+    #[doc(alias = "drm_vblank_seq_type")]
+    pub struct WaitVblankFlags : u32 {
+        /// Send [`control::Event::Vblank`] event instead of blocking
+        #[doc(alias = "_DRM_VBLANK_EVENT")]
         const EVENT = drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_EVENT;
         /// If missed, wait for next vblank
+        #[doc(alias = "_DRM_VBLANK_NEXTONMISS")]
         const NEXT_ON_MISS = drm_ffi::drm_vblank_seq_type::_DRM_VBLANK_NEXTONMISS;
+        // TODO: We miss FLIP, SECONDARY, and SIGNAL?
     }
 }
 
-/// Data returned from a vblank wait
+/// Result from [`Device::wait_vblank()`]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct VblankWaitReply {
+pub struct WaitVblankReply {
+    /// The absolute frame at which the vblank occurred
     frame: u32,
     time: Option<Duration>,
 }
 
-impl VblankWaitReply {
+// TODO: Make this a return-only POD with direct field access
+// Or #[inline]
+impl WaitVblankReply {
     /// Sequence of the frame
     pub fn frame(&self) -> u32 {
         self.frame
