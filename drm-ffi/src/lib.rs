@@ -160,9 +160,7 @@ pub fn get_version(
     mut desc_buf: Option<&mut Vec<i8>>,
 ) -> io::Result<drm_version> {
     let mut sizes = drm_version::default();
-    unsafe {
-        ioctl::get_version(fd, &mut sizes)?;
-    }
+    unsafe { ioctl::get_version(fd, &mut sizes) }?;
 
     map_reserve!(name_buf, sizes.name_len as usize);
     map_reserve!(date_buf, sizes.date_len as usize);
@@ -178,9 +176,7 @@ pub fn get_version(
         ..Default::default()
     };
 
-    unsafe {
-        ioctl::get_version(fd, &mut version)?;
-    }
+    unsafe { ioctl::get_version(fd, &mut version) }?;
 
     map_set!(name_buf, version.name_len as usize);
     map_set!(date_buf, version.date_len as usize);

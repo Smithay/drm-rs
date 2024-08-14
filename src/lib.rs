@@ -165,18 +165,24 @@ pub trait Device: AsFd {
         let mut date = Vec::new();
         let mut desc = Vec::new();
 
-        let _ = drm_ffi::get_version(
+        let v = drm_ffi::get_version(
             self.as_fd(),
             Some(&mut name),
             Some(&mut date),
             Some(&mut desc),
         )?;
 
+        let version = (v.version_major, v.version_minor, v.version_patchlevel);
         let name = OsString::from_vec(unsafe { transmute_vec(name) });
         let date = OsString::from_vec(unsafe { transmute_vec(date) });
         let desc = OsString::from_vec(unsafe { transmute_vec(desc) });
 
-        let driver = Driver { name, date, desc };
+        let driver = Driver {
+            version,
+            name,
+            date,
+            desc,
+        };
 
         Ok(driver)
     }
@@ -238,6 +244,8 @@ pub struct AuthToken(u32);
 /// Driver version of a device.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Driver {
+    /// Version of the driver in `(major, minor, patchlevel)` format
+    pub version: (i32, i32, i32),
     /// Name of the driver
     pub name: OsString,
     /// Date driver was published
