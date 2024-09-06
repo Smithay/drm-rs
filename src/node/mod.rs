@@ -198,13 +198,6 @@ impl From<io::Error> for CreateDrmNodeError {
     }
 }
 
-/// Returns if the given device by major:minor pair is a drm device
-#[cfg(target_os = "linux")]
-pub fn is_device_drm(dev: dev_t) -> bool {
-    let path = format!("/sys/dev/char/{}:{}/device/drm", major(dev), minor(dev));
-    stat(path.as_str()).is_ok()
-}
-
 #[cfg(target_os = "freebsd")]
 fn devname(dev: dev_t) -> Option<String> {
     use std::os::raw::{c_char, c_int};
@@ -230,6 +223,13 @@ fn devname(dev: dev_t) -> Option<String> {
     unsafe { dev_name.set_len(libc::strlen(buf)) };
 
     Some(String::from_utf8(dev_name).expect("Returned device name is not valid utf8"))
+}
+
+/// Returns if the given device by major:minor pair is a drm device
+#[cfg(target_os = "linux")]
+pub fn is_device_drm(dev: dev_t) -> bool {
+    let path = format!("/sys/dev/char/{}:{}/device/drm", major(dev), minor(dev));
+    stat(path.as_str()).is_ok()
 }
 
 /// Returns if the given device by major:minor pair is a drm device
