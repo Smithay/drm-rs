@@ -175,10 +175,9 @@ impl Display for CreateDrmNodeError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io(err) => Display::fmt(err, f),
-            Self::NotDrmNode => write!(
-                f,
-                "the provided file descriptor does not refer to a DRM node"
-            ),
+            Self::NotDrmNode => {
+                f.write_str("the provided file descriptor does not refer to a DRM node")
+            }
         }
     }
 }
