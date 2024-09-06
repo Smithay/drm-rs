@@ -3,6 +3,7 @@
 pub mod constants;
 
 use std::error::Error;
+use std::fmt::Debug;
 use std::fmt::{self, Display, Formatter};
 use std::io;
 use std::os::unix::io::AsFd;
@@ -156,15 +157,7 @@ impl NodeType {
 
 impl Display for NodeType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                NodeType::Primary => "Primary",
-                NodeType::Control => "Control",
-                NodeType::Render => "Render",
-            }
-        )
+        Debug::fmt(self, f)
     }
 }
 
@@ -181,7 +174,7 @@ pub enum CreateDrmNodeError {
 impl Display for CreateDrmNodeError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Io(err) => err.fmt(f),
+            Self::Io(err) => Display::fmt(err, f),
             Self::NotDrmNode => write!(
                 f,
                 "the provided file descriptor does not refer to a DRM node"
