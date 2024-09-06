@@ -323,7 +323,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
         let suffix = dev_name.trim_start_matches(|c: char| !c.is_numeric());
         if let Ok(old_id) = suffix.parse::<u32>() {
             let id_mask = 0b11_1111;
-            let id = old_id & id_mask;
+            let id = old_id & id_mask + get_minor_base(ty);
             let path = PathBuf::from(format!("/dev/dri/{}{}", ty.minor_name_prefix(), id));
             if path.exists() {
                 return Ok(path);
@@ -355,7 +355,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
 
     let old_id = minor(dev);
     let id_mask = 0b11_1111;
-    let id = old_id & id_mask;
+    let id = old_id & id_mask + get_minor_base(ty);
     let path = PathBuf::from(format!("/dev/dri/{}{}", ty.minor_name_prefix(), id));
     if path.exists() {
         return Ok(path);
@@ -370,4 +370,13 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
             minor(dev)
         ),
     ))
+}
+
+#[cfg(any(target_os = "freebsd", target_os = "openbsd"))]
+fn get_minor_base(type_: NodeType) -> u32 {
+    match type_ {
+        NodeType::Primary => 0,
+        NodeType::Control => 64,
+        NodeType::Render => 128,
+    }
 }
