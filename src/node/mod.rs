@@ -333,9 +333,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
         if let Ok(old_id) = suffix.parse::<u32>() {
             let id_mask = 0b11_1111;
             let id = old_id & id_mask + ty.minor_base();
-            let path = PathBuf::new("/dev/dri")
-                .join(ty.minor_name_prefix())
-                .join(id);
+            let path = PathBuf::from(format!("/dev/dri/{}{}", ty.minor_name_prefix(), id));
             if path.exists() {
                 return Ok(path);
             }
@@ -368,7 +366,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     let old_id = minor(dev);
     let id_mask = 0b11_1111;
     let id = old_id & id_mask + ty.minor_base();
-    let path = PathBuf::from("/dev/dri", ty.minor_name_prefix(), id);
+    let path = PathBuf::from(format!("/dev/dri/{}{}", ty.minor_name_prefix(), id));
     if path.exists() {
         return Ok(path);
     }
