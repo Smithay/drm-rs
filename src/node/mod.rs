@@ -286,7 +286,7 @@ pub fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
         // Only 1 primary, control and render node may exist simultaneously, so the
         // first occurrence is good enough.
         if name.starts_with(ty.minor_name_prefix()) {
-            let path = [r"/", "dev", "dri", &name].iter().collect::<PathBuf>();
+            let path = Path::new("/dev/dri").join(&*name);
             if path.exists() {
                 return Ok(path);
             }
@@ -324,7 +324,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
         if let Ok(old_id) = suffix.parse::<u32>() {
             let id_mask = 0b11_1111;
             let id = old_id & id_mask + get_minor_base(ty);
-            let path = PathBuf::from(format!("/dev/dri/{}{}", ty.minor_name_prefix(), id));
+            let path = PathBuf::new("/dev/dri").join(ty.minor_name_prefix()).join(id);
             if path.exists() {
                 return Ok(path);
             }
@@ -356,7 +356,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     let old_id = minor(dev);
     let id_mask = 0b11_1111;
     let id = old_id & id_mask + get_minor_base(ty);
-    let path = PathBuf::from(format!("/dev/dri/{}{}", ty.minor_name_prefix(), id));
+    let path = PathBuf::from("/dev/dri", ty.minor_name_prefix(), id);
     if path.exists() {
         return Ok(path);
     }
