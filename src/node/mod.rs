@@ -233,8 +233,11 @@ fn devname(dev: dev_t) -> Option<String> {
 }
 
 /// Returns if the given device by major:minor pair is a drm device
+///
 #[cfg(target_os = "linux")]
 pub fn is_device_drm(dev: dev_t) -> bool {
+    // We `stat` the path rather than comparing the major to support dynamic device numbers:
+    //   https://gitlab.freedesktop.org/mesa/drm/-/commit/f8392583418aef5e27bfed9989aeb601e20cc96d
     let path = format!("/sys/dev/char/{}:{}/device/drm", major(dev), minor(dev));
     stat(path.as_str()).is_ok()
 }
