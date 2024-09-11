@@ -22,8 +22,6 @@ pub struct DrmNode {
 
 impl DrmNode {
     /// Creates a DRM node from an open drm device.
-    ///
-    /// This function does not take ownership of the passed in file descriptor.
     pub fn from_file<A: AsFd>(file: A) -> Result<DrmNode, CreateDrmNodeError> {
         let stat = fstat(file).map_err(Into::<io::Error>::into)?;
         DrmNode::from_stat(stat)
