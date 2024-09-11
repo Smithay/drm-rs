@@ -42,7 +42,7 @@ impl DrmNode {
     }
 
     /// Creates a DRM node from a [`dev_t`].
-    pub fn from_dev_id(dev: dev_t) -> Result<DrmNode, CreateDrmNodeError> {
+    pub fn from_dev_id(dev: dev_t) -> Result<Self, CreateDrmNodeError> {
         if !is_device_drm(dev) {
             return Err(CreateDrmNodeError::NotDrmNode);
         }
@@ -151,6 +151,15 @@ impl NodeType {
             NodeType::Primary => PRIMARY_NAME,
             NodeType::Control => CONTROL_NAME,
             NodeType::Render => RENDER_NAME,
+        }
+    }
+
+    #[cfg(any(target_os = "freebsd", target_os = "openbsd"))]
+    fn minor_base(&self) -> u32 {
+        match self {
+            NodeType::Primary => 0,
+            NodeType::Control => 64,
+            NodeType::Render => 128,
         }
     }
 }
@@ -323,8 +332,10 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
         let suffix = dev_name.trim_start_matches(|c: char| !c.is_numeric());
         if let Ok(old_id) = suffix.parse::<u32>() {
             let id_mask = 0b11_1111;
-            let id = old_id & id_mask + get_minor_base(ty);
-            let path = PathBuf::new("/dev/dri").join(ty.minor_name_prefix()).join(id);
+            let id = old_id & id_mask + ty.minor_base();
+            let path = PathBuf::new("/dev/dri")
+                .join(ty.minor_name_prefix())
+                .join(id);
             if path.exists() {
                 return Ok(path);
             }
@@ -342,6 +353,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     ))
 }
 
+/// Returns the path of a specific type of node from the DRM device described by major and minor device numbers.
 #[cfg(target_os = "openbsd")]
 fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     use std::io::ErrorKind;
@@ -355,7 +367,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
 
     let old_id = minor(dev);
     let id_mask = 0b11_1111;
-    let id = old_id & id_mask + get_minor_base(ty);
+    let id = old_id & id_mask + ty.minor_base();
     let path = PathBuf::from("/dev/dri", ty.minor_name_prefix(), id);
     if path.exists() {
         return Ok(path);
@@ -370,13 +382,4 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
             minor(dev)
         ),
     ))
-}
-
-#[cfg(any(target_os = "freebsd", target_os = "openbsd"))]
-fn get_minor_base(type_: NodeType) -> u32 {
-    match type_ {
-        NodeType::Primary => 0,
-        NodeType::Control => 64,
-        NodeType::Render => 128,
-    }
 }
