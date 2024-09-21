@@ -3,8 +3,7 @@
 pub mod constants;
 
 use std::error::Error;
-use std::fmt::Debug;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 use std::io;
 use std::os::unix::io::AsFd;
 use std::path::{Path, PathBuf};
@@ -168,7 +167,7 @@ impl Display for NodeType {
     }
 }
 
-/// An error that may occur when creating a DrmNode from a file descriptor.
+/// An error that may occur when creating a [`DrmNode`] from a file descriptor.
 #[derive(Debug)]
 pub enum CreateDrmNodeError {
     /// Some underlying IO error occured while trying to create a DRM node.
@@ -232,8 +231,7 @@ fn devname(dev: dev_t) -> Option<String> {
     Some(String::from_utf8(dev_name).expect("Returned device name is not valid utf8"))
 }
 
-/// Returns if the given device by major:minor pair is a drm device
-///
+/// Returns if the given device by major:minor pair is a DRM device.
 #[cfg(target_os = "linux")]
 pub fn is_device_drm(dev: dev_t) -> bool {
     // We `stat` the path rather than comparing the major to support dynamic device numbers:
@@ -242,7 +240,7 @@ pub fn is_device_drm(dev: dev_t) -> bool {
     stat(path.as_str()).is_ok()
 }
 
-/// Returns if the given device by major:minor pair is a drm device
+/// Returns if the given device by major:minor pair is a DRM device.
 #[cfg(target_os = "freebsd")]
 pub fn is_device_drm(dev: dev_t) -> bool {
     devname(dev).map_or(false, |dev_name| {
@@ -253,7 +251,7 @@ pub fn is_device_drm(dev: dev_t) -> bool {
     })
 }
 
-/// Returns if the given device by major:minor pair is a drm device
+/// Returns if the given device by major:minor pair is a DRM device.
 #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
 pub fn is_device_drm(dev: dev_t) -> bool {
     major(dev) == DRM_MAJOR
@@ -375,7 +373,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     Err(io::Error::new(
         ErrorKind::NotFound,
         format!(
-            "Could not find node of type {} from DRM device {}:{}",
+            "Could not find node of type {} for DRM device {}:{}",
             ty,
             major(dev),
             minor(dev)
