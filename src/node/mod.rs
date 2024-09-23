@@ -151,7 +151,7 @@ impl NodeType {
         }
     }
 
-    #[cfg(any(target_os = "freebsd", target_os = "openbsd"))]
+    #[cfg(not(target_os = "linux"))]
     fn minor_base(&self) -> u32 {
         match self {
             NodeType::Primary => 0,
@@ -351,7 +351,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
 }
 
 /// Returns the path of a specific type of node from the DRM device described by major and minor device numbers.
-#[cfg(target_os = "openbsd")]
+#[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
 fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     use std::io::ErrorKind;
 
