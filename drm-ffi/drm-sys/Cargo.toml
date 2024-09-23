@@ -6,7 +6,7 @@ version = "0.7.0"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 license = "MIT"
 build = "build.rs"
-rust-version = "1.65"
+rust-version = "1.66"
 edition = "2021"
 
 [features]
