@@ -125,6 +125,31 @@ ioctl_readwrite!(get_irq_from_bus_id, DRM_IOCTL_BASE, 0x03, drm_irq_busid);
 /// # Nodes: Primary
 ioctl_readwrite!(wait_vblank, DRM_IOCTL_BASE, 0x3a, drm_wait_vblank);
 
+// TODO: Move into mode?
+/// Query current scanout sequence number
+///
+/// # Locks DRM mutex: ?
+/// # Permissions: None
+/// # Nodes: Primary
+ioctl_readwrite!(
+    crtc_get_sequence,
+    DRM_IOCTL_BASE,
+    0x3b,
+    drm_crtc_get_sequence
+);
+
+/// Queue event to be delivered at specified sequence
+///
+/// # Locks DRM mutex: ?
+/// # Permissions: None
+/// # Nodes: Primary
+ioctl_readwrite!(
+    crtc_queue_sequence,
+    DRM_IOCTL_BASE,
+    0x3c,
+    drm_crtc_queue_sequence
+);
+
 pub(crate) mod mode {
     use super::*;
 
