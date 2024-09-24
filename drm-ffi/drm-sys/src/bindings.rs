@@ -1149,16 +1149,17 @@ pub struct drm_color_ctm {
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct drm_color_ctm_3x4 {
-    pub matrix: [__u64; 12usize],
-}
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_color_lut {
     pub red: __u16,
     pub green: __u16,
     pub blue: __u16,
     pub reserved: __u16,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_plane_size_hint {
+    pub width: __u16,
+    pub height: __u16,
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
