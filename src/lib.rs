@@ -32,6 +32,7 @@ pub(crate) mod util;
 
 pub mod buffer;
 pub mod control;
+pub mod node;
 
 use std::ffi::{OsStr, OsString};
 use std::time::Duration;

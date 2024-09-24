@@ -396,7 +396,7 @@ pub fn get_connector(
         } else {
             &tmp_mode as *const _ as _
         },
-        count_modes: if force_probe { 0 } else { 1 },
+        count_modes: u32::from(!force_probe),
         ..Default::default()
     };
 
@@ -427,13 +427,7 @@ pub fn get_connector(
             prop_values_ptr: map_ptr!(&prop_values),
             count_modes: match &modes {
                 Some(b) => b.capacity() as _,
-                None => {
-                    if force_probe {
-                        0
-                    } else {
-                        1
-                    }
-                }
+                None => u32::from(!force_probe),
             },
             count_props: map_len!(&props),
             count_encoders: map_len!(&encoders),

@@ -75,7 +75,7 @@ jobs:
           command: update
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.65.0
+          toolchain: 1.66.0
           profile: minimal
           components: clippy
           default: true
@@ -88,12 +88,12 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-rust_1.65.0-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ runner.os }}-cargo-rust_1.66.0-${{ hashFiles('**/Cargo.toml') }}
       - name: Build cache
         uses: actions/cache@v3
         with:
           path: target
-          key: ${{ runner.os }}-build-rust_1.65.0-check-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ runner.os }}-build-rust_1.66.0-check-${{ hashFiles('**/Cargo.toml') }}
       - name: Clippy
         uses: actions-rs/clippy-check@v1
         with:
