@@ -314,7 +314,7 @@ pub fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
 
 /// Returns the path of a specific type of node from the DRM device described by major and minor device numbers.
 #[cfg(target_os = "freebsd")]
-fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
+pub fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     // Based on libdrm `drmGetMinorNameForFD`. Should be updated if the code
     // there is replaced with anything more sensible...
 
@@ -352,7 +352,7 @@ fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
 
 /// Returns the path of a specific type of node from the DRM device described by major and minor device numbers.
 #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
-fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
+pub fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     use std::io::ErrorKind;
 
     if !is_device_drm(dev) {
