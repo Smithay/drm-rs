@@ -2,7 +2,7 @@
 name = "drm"
 description = "Safe, low-level bindings to the Direct Rendering Manager API"
 repository = "https://github.com/Smithay/drm-rs"
-version = "0.14.0"
+version = "0.14.1"
 license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>", "Victoria Brekenfeld <crates-io@drakulix.de>"]
 exclude = [".gitignore", ".github"]
