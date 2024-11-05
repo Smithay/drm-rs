@@ -13,14 +13,6 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          components: rustfmt
-          default: true
-          override: true
       - name: Cargo cache
         uses: actions/cache@v3
         with:
@@ -29,23 +21,12 @@ jobs:
             ~/.cargo/git
           key: ${{ runner.os }}-cargo-rust_stable-${{ hashFiles('**/Cargo.toml') }}
       - name: Format
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
   doc:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          profile: minimal
-          components: rust-docs
-          default: true
-          override: true
       - name: Cargo cache
         uses: actions/cache@v3
         with:
@@ -54,11 +35,7 @@ jobs:
             ~/.cargo/git
           key: ${{ runner.os }}-cargo-rust_nightly-${{ hashFiles('**/Cargo.toml') }}
       - name: Documentation
-        uses: actions-rs/cargo@v1
-        env:
-          DOCS_RS: 1
-        with:
-          command: doc
+        run: cargo doc
 
   check:
     runs-on: ubuntu-22.04
@@ -69,17 +46,9 @@ jobs:
           sudo apt-get install -y libdrm-dev
       - name: Fetch drm headers
         run: ./.github/workflows/fetch_headers.sh
-      - name: Update deps
-        uses: actions-rs/cargo@v1
+      - uses: dtolnay/rust-toolchain@1.66.0
         with:
-          command: update
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.66.0
-          profile: minimal
           components: clippy
-          default: true
-          override: true
       - name: Downgrade (transitive) dependencies
         run: |
           cargo update -p home --precise 0.5.5
@@ -98,10 +67,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-build-rust_1.66.0-check-${{ hashFiles('**/Cargo.toml') }}
       - name: Clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all --all-features --all-targets -- -D warnings -A clippy::redundant_static_lifetimes
+        run: cargo clippy --all --all-features --all-targets -- -D warnings -A clippy::redundant_static_lifetimes
 
   check-minimal:
     runs-on: ubuntu-22.04
@@ -112,16 +78,7 @@ jobs:
           sudo apt-get install -y libdrm-dev
       - name: Fetch drm headers
         run: ./.github/workflows/fetch_headers.sh
-      - name: Update deps
-        uses: actions-rs/cargo@v1
-        with:
-          command: update
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          profile: minimal
-          default: true
-          override: true
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Cargo cache
         uses: actions/cache@v3
         with:
@@ -135,10 +92,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-build-rust_nightly-check-minimal-${{ hashFiles('**/Cargo.toml') }}
       - name: Check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all --all-features --all-targets -Z minimal-versions
+        run: cargo check --all --all-features --all-targets -Z minimal-versions
 
   test:
     needs:
@@ -202,14 +156,10 @@ jobs:
       - name: Fetch drm headers
         run: ./.github/workflows/fetch_headers.sh
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          target: ${{ matrix.target }}
-          profile: minimal
-          components: rustfmt
-          default: true
-          override: true
+          targets: ${{ matrix.target }}
       - name: Cargo cache
         uses: actions/cache@v3
         with:
@@ -222,17 +172,10 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-build-rust_${{ matrix.rust }}-target_${{ matrix.target }}-${{ hashFiles('**/Cargo.toml') }}
-      - name: Update deps
-        uses: actions-rs/cargo@v1
-        with:
-          command: update
       - name: Build sys
-        uses: actions-rs/cargo@v1
         env:
           RUST_LOG: bindgen=warn,bindgen::ir=error,bindgen::codegen=error
-        with:
-          command: build
-          args: --manifest-path drm-ffi/drm-sys/Cargo.toml --target ${{ matrix.target }} --features update_bindings
+        run: cargo build --manifest-path drm-ffi/drm-sys/Cargo.toml --target ${{ matrix.target }} --features update_bindings
       - name: Copy bindings
         run: cp drm-ffi/drm-sys/src/bindings.rs bindings-${{ matrix.target }}.rs
       - name: Upload bindings
@@ -242,19 +185,13 @@ jobs:
           name: bindings-${{ matrix.target }}-${{ matrix.rust }}
           path: bindings-*.rs
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --target ${{ matrix.target }}
+        run: cargo build --target ${{ matrix.target }}
       - name: Test
         if: contains(matrix.target, '-linux-') && (startsWith(matrix.target, 'x86_64-') || startsWith(matrix.target, 'i686-'))
-        uses: actions-rs/cargo@v1
         timeout-minutes: 12
         env:
           RUST_BACKTRACE: full
-        with:
-          command: test
-          args: --all --target ${{ matrix.target }}
+        run: cargo test --all --target ${{ matrix.target }}
 
   compare-bindings:
     needs:
@@ -320,11 +257,6 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
       - name: Publish crates
         uses: katyo/publish-crates@v1
         with:
