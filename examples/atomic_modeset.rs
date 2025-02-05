@@ -98,10 +98,10 @@ pub fn main() {
         });
     let plane = *better_planes.first().unwrap_or(&compatible_planes[0]);
 
-    println!("{:#?}", mode);
-    println!("{:#?}", fb);
-    println!("{:#?}", db);
-    println!("{:#?}", plane);
+    println!("{mode:#?}");
+    println!("{fb:#?}");
+    println!("{db:#?}");
+    println!("{plane:#?}");
 
     let con_props = card
         .get_properties(con.handle())

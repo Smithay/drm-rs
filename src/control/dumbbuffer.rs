@@ -63,7 +63,7 @@ impl DerefMut for DumbMapping<'_> {
     }
 }
 
-impl<'a> Drop for DumbMapping<'a> {
+impl Drop for DumbMapping<'_> {
     fn drop(&mut self) {
         unsafe {
             rustix::mm::munmap(self.map.as_mut_ptr() as *mut _, self.map.len())

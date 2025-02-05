@@ -7,13 +7,13 @@
 //! types of planes available for use:
 //!
 //! * Primary - A CRTC's built-in plane. When attaching a framebuffer to a CRTC,
-//! it is actually being attached to this kind of plane.
+//!   it is actually being attached to this kind of plane.
 //!
 //! * Overlay - Can be overlaid on top of a primary plane, utilizing extremely
-//! fast hardware compositing.
+//!   fast hardware compositing.
 //!
 //! * Cursor - Similar to an overlay plane, these are typically used to display
-//! cursor type objects.
+//!   cursor type objects.
 
 use crate::control;
 use drm_ffi as ffi;

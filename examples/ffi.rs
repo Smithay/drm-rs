@@ -30,12 +30,12 @@ impl Card {
 fn print_busid(fd: BorrowedFd<'_>) {
     let mut buffer = Vec::new();
     let busid = ffi::get_bus_id(fd, Some(&mut buffer));
-    println!("{:#?}", busid);
+    println!("{busid:#?}");
 }
 
 fn print_client(fd: BorrowedFd<'_>) {
     let client = ffi::get_client(fd, 0);
-    println!("{:#?}", client);
+    println!("{client:#?}");
 }
 
 fn print_version(fd: BorrowedFd<'_>) {
@@ -45,14 +45,14 @@ fn print_version(fd: BorrowedFd<'_>) {
 
     let version = ffi::get_version(fd, Some(&mut name), Some(&mut date), Some(&mut desc));
 
-    println!("{:#?}", version);
+    println!("{version:#?}");
 }
 
 fn print_capabilities(fd: BorrowedFd<'_>) {
     for cty in 1.. {
         let cap = ffi::get_capability(fd, cty);
         match cap {
-            Ok(_) => println!("{:#?}", cap),
+            Ok(_) => println!("{cap:#?}"),
             Err(_) => break,
         }
     }
@@ -60,7 +60,7 @@ fn print_capabilities(fd: BorrowedFd<'_>) {
 
 fn print_token(fd: BorrowedFd<'_>) {
     let token = ffi::auth::get_magic_token(fd);
-    println!("{:#?}", token);
+    println!("{token:#?}");
 }
 
 fn main() {

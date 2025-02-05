@@ -6,7 +6,7 @@ fn print_properties<T: drm::control::ResourceHandle>(card: &Card, handle: T) {
     let props = card.get_properties(handle).unwrap();
 
     for (&id, &val) in props.iter() {
-        println!("Property: {:?}", id);
+        println!("Property: {id:?}");
         let info = card.get_property(id).unwrap();
         println!("{:?}", info.name());
         println!("{:#?}", info.value_type());
@@ -23,7 +23,7 @@ pub fn main() {
     // Enable all possible client capabilities
     for &cap in capabilities::CLIENT_CAP_ENUMS {
         if let Err(e) = card.set_client_capability(cap, true) {
-            eprintln!("Unable to activate capability {:?}: {}", cap, e);
+            eprintln!("Unable to activate capability {cap:?}: {e}");
             return;
         }
     }
