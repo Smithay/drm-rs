@@ -27,7 +27,7 @@ mod use_bindgen {
     }
 
     fn create_builder(contents: &str) -> Builder {
-        println!("{}", contents);
+        println!("{contents}");
 
         let pkgconf = pkg_config::Config::new();
         let include_paths = if let Ok(value) = var("LIBDRM_INCLUDE_PATH") {
@@ -82,27 +82,27 @@ mod use_bindgen {
 
     // Create a name for a temporary value
     fn tmp_val(name: &str) -> String {
-        format!("{}{}", TMP_BIND_PREFIX, name)
+        format!("{TMP_BIND_PREFIX}{name}")
     }
 
     // Create a C include directive
     fn include(header: &str) -> String {
-        format!("#include <{}>", header)
+        format!("#include <{header}>")
     }
 
     // Create a C constant
     fn decl_const(ty: &str, name: &str, value: &str) -> String {
-        format!("const {} {} = {};", ty, name, value)
+        format!("const {ty} {name} = {value};")
     }
 
     // Create a C macro definition
     fn define_macro(name: &str, val: &str) -> String {
-        format!("#define {} {}", name, val)
+        format!("#define {name} {val}")
     }
 
     // Create a C undefinition
     fn undefine_macro(name: &str) -> String {
-        format!("#undef {}", name)
+        format!("#undef {name}")
     }
 
     // Rebind a C macro as a constant

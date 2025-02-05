@@ -16,13 +16,13 @@
 //! There are two methods of sharing a GEM handle between processes:
 //!
 //! 1. Using `Flink` to globally publish a handle using a 32-bit 'name'. This
-//! requires either holding the DRM Master lock or having the process'
-//! [`AuthToken`](struct@crate::AuthToken) authenticated. However, any process can
-//! open these handles if they know (or even guess) the global name.
+//!    requires either holding the DRM Master lock or having the process'
+//!    [`AuthToken`](struct@crate::AuthToken) authenticated. However, any process can
+//!    open these handles if they know (or even guess) the global name.
 //!
 //! 2. Converting the GEM handle into a PRIME file descriptor, and passing it
-//! like a regular one. This allows better control and security, and is the
-//! recommended method of sharing buffers.
+//!    like a regular one. This allows better control and security, and is the
+//!    recommended method of sharing buffers.
 
 use crate::control;
 pub use drm_fourcc::{DrmFourcc, DrmModifier, DrmVendor, UnrecognizedFourcc, UnrecognizedVendor};

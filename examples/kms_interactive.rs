@@ -9,7 +9,7 @@ pub fn main() {
     // Enable all possible client capabilities
     for &cap in capabilities::CLIENT_CAP_ENUMS {
         if let Err(e) = card.set_client_capability(cap, true) {
-            eprintln!("Unable to activate capability {:?}: {}", cap, e);
+            eprintln!("Unable to activate capability {cap:?}: {e}");
             return;
         }
     }
@@ -69,7 +69,7 @@ fn run_repl(card: &Card) {
                     let args: Vec<_> = line.split_whitespace().collect();
                     match &args[..] {
                         ["Quit"] => break,
-                        args => println!("{:?}", args),
+                        args => println!("{args:?}"),
                     }
                 }
             }
@@ -78,7 +78,7 @@ fn run_repl(card: &Card) {
                 let handle: u32 = str::parse(handle).unwrap();
                 let handle: drm::control::framebuffer::Handle = from_u32(handle).unwrap();
                 if let Err(err) = card.destroy_framebuffer(handle) {
-                    println!("Unable to destroy framebuffer ({:?}): {}", handle, err);
+                    println!("Unable to destroy framebuffer ({handle:?}): {err}");
                 }
             }
             // Print out all resources
@@ -89,7 +89,7 @@ fn run_repl(card: &Card) {
                 println!("\tCRTCS: {:?}", resources.crtcs());
                 println!("\tFramebuffers: {:?}", resources.framebuffers());
                 let planes = card.plane_handles().unwrap();
-                println!("\tPlanes: {:?}", planes);
+                println!("\tPlanes: {planes:?}");
             }
             // Print out the values of a specific property
             ["GetProperty", handle] => {
@@ -112,7 +112,7 @@ fn run_repl(card: &Card) {
                         HandleWithProperties::Plane(handle) => card.get_properties(handle).unwrap(),
                     };
                     for (id, val) in props.iter() {
-                        println!("\tProperty: {:?}\tValue: {:?}", id, val);
+                        println!("\tProperty: {id:?}\tValue: {val:?}");
                     }
                 }
                 Err(_) => println!("Unknown handle or handle has no properties"),
