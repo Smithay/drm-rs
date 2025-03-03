@@ -21,25 +21,10 @@ pub const DRM_MAJOR: u32 = 87;
 pub const DRM_MAJOR: u32 = 226;
 
 /// Primary DRM node prefix.
-#[cfg(not(target_os = "openbsd"))]
 pub const PRIMARY_NAME: &str = "card";
 
-/// Primary DRM node prefix.
-#[cfg(target_os = "openbsd")]
-pub const PRIMARY_NAME: &str = "drm";
-
 /// Control DRM node prefix.
-#[cfg(not(target_os = "openbsd"))]
 pub const CONTROL_NAME: &str = "controlD";
 
-/// Control DRM node prefix.
-#[cfg(target_os = "openbsd")]
-pub const CONTROL_NAME: &str = "drmC";
-
 /// Render DRM node prefix.
-#[cfg(not(target_os = "openbsd"))]
 pub const RENDER_NAME: &str = "renderD";
-
-/// Render DRM node prefix.
-#[cfg(target_os = "openbsd")]
-pub const RENDER_NAME: &str = "drmR";
