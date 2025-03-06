@@ -24,7 +24,7 @@ fn display_plane(
     for (handle, value) in &props {
         let info = card.get_property(*handle)?;
         let name = info.name().to_str().unwrap().to_owned();
-        prop_map.insert(name, (info.value_type(), *value));
+        prop_map.insert(name, (info.value_type().clone(), *value));
     }
     let Value::Enum(Some(type_)) = convert_value(&prop_map["type"]) else {
         panic!("failed to convert plane type enum");
