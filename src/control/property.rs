@@ -76,8 +76,8 @@ impl Info {
     }
 
     /// Returns the ValueType of this property.
-    pub fn value_type(&self) -> ValueType {
-        self.val_type.clone()
+    pub fn value_type(&self) -> &ValueType {
+        &self.val_type
     }
 
     /// Returns whether this property is mutable.
