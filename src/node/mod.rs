@@ -3,10 +3,10 @@
 pub mod constants;
 
 use std::error::Error;
-use std::fmt::{self, Debug, Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::os::unix::io::AsFd;
 use std::path::{Path, PathBuf};
-use std::{fs, io};
+use std::{fmt, fs, io};
 
 use rustix::fs::{fstat, major, minor, stat, Dev as dev_t, Stat};
 
