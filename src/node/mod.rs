@@ -294,7 +294,7 @@ pub fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
         // Only 1 primary, control and render node may exist simultaneously, so the
         // first occurrence is good enough.
         if name.starts_with(ty.minor_name_prefix()) {
-            let path = Path::new("/dev/dri").join(&*name);
+            let path = Path::new(DRM_DIR_NAME).join(&*name);
             if path.exists() {
                 return Ok(path);
             }
@@ -332,7 +332,7 @@ pub fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
         if let Ok(old_id) = suffix.parse::<u32>() {
             let id_mask = 0b11_1111;
             let id = old_id & id_mask + ty.minor_base();
-            let path = PathBuf::from(format!("/dev/dri/{}{}", ty.minor_name_prefix(), id));
+            let path = PathBuf::from(format!("{}{}{}", DRM_DIR_NAME, ty.minor_name_prefix(), id));
             if path.exists() {
                 return Ok(path);
             }
@@ -365,7 +365,7 @@ pub fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     let old_id = minor(dev);
     let id_mask = 0b11_1111;
     let id = old_id & id_mask + ty.minor_base();
-    let path = PathBuf::from(format!("/dev/dri/{}{}", ty.minor_name_prefix(), id));
+    let path = PathBuf::from(format!("{}{}{}", DRM_DIR_NAME, ty.minor_name_prefix(), id));
     if path.exists() {
         return Ok(path);
     }
@@ -381,7 +381,7 @@ pub fn dev_path(dev: dev_t, ty: NodeType) -> io::Result<PathBuf> {
     ))
 }
 
-/// Returns an iterator with all DRM Nodes we managed to find. There might be duplicates.
+/// Returns an iterator with all the DRM Nodes. There might be duplicates.
 pub fn devices() -> io::Result<impl Iterator<Item = DrmNode>> {
     let result = fs::read_dir(DRM_DIR_NAME)?
         .filter_map(|entry| entry.ok())
