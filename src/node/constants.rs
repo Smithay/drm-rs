@@ -43,3 +43,11 @@ pub const RENDER_NAME: &str = "renderD";
 /// Render DRM node prefix.
 #[cfg(target_os = "openbsd")]
 pub const RENDER_NAME: &str = "drmR";
+
+/// Directory to search DRM devices
+#[cfg(target_os = "openbsd")]
+pub const DRM_DIR_NAME: &str = "/dev";
+
+/// Directory to search DRM devices
+#[cfg(not(target_os = "openbsd"))]
+pub const DRM_DIR_NAME: &str = "/dev/dri";
