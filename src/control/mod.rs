@@ -534,13 +534,9 @@ pub trait Device: super::Device {
     }
 
     /// Create a property blob value from a given data blob
-    fn create_property_blob<T>(&self, data: &[T]) -> io::Result<property::Value<'static>> {
-        let data = unsafe {
-            std::slice::from_raw_parts_mut(
-                data.as_ptr() as *mut u8,
-                data.len() * mem::size_of::<T>(),
-            )
-        };
+    fn create_property_blob<T: ?Sized>(&self, data: &T) -> io::Result<property::Value<'static>> {
+        let size = mem::size_of_val(data);
+        let data = unsafe { std::slice::from_raw_parts_mut(data as *const _ as *mut u8, size) };
         let blob = ffi::mode::create_property_blob(self.as_fd(), data)?;
 
         Ok(property::Value::Blob(blob.blob_id.into()))
