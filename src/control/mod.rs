@@ -6,20 +6,20 @@
 //! exposing the following resource types:
 //!
 //! * FrameBuffer - Specific to an individual process, these wrap around generic
-//! GPU buffers so that they can be attached to a Plane.
+//!   GPU buffers so that they can be attached to a Plane.
 //!
 //! * Planes - Dedicated memory objects which contain a buffer that can then be
-//! scanned out by a CRTC. There exist a few different types of planes depending
-//! on the use case.
+//!   scanned out by a CRTC. There exist a few different types of planes depending
+//!   on the use case.
 //!
 //! * CRTC - Scanout engines that read pixel data from a Plane and sends it to
-//! a Connector. Each CRTC has at least one Primary Plane.
+//!   a Connector. Each CRTC has at least one Primary Plane.
 //!
 //! * Connector - Represents the physical output, such as a DisplayPort or
-//! VGA connector.
+//!   VGA connector.
 //!
 //! * Encoder - Encodes pixel data from a CRTC into something a Connector can
-//! understand.
+//!   understand.
 //!
 //! Further details on each resource can be found in their respective modules.
 //!
@@ -96,8 +96,8 @@ pub enum GetPlanarFramebufferError {
 impl fmt::Display for GetPlanarFramebufferError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Io(err) => write!(f, "{}", err),
-            Self::UnrecognizedFourcc(err) => write!(f, "{}", err),
+            Self::Io(err) => write!(f, "{err}"),
+            Self::UnrecognizedFourcc(err) => write!(f, "{err}"),
         }
     }
 }
@@ -214,7 +214,9 @@ pub trait Device: super::Device {
             },
             modes: Mode::wrap_vec(modes),
             encoders: unsafe { transmute_vec_from_u32(encoders) },
-            curr_enc: unsafe { mem::transmute(ffi_info.encoder_id) },
+            curr_enc: unsafe {
+                mem::transmute::<u32, Option<encoder::Handle>>(ffi_info.encoder_id)
+            },
             subpixel: connector::SubPixel::from_raw(ffi_info.subpixel),
         };
 
