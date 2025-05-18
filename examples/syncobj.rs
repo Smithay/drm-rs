@@ -49,5 +49,5 @@ fn main() {
     // let future = async move { afd.readable().await.unwrap().retain_ready() };
     // future.await;
     let mut poll_fds = [rustix::event::PollFd::new(&fd, PollFlags::IN)];
-    rustix::event::poll(&mut poll_fds, -1).unwrap();
+    rustix::event::poll(&mut poll_fds, None).unwrap();
 }
