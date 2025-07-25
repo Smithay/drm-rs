@@ -6,7 +6,7 @@ version = "0.14.1"
 license = "MIT"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>", "Victoria Brekenfeld <crates-io@drakulix.de>"]
 exclude = [".gitignore", ".github"]
-rust-version = "1.66"
+rust-version = "1.70"
 edition = "2021"
 
 [dependencies]

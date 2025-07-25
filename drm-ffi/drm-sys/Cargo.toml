@@ -6,7 +6,7 @@ version = "0.8.0"
 authors = ["Tyler Slabinski <tslabinski@slabity.net>"]
 license = "MIT"
 build = "build.rs"
-rust-version = "1.66"
+rust-version = "1.70"
 edition = "2021"
 
 [features]
@@ -15,7 +15,7 @@ use_bindgen = ["bindgen", "pkg-config"]
 update_bindings = ["use_bindgen"]
 
 [build-dependencies]
-bindgen = { version = "0.69.1", optional = true }
+bindgen = { version = "0.70", optional = true }
 pkg-config = { version = "0.3.19", optional = true }
 
 [target.'cfg(any(target_os = "android", target_os = "linux"))'.dependencies]
