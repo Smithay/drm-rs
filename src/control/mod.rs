@@ -840,30 +840,37 @@ pub trait Device: super::Device {
 
     /// Exports a syncobj as an inter-process file descriptor.
     fn syncobj_to_fd(&self, handle: syncobj::Handle) -> io::Result<OwnedFd> {
-        ffi::syncobj::handle_to_fd(self.as_fd(), handle.into())
+        let args = ffi::syncobj::handle_to_fd(self.as_fd(), handle.into())?;
+        Ok(unsafe { OwnedFd::from_raw_fd(args.fd) })
     }
 
-    /// Exports a syncobj as a poll-able sync file.
+    /// Exports a syncobj as a poll-able sync file optionally for a specified timeline point.
     fn syncobj_to_sync_file(
         &self,
         handle: syncobj::Handle,
+        timeline_point: Option<u64>,
     ) -> io::Result<OwnedFd> {
-        ffi::syncobj::handle_to_sync_file(self.as_fd(), handle.into())
+        let args = ffi::syncobj::handle_to_sync_file(self.as_fd(), handle.into(), timeline_point)?;
+        Ok(unsafe { OwnedFd::from_raw_fd(args.fd) })
     }
 
     /// Imports a file descriptor exported by [`Self::syncobj_to_fd`] back into a process-local handle.
     fn fd_to_syncobj(&self, fd: BorrowedFd<'_>) -> io::Result<syncobj::Handle> {
-        let handle = ffi::syncobj::fd_to_handle(self.as_fd(), fd)?;
-        Ok(from_u32(handle).unwrap())
+        let args = ffi::syncobj::fd_to_handle(self.as_fd(), fd)?;
+        Ok(from_u32(args.handle).unwrap())
     }
 
-    /// Imports a sync file exported by [`Self::syncobj_to_sync_file`] into an existing process-local handle.
+    /// Imports a sync file exported by [`Self::syncobj_to_sync_file`] into an existing process-local handle
+    /// optionally for a specified timeline point.
     fn sync_file_into_syncobj(
         &self,
         fd: BorrowedFd<'_>,
         handle: syncobj::Handle,
+        timeline_point: Option<u64>,
     ) -> io::Result<()> {
-        ffi::syncobj::sync_file_into_handle(self.as_fd(), fd, handle.into())
+        let _ =
+            ffi::syncobj::sync_file_into_handle(self.as_fd(), fd, handle.into(), timeline_point)?;
+        Ok(())
     }
 
     /// Waits for one or more syncobjs to become signalled.

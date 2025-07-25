@@ -24,7 +24,7 @@ impl Card {
             self.syncobj_signal(&[syncobj])?;
 
             // Export fence set by previous ioctl to file descriptor.
-            self.syncobj_to_sync_file(syncobj)
+            self.syncobj_to_sync_file(syncobj, None)
         };
 
         // The sync file descriptor constitutes ownership of the fence, so the syncobj can be

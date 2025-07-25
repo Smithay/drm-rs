@@ -7,10 +7,7 @@ use drm_sys::*;
 
 use std::{
     io,
-    os::{
-        fd::{FromRawFd, OwnedFd},
-        unix::io::{AsRawFd, BorrowedFd},
-    },
+    os::fd::{AsRawFd, BorrowedFd},
 };
 
 /// Creates a syncobj.
@@ -43,7 +40,7 @@ pub fn destroy(fd: BorrowedFd<'_>, handle: u32) -> io::Result<drm_syncobj_destro
 }
 
 /// Exports a syncobj as an inter-process file descriptor.
-pub fn handle_to_fd(fd: BorrowedFd<'_>, handle: u32) -> io::Result<OwnedFd> {
+pub fn handle_to_fd(fd: BorrowedFd<'_>, handle: u32) -> io::Result<drm_syncobj_handle> {
     let mut args = drm_syncobj_handle {
         handle,
         flags: 0,
@@ -56,31 +53,40 @@ pub fn handle_to_fd(fd: BorrowedFd<'_>, handle: u32) -> io::Result<OwnedFd> {
         ioctl::syncobj::handle_to_fd(fd, &mut args)?;
     }
 
-    Ok(unsafe { OwnedFd::from_raw_fd(args.fd) })
+    Ok(args)
 }
 
-/// Exports a syncobj as a poll-able sync file.
+/// Exports a syncobj as a poll-able `sync_file` optionally for a specified timeline point.
 pub fn handle_to_sync_file(
     fd: BorrowedFd<'_>,
     handle: u32,
-) -> io::Result<OwnedFd> {
+    timeline_point: Option<u64>,
+) -> io::Result<drm_syncobj_handle> {
     let mut args = drm_syncobj_handle {
         handle,
-        flags: DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_EXPORT_SYNC_FILE,
+        flags: DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_EXPORT_SYNC_FILE
+            | if timeline_point.is_some() {
+                DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_TIMELINE
+            } else {
+                0
+            },
         fd: 0,
         pad: 0,
-        point: 0, // TODO: Add support for TIMELINE sync files
+        point: timeline_point.unwrap_or(0),
     };
 
     unsafe {
         ioctl::syncobj::handle_to_fd(fd, &mut args)?;
     }
 
-    Ok(unsafe { OwnedFd::from_raw_fd(args.fd) })
+    Ok(args)
 }
 
-/// Imports a file descriptor exported by [`handle_to_fd`] back into a process-local handle.
-pub fn fd_to_handle(fd: BorrowedFd<'_>, opaque_fd: BorrowedFd<'_>) -> io::Result<u32> {
+/// Imports a file descriptor exported by [`handle_to_fd()`] back into a process-local handle.
+pub fn fd_to_handle(
+    fd: BorrowedFd<'_>,
+    opaque_fd: BorrowedFd<'_>,
+) -> io::Result<drm_syncobj_handle> {
     let mut args = drm_syncobj_handle {
         handle: 0,
         flags: 0,
@@ -93,28 +99,35 @@ pub fn fd_to_handle(fd: BorrowedFd<'_>, opaque_fd: BorrowedFd<'_>) -> io::Result
         ioctl::syncobj::fd_to_handle(fd, &mut args)?;
     }
 
-    Ok(args.handle)
+    Ok(args)
 }
 
-/// Imports a sync file exported by [`handle_to_sync_file`] into an existing process-local handle.
+/// Imports a `sync_file` exported by [`handle_to_sync_file()`] into an existing process-local handle,
+/// optionally for a specified timeline point.
 pub fn sync_file_into_handle(
     fd: BorrowedFd<'_>,
     syncobj_fd: BorrowedFd<'_>,
     handle: u32,
-) -> io::Result<()> {
+    timeline_point: Option<u64>,
+) -> io::Result<drm_syncobj_handle> {
     let mut args = drm_syncobj_handle {
         handle,
-        flags: DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_IMPORT_SYNC_FILE,
+        flags: DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_IMPORT_SYNC_FILE
+            | if timeline_point.is_some() {
+                DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_TIMELINE
+            } else {
+                0
+            },
         fd: syncobj_fd.as_raw_fd(),
         pad: 0,
-        point: 0, // TODO: Add support for TIMELINE sync files
+        point: timeline_point.unwrap_or(0),
     };
 
     unsafe {
         ioctl::syncobj::fd_to_handle(fd, &mut args)?;
     }
 
-    Ok(())
+    Ok(args)
 }
 
 /// Waits for one or more syncobjs to become signalled.
