@@ -54,6 +54,7 @@ pub fn handle_to_fd(
         },
         fd: 0,
         pad: 0,
+        point: 0, // TODO: Add support for TIMELINE sync files
     };
 
     unsafe {
@@ -78,6 +79,7 @@ pub fn fd_to_handle(
         },
         fd: syncobj_fd.as_raw_fd(),
         pad: 0,
+        point: 0, // TODO: Add support for TIMELINE sync files
     };
 
     unsafe {
