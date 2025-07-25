@@ -237,9 +237,9 @@ jobs:
         run: cp drm-ffi/drm-sys/src/bindings.rs bindings-${{ matrix.target }}.rs
       - name: Upload bindings
         if: matrix.task == 'bindings'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: bindings
+          name: bindings-${{ matrix.target }}-${{ matrix.rust }}
           path: bindings-*.rs
       - name: Build
         uses: actions-rs/cargo@v1
@@ -262,9 +262,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: download bindings
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: bindings
+          pattern: bindings-*
+          merge-multiple: true
       - name: compare
         run: |
           code=0
@@ -289,9 +290,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: download bindings
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: bindings
+          pattern: bindings-*
+          merge-multiple: true
       - name: Copy x86_64 bindings
         run: |
           cp bindings-x86_64-unknown-linux-gnu.rs drm-ffi/drm-sys/src/bindings.rs
