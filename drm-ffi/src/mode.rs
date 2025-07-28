@@ -639,12 +639,9 @@ pub fn get_property_blob(
 }
 
 /// Create a property blob
-pub fn create_property_blob(
-    fd: BorrowedFd<'_>,
-    data: &mut [u8],
-) -> io::Result<drm_mode_create_blob> {
+pub fn create_property_blob(fd: BorrowedFd<'_>, data: &[u8]) -> io::Result<drm_mode_create_blob> {
     let mut blob = drm_mode_create_blob {
-        data: data.as_mut_ptr() as _,
+        data: data.as_ptr() as _,
         length: data.len() as _,
         ..Default::default()
     };
