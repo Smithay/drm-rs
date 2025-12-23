@@ -49,6 +49,8 @@ use crate::buffer;
 
 use super::util::*;
 
+use alloc::string::String;
+use alloc::vec::{self, Vec};
 use core::ffi::CStr;
 use core::fmt;
 use core::iter::Zip;
@@ -1470,8 +1472,7 @@ impl<'a> IntoIterator for &'a PropertyValueSet {
 
 impl IntoIterator for PropertyValueSet {
     type Item = (property::Handle, property::RawValue);
-    type IntoIter =
-        Zip<std::vec::IntoIter<property::Handle>, std::vec::IntoIter<property::RawValue>>;
+    type IntoIter = Zip<vec::IntoIter<property::Handle>, vec::IntoIter<property::RawValue>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.prop_ids.into_iter().zip(self.prop_vals)

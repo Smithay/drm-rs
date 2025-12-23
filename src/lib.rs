@@ -28,12 +28,15 @@
 
 #![warn(missing_docs)]
 
+extern crate alloc;
+
 pub(crate) mod util;
 
 pub mod buffer;
 pub mod control;
 pub mod node;
 
+use alloc::vec::Vec;
 use core::time::Duration;
 use std::ffi::{OsStr, OsString};
 use std::os::unix::ffi::OsStringExt;

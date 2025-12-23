@@ -2,6 +2,7 @@
 
 pub mod constants;
 
+use alloc::format;
 use core::fmt;
 use rustix::io::Errno;
 use std::error::Error;

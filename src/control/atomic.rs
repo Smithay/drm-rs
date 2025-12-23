@@ -1,6 +1,7 @@
 //! Helpers for atomic modesetting.
 
 use crate::control;
+use alloc::vec::Vec;
 
 /// Helper struct to construct atomic commit requests
 #[derive(Debug, Clone, Default)]

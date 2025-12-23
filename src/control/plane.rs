@@ -16,6 +16,7 @@
 //!   cursor type objects.
 
 use crate::control;
+use alloc::vec::Vec;
 use core::fmt;
 use drm_ffi as ffi;
 

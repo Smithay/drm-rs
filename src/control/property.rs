@@ -12,6 +12,7 @@
 //! together and executing them all atomically.
 
 use crate::control::{RawResourceHandle, ResourceHandle};
+use alloc::vec::Vec;
 use core::ffi::CStr;
 use core::fmt;
 use drm_ffi as ffi;

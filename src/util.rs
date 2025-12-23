@@ -1,6 +1,7 @@
 //! Utilities used internally by this crate.
 
 use crate::control::{from_u32, RawResourceHandle};
+use alloc::vec::Vec;
 
 pub unsafe fn transmute_vec<T, U>(from: Vec<T>) -> Vec<U> {
     let mut from = core::mem::ManuallyDrop::new(from);

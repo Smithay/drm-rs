@@ -7,6 +7,7 @@
 //! including the modes that the current display supports.
 
 use crate::control;
+use alloc::vec::Vec;
 use core::fmt;
 use drm_ffi as ffi;
 
