@@ -2,8 +2,11 @@
 //! Foreign function interface
 //!
 
+#![no_std]
 #![warn(missing_docs)]
 #![allow(unused_doc_comments)]
+
+extern crate alloc;
 
 pub use drm_sys::{self, *};
 
@@ -15,6 +18,7 @@ mod ioctl;
 pub mod mode;
 pub mod syncobj;
 
+use alloc::vec::Vec;
 use core::ffi::{c_int, c_ulong};
 use rustix::fd::BorrowedFd;
 use rustix::io;

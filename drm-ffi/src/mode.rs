@@ -7,6 +7,7 @@
 use crate::ioctl;
 use drm_sys::*;
 
+use alloc::vec::Vec;
 use rustix::fd::BorrowedFd;
 use rustix::io;
 

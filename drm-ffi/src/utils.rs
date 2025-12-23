@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 /// Takes an `Option<&mut Vec<T>>` style buffer and gets its pointer.
 macro_rules! map_ptr {
     ($buffer:expr) => {
