@@ -3,6 +3,7 @@
 pub mod constants;
 
 use core::fmt;
+use rustix::io::Errno;
 use std::error::Error;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -22,13 +23,13 @@ pub struct DrmNode {
 impl DrmNode {
     /// Creates a DRM node from an open drm device.
     pub fn from_file<A: AsFd>(file: A) -> Result<DrmNode, CreateDrmNodeError> {
-        let stat = fstat(file).map_err(Into::<io::Error>::into)?;
+        let stat = fstat(file)?;
         DrmNode::from_stat(stat)
     }
 
     /// Creates a DRM node from path.
     pub fn from_path<A: AsRef<Path>>(path: A) -> Result<DrmNode, CreateDrmNodeError> {
-        let stat = stat(path.as_ref()).map_err(Into::<io::Error>::into)?;
+        let stat = stat(path.as_ref())?;
         DrmNode::from_stat(stat)
     }
 
@@ -187,7 +188,7 @@ impl fmt::Display for NodeType {
 #[derive(Debug)]
 pub enum CreateDrmNodeError {
     /// Some underlying IO error occured while trying to create a DRM node.
-    Io(io::Error),
+    Io(Errno),
 
     /// The provided file descriptor does not refer to a DRM node.
     NotDrmNode,
@@ -213,9 +214,9 @@ impl Error for CreateDrmNodeError {
     }
 }
 
-impl From<io::Error> for CreateDrmNodeError {
+impl From<Errno> for CreateDrmNodeError {
     #[inline]
-    fn from(err: io::Error) -> Self {
+    fn from(err: Errno) -> Self {
         CreateDrmNodeError::Io(err)
     }
 }
@@ -275,7 +276,7 @@ pub fn is_device_drm(dev: dev_t) -> bool {
 
 /// Returns the path of a specific type of node from the same DRM device as another path of the same node.
 pub fn path_to_type<P: AsRef<Path>>(path: P, ty: NodeType) -> io::Result<PathBuf> {
-    let stat = stat(path.as_ref()).map_err(Into::<io::Error>::into)?;
+    let stat = stat(path.as_ref())?;
     dev_path(stat.st_rdev, ty)
 }
 

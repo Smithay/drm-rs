@@ -4,7 +4,7 @@ pub mod utils;
 use crate::utils::*;
 use rustix::event::PollFlags;
 use rustix::fd::{AsFd, OwnedFd};
-use std::io;
+use rustix::io;
 
 impl Card {
     fn simulate_command_submission(&self) -> io::Result<OwnedFd> {

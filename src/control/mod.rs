@@ -32,7 +32,6 @@ use drm_ffi as ffi;
 use drm_fourcc::{DrmFourcc, DrmModifier, UnrecognizedFourcc};
 
 use bytemuck::allocation::TransparentWrapperAlloc;
-use rustix::io::Errno;
 
 pub mod atomic;
 pub mod connector;
@@ -59,9 +58,9 @@ use core::ptr;
 use core::slice;
 use core::time::Duration;
 use rustix::fd::{AsFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
+use rustix::io::{self, Errno};
 use std::collections::HashMap;
 use std::error;
-use std::io;
 
 use core::num::NonZeroU32;
 
@@ -90,7 +89,7 @@ pub fn from_u32<T: From<RawResourceHandle>>(raw: u32) -> Option<T> {
 #[derive(Debug)]
 pub enum GetPlanarFramebufferError {
     /// IO error
-    Io(io::Error),
+    Io(Errno),
     /// Unrecognized fourcc format
     UnrecognizedFourcc(drm_fourcc::UnrecognizedFourcc),
 }
@@ -113,8 +112,8 @@ impl error::Error for GetPlanarFramebufferError {
     }
 }
 
-impl From<io::Error> for GetPlanarFramebufferError {
-    fn from(err: io::Error) -> Self {
+impl From<Errno> for GetPlanarFramebufferError {
+    fn from(err: Errno) -> Self {
         Self::Io(err)
     }
 }
@@ -609,7 +608,7 @@ pub trait Device: super::Device {
             || crtc_info.gamma_length as usize > green.len()
             || crtc_info.gamma_length as usize > blue.len()
         {
-            return Err(Errno::INVAL.into());
+            return Err(Errno::INVAL);
         }
 
         ffi::mode::get_gamma(
@@ -637,7 +636,7 @@ pub trait Device: super::Device {
             || crtc_info.gamma_length as usize > green.len()
             || crtc_info.gamma_length as usize > blue.len()
         {
-            return Err(Errno::INVAL.into());
+            return Err(Errno::INVAL);
         }
 
         ffi::mode::set_gamma(

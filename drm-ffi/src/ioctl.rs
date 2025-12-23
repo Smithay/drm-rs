@@ -1,6 +1,6 @@
 use core::ffi::c_uint;
 use rustix::fd::BorrowedFd;
-use std::io;
+use rustix::io;
 
 use drm_sys::*;
 use rustix::ioctl::{ioctl, opcode, Getter, NoArg, Opcode, Setter, Updater};
@@ -9,7 +9,7 @@ macro_rules! ioctl_readwrite {
     ($name:ident, $ioty:expr, $nr:expr, $ty:ty) => {
         pub unsafe fn $name(fd: BorrowedFd, data: &mut $ty) -> io::Result<()> {
             const OPCODE: Opcode = opcode::read_write::<$ty>($ioty, $nr);
-            Ok(ioctl(fd, Updater::<OPCODE, $ty>::new(data))?)
+            ioctl(fd, Updater::<OPCODE, $ty>::new(data))
         }
     };
 }
@@ -18,7 +18,7 @@ macro_rules! ioctl_read {
     ($name:ident, $ioty:expr, $nr:expr, $ty:ty) => {
         pub unsafe fn $name(fd: BorrowedFd) -> io::Result<$ty> {
             const OPCODE: Opcode = opcode::read::<$ty>($ioty, $nr);
-            Ok(ioctl(fd, Getter::<OPCODE, $ty>::new())?)
+            ioctl(fd, Getter::<OPCODE, $ty>::new())
         }
     };
 }
@@ -27,7 +27,7 @@ macro_rules! ioctl_write_ptr {
     ($name:ident, $ioty:expr, $nr:expr, $ty:ty) => {
         pub unsafe fn $name(fd: BorrowedFd, data: &$ty) -> io::Result<()> {
             const OPCODE: Opcode = opcode::write::<$ty>($ioty, $nr);
-            Ok(ioctl(fd, Setter::<OPCODE, $ty>::new(*data))?)
+            ioctl(fd, Setter::<OPCODE, $ty>::new(*data))
         }
     };
 }
@@ -36,7 +36,7 @@ macro_rules! ioctl_none {
     ($name:ident, $ioty:expr, $nr:expr) => {
         pub unsafe fn $name(fd: BorrowedFd) -> io::Result<()> {
             const OPCODE: Opcode = opcode::none($ioty, $nr);
-            Ok(ioctl(fd, NoArg::<OPCODE>::new())?)
+            ioctl(fd, NoArg::<OPCODE>::new())
         }
     };
 }

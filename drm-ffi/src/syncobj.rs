@@ -6,7 +6,7 @@ use crate::ioctl;
 use drm_sys::*;
 
 use rustix::fd::{AsRawFd, BorrowedFd};
-use std::io;
+use rustix::io;
 
 /// Creates a syncobj.
 pub fn create(fd: BorrowedFd<'_>, signaled: bool) -> io::Result<drm_syncobj_create> {

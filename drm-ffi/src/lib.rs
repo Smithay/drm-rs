@@ -17,7 +17,7 @@ pub mod syncobj;
 
 use core::ffi::{c_int, c_ulong};
 use rustix::fd::BorrowedFd;
-use std::io;
+use rustix::io;
 
 ///
 /// Bindings to the methods of authentication the DRM provides.
@@ -27,7 +27,7 @@ pub mod auth {
     use drm_sys::*;
 
     use rustix::fd::BorrowedFd;
-    use std::io;
+    use rustix::io;
 
     /// Get the 'Magic Authentication Token' for this file descriptor.
     pub fn get_magic_token(fd: BorrowedFd<'_>) -> io::Result<drm_auth> {

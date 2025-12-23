@@ -36,10 +36,10 @@ pub mod node;
 
 use core::time::Duration;
 use std::ffi::{OsStr, OsString};
-use std::{io, os::unix::ffi::OsStringExt};
+use std::os::unix::ffi::OsStringExt;
 
 use rustix::fd::AsFd;
-use rustix::io::Errno;
+use rustix::io::{self, Errno};
 
 use crate::util::*;
 
@@ -199,7 +199,7 @@ pub trait Device: AsFd {
 
         let high_crtc_mask = _DRM_VBLANK_HIGH_CRTC_MASK >> _DRM_VBLANK_HIGH_CRTC_SHIFT;
         if (high_crtc & !high_crtc_mask) != 0 {
-            return Err(Errno::INVAL.into());
+            return Err(Errno::INVAL);
         }
 
         let (sequence, wait_type) = match target_sequence {
