@@ -13,6 +13,7 @@
 //! compositing.
 
 use crate::control;
+use core::fmt;
 use drm_ffi as ffi;
 
 /// A handle to a specific CRTC
@@ -46,8 +47,8 @@ impl control::ResourceHandle for Handle {
     const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_CRTC;
 }
 
-impl std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Handle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("crtc::Handle").field(&self.0).finish()
     }
 }
@@ -62,8 +63,8 @@ pub struct Info {
     pub(crate) gamma_length: u32,
 }
 
-impl std::fmt::Display for Info {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Info {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "CRTC {}", self.handle.0)
     }
 }

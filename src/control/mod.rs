@@ -50,10 +50,10 @@ use crate::buffer;
 
 use super::util::*;
 
+use core::fmt;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::error;
-use std::fmt;
 use std::io;
 use std::iter::Zip;
 use std::mem;

@@ -2,8 +2,8 @@
 
 pub mod constants;
 
+use core::fmt;
 use std::error::Error;
-use std::fmt::{self, Debug, Display, Formatter};
 use std::io;
 use std::os::unix::io::AsFd;
 use std::path::{Path, PathBuf};
@@ -105,8 +105,8 @@ impl DrmNode {
     }
 }
 
-impl Display for DrmNode {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::Display for DrmNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.ty.minor_name_prefix(), minor(self.dev_id()))
     }
 }
@@ -177,9 +177,9 @@ impl NodeType {
     }
 }
 
-impl Display for NodeType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Debug::fmt(self, f)
+impl fmt::Display for NodeType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(self, f)
     }
 }
 
@@ -193,10 +193,10 @@ pub enum CreateDrmNodeError {
     NotDrmNode,
 }
 
-impl Display for CreateDrmNodeError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::Display for CreateDrmNodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Io(err) => Display::fmt(err, f),
+            Self::Io(err) => fmt::Display::fmt(err, f),
             Self::NotDrmNode => {
                 f.write_str("the provided file descriptor does not refer to a DRM node")
             }

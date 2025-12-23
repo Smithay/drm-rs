@@ -12,6 +12,7 @@
 //! together and executing them all atomically.
 
 use crate::control::{RawResourceHandle, ResourceHandle};
+use core::fmt;
 use drm_ffi as ffi;
 
 /// A raw property value that does not have a specific property type
@@ -48,8 +49,8 @@ impl ResourceHandle for Handle {
     const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_PROPERTY;
 }
 
-impl std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Handle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("property::Handle").field(&self.0).finish()
     }
 }
@@ -305,8 +306,8 @@ impl From<ffi::drm_mode_property_enum> for EnumValue {
     }
 }
 
-impl std::fmt::Debug for EnumValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for EnumValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("EnumValue")
             .field("value", &self.value())
             .field("name", &self.name())
