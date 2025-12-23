@@ -12,6 +12,7 @@
 //! together and executing them all atomically.
 
 use crate::control::{RawResourceHandle, ResourceHandle};
+use core::ffi::CStr;
 use core::fmt;
 use drm_ffi as ffi;
 
@@ -72,8 +73,8 @@ impl Info {
     }
 
     /// Returns the name of this property.
-    pub fn name(&self) -> &std::ffi::CStr {
-        unsafe { std::ffi::CStr::from_ptr(&self.info.name[0] as _) }
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(&self.info.name[0] as _) }
     }
 
     /// Returns the ValueType of this property.
@@ -295,8 +296,8 @@ impl EnumValue {
     }
 
     /// Returns the name of this value
-    pub fn name(&self) -> &std::ffi::CStr {
-        unsafe { std::ffi::CStr::from_ptr(&self.0.name[0] as _) }
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(&self.0.name[0] as _) }
     }
 }
 

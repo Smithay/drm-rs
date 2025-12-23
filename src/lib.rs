@@ -34,8 +34,8 @@ pub mod buffer;
 pub mod control;
 pub mod node;
 
+use core::time::Duration;
 use std::ffi::{OsStr, OsString};
-use std::time::Duration;
 use std::{
     io,
     os::unix::{ffi::OsStringExt, io::AsFd},

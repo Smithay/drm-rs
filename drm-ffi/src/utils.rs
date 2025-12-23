@@ -38,7 +38,7 @@ pub(crate) fn map_reserve_inner<T>(b: &mut Vec<T>, size: usize) {
     // `memset` to 0, at least so Valgrind doesn't complain
     unsafe {
         let ptr = b.as_mut_ptr().add(old_len) as *mut u8;
-        ptr.write_bytes(0, (size - old_len) * std::mem::size_of::<T>());
+        ptr.write_bytes(0, (size - old_len) * core::mem::size_of::<T>());
     }
 }
 

@@ -15,11 +15,8 @@ mod ioctl;
 pub mod mode;
 pub mod syncobj;
 
-use std::{
-    ffi::{c_int, c_ulong},
-    io,
-    os::unix::io::BorrowedFd,
-};
+use core::ffi::{c_int, c_ulong};
+use std::{io, os::unix::io::BorrowedFd};
 
 ///
 /// Bindings to the methods of authentication the DRM provides.

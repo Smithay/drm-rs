@@ -50,16 +50,18 @@ use crate::buffer;
 
 use super::util::*;
 
+use core::ffi::CStr;
 use core::fmt;
+use core::iter::Zip;
+use core::mem;
+use core::ops::RangeBounds;
+use core::ptr;
+use core::slice;
+use core::time::Duration;
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::error;
 use std::io;
-use std::iter::Zip;
-use std::mem;
-use std::ops::RangeBounds;
 use std::os::unix::io::{AsFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
-use std::time::Duration;
 
 use core::num::NonZeroU32;
 
@@ -394,7 +396,7 @@ pub trait Device: super::Device {
     fn dirty_framebuffer(&self, handle: framebuffer::Handle, clips: &[ClipRect]) -> io::Result<()> {
         ffi::mode::dirty_fb(self.as_fd(), handle.into(), unsafe {
             // SAFETY: ClipRect is repr(transparent) for drm_clip_rect
-            core::slice::from_raw_parts(clips.as_ptr() as *const ffi::drm_clip_rect, clips.len())
+            slice::from_raw_parts(clips.as_ptr() as *const ffi::drm_clip_rect, clips.len())
         })?;
         Ok(())
     }
@@ -536,7 +538,7 @@ pub trait Device: super::Device {
     /// Create a property blob value from a given data blob
     fn create_property_blob<T: ?Sized>(&self, data: &T) -> io::Result<property::Value<'static>> {
         let size = mem::size_of_val(data);
-        let data = unsafe { std::slice::from_raw_parts_mut(data as *const _ as *mut u8, size) };
+        let data = unsafe { slice::from_raw_parts_mut(data as *const _ as *mut u8, size) };
         let blob = ffi::mode::create_property_blob(self.as_fd(), data)?;
 
         Ok(property::Value::Blob(blob.blob_id.into()))
@@ -691,12 +693,12 @@ pub trait Device: super::Device {
             let flags = mm::MapFlags::SHARED;
             let fd = self.as_fd();
             let offset = info.offset as _;
-            unsafe { mm::mmap(std::ptr::null_mut(), buffer.length, prot, flags, fd, offset)? }
+            unsafe { mm::mmap(ptr::null_mut(), buffer.length, prot, flags, fd, offset)? }
         };
 
         let mapping = DumbMapping {
-            _phantom: std::marker::PhantomData,
-            map: unsafe { std::slice::from_raw_parts_mut(map as *mut _, buffer.length) },
+            _phantom: core::marker::PhantomData,
+            map: unsafe { slice::from_raw_parts_mut(map as *mut _, buffer.length) },
         };
 
         Ok(mapping)
@@ -1139,13 +1141,12 @@ impl Iterator for Events {
     fn next(&mut self) -> Option<Event> {
         if self.amount > 0 && self.i < self.amount {
             let event_ptr = unsafe { self.event_buf.as_ptr().add(self.i) as *const ffi::drm_event };
-            let event = unsafe { std::ptr::read_unaligned(event_ptr) };
+            let event = unsafe { ptr::read_unaligned(event_ptr) };
             self.i += event.length as usize;
             match event.type_ {
                 ffi::DRM_EVENT_VBLANK => {
-                    let vblank_event = unsafe {
-                        std::ptr::read_unaligned(event_ptr as *const ffi::drm_event_vblank)
-                    };
+                    let vblank_event =
+                        unsafe { ptr::read_unaligned(event_ptr as *const ffi::drm_event_vblank) };
                     Some(Event::Vblank(VblankEvent {
                         frame: vblank_event.sequence,
                         time: Duration::new(
@@ -1158,9 +1159,8 @@ impl Iterator for Events {
                     }))
                 }
                 ffi::DRM_EVENT_FLIP_COMPLETE => {
-                    let vblank_event = unsafe {
-                        std::ptr::read_unaligned(event_ptr as *const ffi::drm_event_vblank)
-                    };
+                    let vblank_event =
+                        unsafe { ptr::read_unaligned(event_ptr as *const ffi::drm_event_vblank) };
                     Some(Event::PageFlip(PageFlipEvent {
                         frame: vblank_event.sequence,
                         duration: Duration::new(
@@ -1260,8 +1260,8 @@ pub struct Mode {
 
 impl Mode {
     /// Returns the name of this mode.
-    pub fn name(&self) -> &std::ffi::CStr {
-        unsafe { std::ffi::CStr::from_ptr(&self.mode.name[0] as _) }
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(&self.mode.name[0] as _) }
     }
 
     /// Returns the clock speed of this mode.
@@ -1462,8 +1462,7 @@ impl PropertyValueSet {
 
 impl<'a> IntoIterator for &'a PropertyValueSet {
     type Item = (&'a property::Handle, &'a property::RawValue);
-    type IntoIter =
-        Zip<std::slice::Iter<'a, property::Handle>, std::slice::Iter<'a, property::RawValue>>;
+    type IntoIter = Zip<slice::Iter<'a, property::Handle>, slice::Iter<'a, property::RawValue>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.prop_ids.iter().zip(self.prop_vals.iter())
