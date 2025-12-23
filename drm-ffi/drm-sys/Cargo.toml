@@ -15,11 +15,11 @@ use_bindgen = ["bindgen", "pkg-config"]
 update_bindings = ["use_bindgen"]
 
 [build-dependencies]
-bindgen = { version = "0.70", optional = true }
+bindgen = { version = "0.72", optional = true }
 pkg-config = { version = "0.3.19", optional = true }
 
 [target.'cfg(any(target_os = "android", target_os = "linux"))'.dependencies]
-linux-raw-sys = { version = "0.9", default-features = false, features = ["general", "no_std"] }
+linux-raw-sys = { version = "0.12", default-features = false, features = ["general", "no_std"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "linux")))'.dependencies]
 libc = "0.2"
