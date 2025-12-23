@@ -58,10 +58,10 @@ use core::ops::RangeBounds;
 use core::ptr;
 use core::slice;
 use core::time::Duration;
+use rustix::fd::{AsFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 use std::collections::HashMap;
 use std::error;
 use std::io;
-use std::os::unix::io::{AsFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 
 use core::num::NonZeroU32;
 

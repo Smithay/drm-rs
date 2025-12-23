@@ -36,11 +36,9 @@ pub mod node;
 
 use core::time::Duration;
 use std::ffi::{OsStr, OsString};
-use std::{
-    io,
-    os::unix::{ffi::OsStringExt, io::AsFd},
-};
+use std::{io, os::unix::ffi::OsStringExt};
 
+use rustix::fd::AsFd;
 use rustix::io::Errno;
 
 use crate::util::*;

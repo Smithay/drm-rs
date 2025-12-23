@@ -5,9 +5,9 @@ pub mod constants;
 use core::fmt;
 use std::error::Error;
 use std::io;
-use std::os::unix::io::AsFd;
 use std::path::{Path, PathBuf};
 
+use rustix::fd::AsFd;
 use rustix::fs::{fstat, major, minor, stat, Dev as dev_t, Stat};
 
 use crate::node::constants::*;

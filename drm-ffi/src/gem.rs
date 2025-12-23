@@ -5,10 +5,8 @@
 use crate::ioctl;
 use drm_sys::*;
 
-use std::{
-    io,
-    os::unix::io::{AsRawFd, BorrowedFd},
-};
+use rustix::fd::{AsRawFd, BorrowedFd};
+use std::io;
 
 /// Open a GEM object given it's 32-bit name, returning the handle.
 pub fn open(fd: BorrowedFd<'_>, name: u32) -> io::Result<drm_gem_open> {

@@ -2,6 +2,7 @@
 
 pub use drm::control::Device as ControlDevice;
 pub use drm::Device;
+use rustix::fd::{AsFd, BorrowedFd};
 use std::io;
 
 #[derive(Debug)]
@@ -10,8 +11,8 @@ pub struct Card(std::fs::File);
 
 /// Implementing `AsFd` is a prerequisite to implementing the traits found
 /// in this crate. Here, we are just calling `as_fd()` on the inner File.
-impl std::os::unix::io::AsFd for Card {
-    fn as_fd(&self) -> std::os::unix::io::BorrowedFd<'_> {
+impl AsFd for Card {
+    fn as_fd(&self) -> BorrowedFd<'_> {
         self.0.as_fd()
     }
 }

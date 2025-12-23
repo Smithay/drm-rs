@@ -16,7 +16,8 @@ pub mod mode;
 pub mod syncobj;
 
 use core::ffi::{c_int, c_ulong};
-use std::{io, os::unix::io::BorrowedFd};
+use rustix::fd::BorrowedFd;
+use std::io;
 
 ///
 /// Bindings to the methods of authentication the DRM provides.
@@ -25,7 +26,8 @@ pub mod auth {
     use crate::ioctl;
     use drm_sys::*;
 
-    use std::{io, os::unix::io::BorrowedFd};
+    use rustix::fd::BorrowedFd;
+    use std::io;
 
     /// Get the 'Magic Authentication Token' for this file descriptor.
     pub fn get_magic_token(fd: BorrowedFd<'_>) -> io::Result<drm_auth> {

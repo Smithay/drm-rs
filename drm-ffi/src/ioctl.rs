@@ -1,5 +1,6 @@
 use core::ffi::c_uint;
-use std::{io, os::unix::io::BorrowedFd};
+use rustix::fd::BorrowedFd;
+use std::io;
 
 use drm_sys::*;
 use rustix::ioctl::{ioctl, opcode, Getter, NoArg, Opcode, Setter, Updater};
