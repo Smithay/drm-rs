@@ -21,7 +21,7 @@ rustix = { version = "1.0.7", features = ["mm", "fs"] }
 libc = "0.2"
 
 [dev-dependencies]
-image = { version = "0.24", default-features = false, features = ["png"] }
+image = { version = "0.25", default-features = false, features = ["png"] }
 rustix = { version = "1.0.7", features = ["event", "mm"] }
 rustyline = "13"
 
