@@ -17,6 +17,11 @@ impl AtomicModeReq {
         Self::default()
     }
 
+    /// Return `true` if the request is empty
+    pub fn is_empty(&self) -> bool {
+        self.objects.is_empty()
+    }
+
     /// Add a property and value pair for a given raw resource to the request
     pub fn add_raw_property(
         &mut self,
