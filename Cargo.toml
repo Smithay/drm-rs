@@ -2,27 +2,27 @@
 name = "drm"
 description = "Safe, low-level bindings to the Direct Rendering Manager API"
 repository = "https://github.com/Smithay/drm-rs"
-version = "0.14.1"
+version = "0.14.2"
 license = "MIT"
-authors = ["Tyler Slabinski <tslabinski@slabity.net>", "Victoria Brekenfeld <crates-io@drakulix.de>"]
+authors = ["Tyler Slabinski <slabity@slabity.dev>", "Victoria Brekenfeld <crates-io@drakulix.de>"]
 exclude = [".gitignore", ".github"]
 rust-version = "1.70"
 edition = "2021"
 
 [dependencies]
-bitflags = "2"
-bytemuck = { version = "1.14", features = ["extern_crate_alloc", "derive"] }
-bytemuck_derive = { version = "1.5" }
+bitflags = "^2"
+bytemuck = { version = "^1.14", features = ["extern_crate_alloc", "derive"] }
+bytemuck_derive = { version = "^1.5" }
 drm-ffi = { path = "drm-ffi", version = "0.9.0" }
-drm-fourcc = "^2.2.0"
-rustix = { version = "1.0.7", features = ["mm", "fs"] }
+drm-fourcc = "^2.2"
+rustix = { version = "^1", features = ["mm", "fs"] }
 
 [target.'cfg(any(target_os = "freebsd", target_os = "dragonfly"))'.dependencies]
 libc = "0.2"
 
 [dev-dependencies]
 image = { version = "0.24", default-features = false, features = ["png"] }
-rustix = { version = "1.0.7", features = ["event", "mm"] }
+rustix = { version = "^1", features = ["event", "mm"] }
 rustyline = "13"
 
 [features]
