@@ -32,6 +32,7 @@ pub const DRM_CLIENT_CAP_ATOMIC: u32 = 3;
 pub const DRM_CLIENT_CAP_ASPECT_RATIO: u32 = 4;
 pub const DRM_CLIENT_CAP_WRITEBACK_CONNECTORS: u32 = 5;
 pub const DRM_CLIENT_CAP_CURSOR_PLANE_HOTSPOT: u32 = 6;
+pub const DRM_CLIENT_CAP_PLANE_COLOR_PIPELINE: u32 = 7;
 pub const DRM_SYNCOBJ_CREATE_SIGNALED: u32 = 1;
 pub const DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_IMPORT_SYNC_FILE: u32 = 1;
 pub const DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_TIMELINE: u32 = 2;
@@ -173,6 +174,7 @@ pub const DRM_MODE_OBJECT_PROPERTY: u32 = 2964369584;
 pub const DRM_MODE_OBJECT_FB: u32 = 4227595259;
 pub const DRM_MODE_OBJECT_BLOB: u32 = 3149642683;
 pub const DRM_MODE_OBJECT_PLANE: u32 = 4008636142;
+pub const DRM_MODE_OBJECT_COLOROP: u32 = 4210752250;
 pub const DRM_MODE_OBJECT_ANY: u32 = 0;
 pub const DRM_MODE_FB_INTERLACED: u32 = 1;
 pub const DRM_MODE_FB_MODIFIERS: u32 = 2;
@@ -789,6 +791,12 @@ pub struct drm_gem_open {
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_gem_change_handle {
+    pub handle: __u32,
+    pub new_handle: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_get_cap {
     pub capability: __u64,
     pub value: __u64,
@@ -1159,12 +1167,35 @@ pub struct drm_color_ctm {
 }
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_color_ctm_3x4 {
+    pub matrix: [__u64; 12usize],
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_color_lut {
     pub red: __u16,
     pub green: __u16,
     pub blue: __u16,
     pub reserved: __u16,
 }
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct drm_color_lut32 {
+    pub red: __u32,
+    pub green: __u32,
+    pub blue: __u32,
+    pub reserved: __u32,
+}
+pub const DRM_COLOROP_1D_CURVE: drm_colorop_type = 0;
+pub const DRM_COLOROP_1D_LUT: drm_colorop_type = 1;
+pub const DRM_COLOROP_CTM_3X4: drm_colorop_type = 2;
+pub const DRM_COLOROP_MULTIPLIER: drm_colorop_type = 3;
+pub const DRM_COLOROP_3D_LUT: drm_colorop_type = 4;
+pub type drm_colorop_type = core::ffi::c_uint;
+pub const DRM_COLOROP_LUT3D_INTERPOLATION_TETRAHEDRAL: drm_colorop_lut3d_interpolation_type = 0;
+pub type drm_colorop_lut3d_interpolation_type = core::ffi::c_uint;
+pub const DRM_COLOROP_LUT1D_INTERPOLATION_LINEAR: drm_colorop_lut1d_interpolation_type = 0;
+pub type drm_colorop_lut1d_interpolation_type = core::ffi::c_uint;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct drm_plane_size_hint {
