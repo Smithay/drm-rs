@@ -13,7 +13,7 @@ edition = "2021"
 bitflags = "^2"
 bytemuck = { version = "^1.14", features = ["extern_crate_alloc", "derive"] }
 bytemuck_derive = { version = "^1.5" }
-drm-ffi = { path = "drm-ffi", version = "0.9.0" }
+drm-ffi = { path = "drm-ffi", version = "0.9" }
 drm-fourcc = "^2.2"
 rustix = { version = "^1", features = ["mm", "fs"] }
 
