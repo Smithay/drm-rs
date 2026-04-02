@@ -23,7 +23,7 @@ libc = "0.2"
 [dev-dependencies]
 image = { version = "0.24", default-features = false, features = ["png"] }
 rustix = { version = "^1", features = ["event", "mm"] }
-rustyline = "13"
+rustyline = "18"
 
 [features]
 use_bindgen = ["drm-ffi/use_bindgen"]

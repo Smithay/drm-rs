@@ -58,7 +58,7 @@ fn run_repl(card: &Card) {
         .edit_mode(rustyline::config::EditMode::Vi)
         .auto_add_history(true)
         .build();
-    let mut kms_editor = rustyline::Editor::<(), _>::with_config(editor_config).unwrap();
+    let mut kms_editor = rustyline::Editor::<(), _>::with_config(editor_config.clone()).unwrap();
     let mut atomic_editor = rustyline::Editor::<(), _>::with_config(editor_config).unwrap();
 
     for line in kms_editor.iter("KMS>> ").map(|x| x.unwrap()) {
