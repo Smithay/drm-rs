@@ -8,16 +8,6 @@ macro_rules! map_ptr {
     };
 }
 
-/// Takes an `Option<&mut Vec<T>>` style buffer and gets its allocated length.
-macro_rules! map_len {
-    ($buffer:expr) => {
-        match $buffer {
-            Some(b) => b.capacity() as _,
-            None => 0,
-        }
-    };
-}
-
 /// Takes an `Option<&mut Vec<T>>` style buffer and reserves space.
 macro_rules! map_reserve {
     ($buffer:expr, $size:expr) => {

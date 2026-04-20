@@ -17,27 +17,20 @@ pub fn get_resources(
     mut connectors: Option<&mut Vec<u32>>,
     mut encoders: Option<&mut Vec<u32>>,
 ) -> io::Result<drm_mode_card_res> {
-    let mut sizes = drm_mode_card_res::default();
+    let mut res = drm_mode_card_res::default();
     unsafe {
-        ioctl::mode::get_resources(fd, &mut sizes)?;
+        ioctl::mode::get_resources(fd, &mut res)?;
     }
 
-    map_reserve!(fbs, sizes.count_fbs as usize);
-    map_reserve!(crtcs, sizes.count_crtcs as usize);
-    map_reserve!(connectors, sizes.count_connectors as usize);
-    map_reserve!(encoders, sizes.count_encoders as usize);
+    map_reserve!(fbs, res.count_fbs as usize);
+    map_reserve!(crtcs, res.count_crtcs as usize);
+    map_reserve!(connectors, res.count_connectors as usize);
+    map_reserve!(encoders, res.count_encoders as usize);
 
-    let mut res = drm_mode_card_res {
-        fb_id_ptr: map_ptr!(&fbs),
-        crtc_id_ptr: map_ptr!(&crtcs),
-        connector_id_ptr: map_ptr!(&connectors),
-        encoder_id_ptr: map_ptr!(&encoders),
-        count_fbs: map_len!(&fbs),
-        count_crtcs: map_len!(&crtcs),
-        count_connectors: map_len!(&connectors),
-        count_encoders: map_len!(&encoders),
-        ..Default::default()
-    };
+    res.fb_id_ptr = map_ptr!(&fbs);
+    res.crtc_id_ptr = map_ptr!(&crtcs);
+    res.connector_id_ptr = map_ptr!(&connectors);
+    res.encoder_id_ptr = map_ptr!(&encoders);
 
     unsafe {
         ioctl::mode::get_resources(fd, &mut res)?;
@@ -56,21 +49,18 @@ pub fn get_plane_resources(
     fd: BorrowedFd<'_>,
     mut planes: Option<&mut Vec<u32>>,
 ) -> io::Result<drm_mode_get_plane_res> {
-    let mut sizes = drm_mode_get_plane_res::default();
+    let mut res = drm_mode_get_plane_res::default();
     unsafe {
-        ioctl::mode::get_plane_resources(fd, &mut sizes)?;
+        ioctl::mode::get_plane_resources(fd, &mut res)?;
     }
 
     if planes.is_none() {
-        return Ok(sizes);
+        return Ok(res);
     }
 
-    map_reserve!(planes, sizes.count_planes as usize);
+    map_reserve!(planes, res.count_planes as usize);
 
-    let mut res = drm_mode_get_plane_res {
-        plane_id_ptr: map_ptr!(&planes),
-        count_planes: sizes.count_planes,
-    };
+    res.plane_id_ptr = map_ptr!(&planes);
 
     unsafe {
         ioctl::mode::get_plane_resources(fd, &mut res)?;
@@ -429,8 +419,8 @@ pub fn get_connector(
                 Some(b) => b.capacity() as _,
                 None => u32::from(!force_probe),
             },
-            count_props: map_len!(&props),
-            count_encoders: map_len!(&encoders),
+            count_props: sizes.count_props,
+            count_encoders: sizes.count_encoders,
             ..Default::default()
         };
 
@@ -476,27 +466,22 @@ pub fn get_plane(
     plane_id: u32,
     mut formats: Option<&mut Vec<u32>>,
 ) -> io::Result<drm_mode_get_plane> {
-    let mut sizes = drm_mode_get_plane {
+    let mut info = drm_mode_get_plane {
         plane_id,
         ..Default::default()
     };
 
     unsafe {
-        ioctl::mode::get_plane(fd, &mut sizes)?;
+        ioctl::mode::get_plane(fd, &mut info)?;
     }
 
     if formats.is_none() {
-        return Ok(sizes);
+        return Ok(info);
     }
 
-    map_reserve!(formats, sizes.count_format_types as usize);
+    map_reserve!(formats, info.count_format_types as usize);
 
-    let mut info = drm_mode_get_plane {
-        plane_id,
-        count_format_types: sizes.count_format_types,
-        format_type_ptr: map_ptr!(&formats),
-        ..Default::default()
-    };
+    info.format_type_ptr = map_ptr!(&formats);
 
     unsafe {
         ioctl::mode::get_plane(fd, &mut info)?;
@@ -608,26 +593,22 @@ pub fn get_property_blob(
     blob_id: u32,
     mut data: Option<&mut Vec<u8>>,
 ) -> io::Result<drm_mode_get_blob> {
-    let mut sizes = drm_mode_get_blob {
+    let mut blob = drm_mode_get_blob {
         blob_id,
         ..Default::default()
     };
 
     unsafe {
-        ioctl::mode::get_blob(fd, &mut sizes)?;
+        ioctl::mode::get_blob(fd, &mut blob)?;
     }
 
     if data.is_none() {
-        return Ok(sizes);
+        return Ok(blob);
     }
 
-    map_reserve!(data, sizes.length as usize);
+    map_reserve!(data, blob.length as usize);
 
-    let mut blob = drm_mode_get_blob {
-        blob_id,
-        length: sizes.length,
-        data: map_ptr!(&data),
-    };
+    blob.data = map_ptr!(&data);
 
     unsafe {
         ioctl::mode::get_blob(fd, &mut blob)?;
@@ -677,26 +658,21 @@ pub fn get_properties(
 ) -> io::Result<drm_mode_obj_get_properties> {
     assert_eq!(props.is_some(), values.is_some());
 
-    let mut sizes = drm_mode_obj_get_properties {
+    let mut info = drm_mode_obj_get_properties {
         obj_id,
         obj_type,
         ..Default::default()
     };
 
     unsafe {
-        ioctl::mode::obj_get_properties(fd, &mut sizes)?;
+        ioctl::mode::obj_get_properties(fd, &mut info)?;
     }
 
-    map_reserve!(props, sizes.count_props as usize);
-    map_reserve!(values, sizes.count_props as usize);
+    map_reserve!(props, info.count_props as usize);
+    map_reserve!(values, info.count_props as usize);
 
-    let mut info = drm_mode_obj_get_properties {
-        props_ptr: map_ptr!(&props),
-        prop_values_ptr: map_ptr!(&values),
-        count_props: map_len!(&props),
-        obj_id,
-        obj_type,
-    };
+    info.props_ptr = map_ptr!(&props);
+    info.prop_values_ptr = map_ptr!(&values);
 
     unsafe {
         ioctl::mode::obj_get_properties(fd, &mut info)?;
@@ -805,19 +781,15 @@ pub fn list_lessees(
     fd: BorrowedFd<'_>,
     mut lessees: Option<&mut Vec<u32>>,
 ) -> io::Result<drm_mode_list_lessees> {
-    let mut sizes = drm_mode_list_lessees::default();
+    let mut data = drm_mode_list_lessees::default();
 
     unsafe {
-        ioctl::mode::list_lessees(fd, &mut sizes)?;
+        ioctl::mode::list_lessees(fd, &mut data)?;
     };
 
-    map_reserve!(lessees, sizes.count_lessees as usize);
+    map_reserve!(lessees, data.count_lessees as usize);
 
-    let mut data = drm_mode_list_lessees {
-        lessees_ptr: map_ptr!(&lessees),
-        count_lessees: map_len!(&lessees),
-        ..Default::default()
-    };
+    data.lessees_ptr = map_ptr!(&lessees);
 
     unsafe {
         ioctl::mode::list_lessees(fd, &mut data)?;
@@ -833,19 +805,15 @@ pub fn get_lease(
     fd: BorrowedFd<'_>,
     mut objects: Option<&mut Vec<u32>>,
 ) -> io::Result<drm_mode_get_lease> {
-    let mut sizes = drm_mode_get_lease::default();
+    let mut data = drm_mode_get_lease::default();
 
     unsafe {
-        ioctl::mode::get_lease(fd, &mut sizes)?;
+        ioctl::mode::get_lease(fd, &mut data)?;
     }
 
-    map_reserve!(objects, sizes.count_objects as usize);
+    map_reserve!(objects, data.count_objects as usize);
 
-    let mut data = drm_mode_get_lease {
-        count_objects: map_len!(&objects),
-        objects_ptr: map_ptr!(&objects),
-        ..Default::default()
-    };
+    data.objects_ptr = map_ptr!(&objects);
 
     unsafe {
         ioctl::mode::get_lease(fd, &mut data)?;
