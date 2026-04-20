@@ -42,8 +42,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
+          uname -a
           sudo apt-get update -y
-          sudo apt-get install -y libdrm-dev
+          sudo apt-get install -y libdrm-dev linux-headers-6.8.0-1044-azure
       - name: Fetch drm headers
         run: ./.github/workflows/fetch_headers.sh
       - uses: dtolnay/rust-toolchain@1.89.0
@@ -69,8 +70,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
+          uname -a
           sudo apt-get update -y
-          sudo apt-get install -y libdrm-dev
+          sudo apt-get install -y libdrm-dev linux-headers-6.8.0-1044-azure
       - name: Fetch drm headers
         run: ./.github/workflows/fetch_headers.sh
       - uses: dtolnay/rust-toolchain@nightly
