@@ -96,7 +96,9 @@ pub fn main() {
             }
             false
         });
-    let plane = *better_planes.first().unwrap_or(&compatible_planes[0]);
+    let plane = *better_planes
+        .first()
+        .unwrap_or_else(|| &compatible_planes[0]);
 
     println!("{mode:#?}");
     println!("{fb:#?}");
