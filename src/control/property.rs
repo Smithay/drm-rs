@@ -12,6 +12,9 @@
 //! together and executing them all atomically.
 
 use crate::control::{RawResourceHandle, ResourceHandle};
+use alloc::vec::Vec;
+use core::ffi::CStr;
+use core::fmt;
 use drm_ffi as ffi;
 
 /// A raw property value that does not have a specific property type
@@ -48,8 +51,8 @@ impl ResourceHandle for Handle {
     const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_PROPERTY;
 }
 
-impl std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Handle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("property::Handle").field(&self.0).finish()
     }
 }
@@ -71,8 +74,8 @@ impl Info {
     }
 
     /// Returns the name of this property.
-    pub fn name(&self) -> &std::ffi::CStr {
-        unsafe { std::ffi::CStr::from_ptr(&self.info.name[0] as _) }
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(&self.info.name[0] as _) }
     }
 
     /// Returns the ValueType of this property.
@@ -294,8 +297,8 @@ impl EnumValue {
     }
 
     /// Returns the name of this value
-    pub fn name(&self) -> &std::ffi::CStr {
-        unsafe { std::ffi::CStr::from_ptr(&self.0.name[0] as _) }
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(&self.0.name[0] as _) }
     }
 }
 
@@ -305,8 +308,8 @@ impl From<ffi::drm_mode_property_enum> for EnumValue {
     }
 }
 
-impl std::fmt::Debug for EnumValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for EnumValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("EnumValue")
             .field("value", &self.value())
             .field("name", &self.name())

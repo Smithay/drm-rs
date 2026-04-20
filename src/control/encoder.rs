@@ -4,6 +4,7 @@
 //! data of the CRTC and encodes it into a format the connector understands.
 
 use crate::control;
+use core::fmt;
 use drm_ffi as ffi;
 
 /// A handle to an encoder
@@ -37,8 +38,8 @@ impl control::ResourceHandle for Handle {
     const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_ENCODER;
 }
 
-impl std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Handle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("encoder::Handle").field(&self.0).finish()
     }
 }
@@ -53,8 +54,8 @@ pub struct Info {
     pub(crate) pos_clones: u32,
 }
 
-impl std::fmt::Display for Info {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Info {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Encoder {}", self.handle.0)
     }
 }

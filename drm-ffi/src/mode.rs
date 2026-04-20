@@ -7,7 +7,9 @@
 use crate::ioctl;
 use drm_sys::*;
 
-use std::{io, os::unix::io::BorrowedFd};
+use alloc::vec::Vec;
+use rustix::fd::BorrowedFd;
+use rustix::io;
 
 /// Enumerate most card resources.
 pub fn get_resources(
@@ -874,7 +876,8 @@ pub mod dumbbuffer {
     use crate::ioctl;
     use drm_sys::*;
 
-    use std::{io, os::unix::io::BorrowedFd};
+    use rustix::fd::BorrowedFd;
+    use rustix::io;
 
     /// Create a dumb buffer
     pub fn create(

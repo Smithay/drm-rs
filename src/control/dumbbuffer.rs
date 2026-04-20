@@ -6,8 +6,8 @@
 
 use crate::buffer;
 
-use std::borrow::{Borrow, BorrowMut};
-use std::ops::{Deref, DerefMut};
+use core::borrow::{Borrow, BorrowMut};
+use core::ops::{Deref, DerefMut};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// Slow, but generic [`buffer::Buffer`] implementation

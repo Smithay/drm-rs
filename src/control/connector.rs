@@ -7,6 +7,8 @@
 //! including the modes that the current display supports.
 
 use crate::control;
+use alloc::vec::Vec;
+use core::fmt;
 use drm_ffi as ffi;
 
 /// A handle to a connector
@@ -40,8 +42,8 @@ impl control::ResourceHandle for Handle {
     const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_CONNECTOR;
 }
 
-impl std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Handle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("connector::Handle").field(&self.0).finish()
     }
 }
@@ -60,8 +62,8 @@ pub struct Info {
     pub(crate) subpixel: SubPixel,
 }
 
-impl std::fmt::Display for Info {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Info {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}-{}", self.interface.as_str(), self.interface_id)
     }
 }
