@@ -86,7 +86,7 @@ impl DrmNode {
 
     /// Returns whether the DRM device has render nodes.
     pub fn has_render(&self) -> bool {
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "openbsd"))]
         {
             node_path(self, NodeType::Render).is_ok()
         }
@@ -98,7 +98,7 @@ impl DrmNode {
             false
         }
 
-        #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
+        #[cfg(not(any(target_os = "linux", target_os = "freebsd", target_os = "openbsd")))]
         {
             false
         }
