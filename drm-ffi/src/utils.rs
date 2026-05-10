@@ -9,7 +9,7 @@ macro_rules! map_ptr {
 }
 
 /// Takes an `Option<&mut Vec<T>>` style buffer and gets its allocated length.
-macro_rules! map_len {
+macro_rules! map_capacity {
     ($buffer:expr) => {
         match $buffer {
             Some(b) => b.capacity() as _,

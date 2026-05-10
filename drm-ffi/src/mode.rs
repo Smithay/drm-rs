@@ -32,10 +32,10 @@ pub fn get_resources(
         crtc_id_ptr: map_ptr!(&crtcs),
         connector_id_ptr: map_ptr!(&connectors),
         encoder_id_ptr: map_ptr!(&encoders),
-        count_fbs: map_len!(&fbs),
-        count_crtcs: map_len!(&crtcs),
-        count_connectors: map_len!(&connectors),
-        count_encoders: map_len!(&encoders),
+        count_fbs: map_capacity!(&fbs),
+        count_crtcs: map_capacity!(&crtcs),
+        count_connectors: map_capacity!(&connectors),
+        count_encoders: map_capacity!(&encoders),
         ..Default::default()
     };
 
@@ -429,8 +429,8 @@ pub fn get_connector(
                 Some(b) => b.capacity() as _,
                 None => u32::from(!force_probe),
             },
-            count_props: map_len!(&props),
-            count_encoders: map_len!(&encoders),
+            count_props: map_capacity!(&props),
+            count_encoders: map_capacity!(&encoders),
             ..Default::default()
         };
 
@@ -693,7 +693,7 @@ pub fn get_properties(
     let mut info = drm_mode_obj_get_properties {
         props_ptr: map_ptr!(&props),
         prop_values_ptr: map_ptr!(&values),
-        count_props: map_len!(&props),
+        count_props: map_capacity!(&props),
         obj_id,
         obj_type,
     };
@@ -815,7 +815,7 @@ pub fn list_lessees(
 
     let mut data = drm_mode_list_lessees {
         lessees_ptr: map_ptr!(&lessees),
-        count_lessees: map_len!(&lessees),
+        count_lessees: map_capacity!(&lessees),
         ..Default::default()
     };
 
@@ -842,7 +842,7 @@ pub fn get_lease(
     map_reserve!(objects, sizes.count_objects as usize);
 
     let mut data = drm_mode_get_lease {
-        count_objects: map_len!(&objects),
+        count_objects: map_capacity!(&objects),
         objects_ptr: map_ptr!(&objects),
         ..Default::default()
     };
