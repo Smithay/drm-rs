@@ -1530,6 +1530,8 @@ bitflags::bitflags! {
         ///
         /// Changes requiring a modeset are rejected otherwise.
         const ALLOW_MODESET = ffi::drm_sys::DRM_MODE_ATOMIC_ALLOW_MODESET;
+        /// Resets the atomic state
+        const RESET = 0x0800;
     }
 }
 
