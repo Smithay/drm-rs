@@ -1,4 +1,5 @@
 //! Module for abstractions on drm device nodes.
+#![allow(unexpected_cfgs)]
 
 pub mod constants;
 
@@ -34,7 +35,17 @@ impl DrmNode {
 
     /// Creates a DRM node from a file stat.
     pub fn from_stat(stat: Stat) -> Result<DrmNode, CreateDrmNodeError> {
-        let dev = stat.st_rdev;
+        let dev: u64 = {
+            #[cfg(not(target_arch = "e2k"))]
+            {
+                stat.st_rdev
+            }
+
+            #[cfg(target_arch = "e2k")]
+            {
+                stat.st_rdev as u64
+            }
+        };
         DrmNode::from_dev_id(dev)
     }
 
@@ -276,7 +287,18 @@ pub fn is_device_drm(dev: dev_t) -> bool {
 /// Returns the path of a specific type of node from the same DRM device as another path of the same node.
 pub fn path_to_type<P: AsRef<Path>>(path: P, ty: NodeType) -> io::Result<PathBuf> {
     let stat = stat(path.as_ref()).map_err(Into::<io::Error>::into)?;
-    dev_path(stat.st_rdev, ty)
+    let dev: u64 = {
+        #[cfg(not(target_arch = "e2k"))]
+        {
+            stat.st_rdev
+        }
+
+        #[cfg(target_arch = "e2k")]
+        {
+            stat.st_rdev as u64
+        }
+    };
+    dev_path(dev, ty)
 }
 
 /// Returns the path of a specific type of node from the same DRM device as an existing [`DrmNode`].
