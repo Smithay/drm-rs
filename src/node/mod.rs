@@ -1,5 +1,4 @@
 //! Module for abstractions on drm device nodes.
-#![allow(unexpected_cfgs)]
 
 pub mod constants;
 
