@@ -414,8 +414,8 @@ pub fn get_connector(
             connector_id,
             encoders_ptr: map_ptr!(&encoders),
             modes_ptr: match &mut modes {
-                Some(b) => b.as_mut_ptr() as _,
-                None => {
+                Some(b) if b.capacity() != 0 => b.as_mut_ptr() as _,
+                None | Some(_) => {
                     if force_probe {
                         0 as _
                     } else {
@@ -426,6 +426,7 @@ pub fn get_connector(
             props_ptr: map_ptr!(&props),
             prop_values_ptr: map_ptr!(&prop_values),
             count_modes: match &modes {
+                Some(b) if b.capacity() == 0 && !force_probe => 1,
                 Some(b) => b.capacity() as _,
                 None => u32::from(!force_probe),
             },
