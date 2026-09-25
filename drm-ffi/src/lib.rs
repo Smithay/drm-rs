@@ -167,11 +167,11 @@ pub fn get_version(
     map_reserve!(desc_buf, sizes.desc_len as usize);
 
     let mut version = drm_version {
-        name_len: map_len!(&name_buf),
+        name_len: map_capacity!(&name_buf),
         name: map_ptr!(&name_buf),
-        date_len: map_len!(&date_buf),
+        date_len: map_capacity!(&date_buf),
         date: map_ptr!(&date_buf),
-        desc_len: map_len!(&desc_buf),
+        desc_len: map_capacity!(&desc_buf),
         desc: map_ptr!(&desc_buf),
         ..Default::default()
     };
