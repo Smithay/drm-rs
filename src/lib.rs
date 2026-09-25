@@ -337,6 +337,16 @@ pub enum ClientCapability {
     ///
     /// The client must enable [`Self::Atomic`] first.
     CursorPlaneHotspot = drm_ffi::DRM_CLIENT_CAP_CURSOR_PLANE_HOTSPOT as u64,
+    /// If set to 1, the DRM core will allow setting the COLOR_PIPELINE property
+    /// on a plane, as well as drm_colorop properties.
+    ///
+    /// Setting of these plane properties will be rejected when this client cap
+    /// is set:
+    /// - COLOR_ENCODING
+    /// - COLOR_RANGE
+    ///
+    /// The client must enable [`Self::Atomic`] first.
+    PlaneColorPipeline = drm_ffi::DRM_CLIENT_CAP_PLANE_COLOR_PIPELINE as u64,
 }
 
 /// Used to specify a vblank sequence to wait for

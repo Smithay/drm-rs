@@ -124,6 +124,8 @@ pub enum ValueType {
     Plane,
     /// A Property object
     Property,
+    /// A Colorop object
+    Colorop,
 }
 
 impl ValueType {
@@ -144,6 +146,7 @@ impl ValueType {
             ValueType::Framebuffer => Value::Framebuffer(bytemuck::cast(value as u32)),
             ValueType::Plane => Value::Plane(bytemuck::cast(value as u32)),
             ValueType::Property => Value::Property(bytemuck::cast(value as u32)),
+            ValueType::Colorop => Value::Colorop(bytemuck::cast(value as u32)),
         }
     }
 }
@@ -181,6 +184,8 @@ pub enum Value<'a> {
     Plane(Option<super::plane::Handle>),
     /// Property object value
     Property(Option<Handle>),
+    /// Colorop object value
+    Colorop(Option<super::colorop::Handle>),
 }
 
 impl<'a> From<Value<'a>> for RawValue {
@@ -201,6 +206,7 @@ impl<'a> From<Value<'a>> for RawValue {
             Value::Framebuffer(x) => bytemuck::cast::<_, u32>(x) as u64,
             Value::Plane(x) => bytemuck::cast::<_, u32>(x) as u64,
             Value::Property(x) => bytemuck::cast::<_, u32>(x) as u64,
+            Value::Colorop(x) => bytemuck::cast::<_, u32>(x) as u64,
         }
     }
 }
@@ -279,6 +285,11 @@ impl<'a> Value<'a> {
     /// Property object value
     pub fn as_property(&self) -> Option<Handle> {
         match_variant!(self, Property).flatten()
+    }
+
+    /// Colorop object value
+    pub fn as_colorop(&self) -> Option<super::colorop::Handle> {
+        match_variant!(self, Colorop).flatten()
     }
 }
 

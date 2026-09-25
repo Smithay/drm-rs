@@ -35,6 +35,7 @@ use bytemuck::allocation::TransparentWrapperAlloc;
 use rustix::io::Errno;
 
 pub mod atomic;
+pub mod colorop;
 pub mod connector;
 pub mod crtc;
 pub mod dumbbuffer;
@@ -503,6 +504,7 @@ pub trait Device: super::Device {
                     ffi::DRM_MODE_OBJECT_PROPERTY => ValueType::Property,
                     ffi::DRM_MODE_OBJECT_BLOB => ValueType::Blob,
                     ffi::DRM_MODE_OBJECT_ANY => ValueType::Object,
+                    ffi::DRM_MODE_OBJECT_COLOROP => ValueType::Colorop,
                     _ => ValueType::Unknown,
                 }
             } else {

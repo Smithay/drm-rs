@@ -36,7 +36,12 @@ impl Card {
 
 pub mod capabilities {
     use drm::ClientCapability as CC;
-    pub const CLIENT_CAP_ENUMS: &[CC] = &[CC::Stereo3D, CC::UniversalPlanes, CC::Atomic];
+    pub const CLIENT_CAP_ENUMS: &[CC] = &[
+        CC::Stereo3D,
+        CC::UniversalPlanes,
+        CC::Atomic,
+        CC::PlaneColorPipeline,
+    ];
 
     use drm::DriverCapability as DC;
     pub const DRIVER_CAP_ENUMS: &[DC] = &[
