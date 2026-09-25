@@ -59,21 +59,18 @@ pub mod auth {
 
 /// Load this device's Bus ID into a buffer.
 pub fn get_bus_id(fd: BorrowedFd<'_>, mut buf: Option<&mut Vec<u8>>) -> io::Result<drm_unique> {
-    let mut sizes = drm_unique::default();
+    let mut busid = drm_unique::default();
     unsafe {
-        ioctl::get_bus_id(fd, &mut sizes)?;
+        ioctl::get_bus_id(fd, &mut busid)?;
     }
 
     if buf.is_none() {
-        return Ok(sizes);
+        return Ok(busid);
     }
 
-    map_reserve!(buf, sizes.unique_len as usize);
+    map_reserve!(buf, busid.unique_len as usize);
 
-    let mut busid = drm_unique {
-        unique_len: sizes.unique_len,
-        unique: map_ptr!(&buf),
-    };
+    busid.unique = map_ptr!(&buf);
 
     unsafe {
         ioctl::get_bus_id(fd, &mut busid)?;
@@ -159,22 +156,16 @@ pub fn get_version(
     mut date_buf: Option<&mut Vec<i8>>,
     mut desc_buf: Option<&mut Vec<i8>>,
 ) -> io::Result<drm_version> {
-    let mut sizes = drm_version::default();
-    unsafe { ioctl::get_version(fd, &mut sizes) }?;
+    let mut version = drm_version::default();
+    unsafe { ioctl::get_version(fd, &mut version) }?;
 
-    map_reserve!(name_buf, sizes.name_len as usize);
-    map_reserve!(date_buf, sizes.date_len as usize);
-    map_reserve!(desc_buf, sizes.desc_len as usize);
+    map_reserve!(name_buf, version.name_len as usize);
+    map_reserve!(date_buf, version.date_len as usize);
+    map_reserve!(desc_buf, version.desc_len as usize);
 
-    let mut version = drm_version {
-        name_len: map_len!(&name_buf),
-        name: map_ptr!(&name_buf),
-        date_len: map_len!(&date_buf),
-        date: map_ptr!(&date_buf),
-        desc_len: map_len!(&desc_buf),
-        desc: map_ptr!(&desc_buf),
-        ..Default::default()
-    };
+    version.name = map_ptr!(&name_buf);
+    version.date = map_ptr!(&date_buf);
+    version.desc = map_ptr!(&desc_buf);
 
     unsafe { ioctl::get_version(fd, &mut version) }?;
 
