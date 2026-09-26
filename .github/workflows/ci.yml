@@ -42,39 +42,37 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
+          uname -a
           sudo apt-get update -y
-          sudo apt-get install -y libdrm-dev
+          sudo apt-get install -y libdrm-dev linux-headers-6.8.0-1044-azure
       - name: Fetch drm headers
         run: ./.github/workflows/fetch_headers.sh
-      - uses: dtolnay/rust-toolchain@1.70.0
+      - uses: dtolnay/rust-toolchain@1.89.0
         with:
           components: clippy
-        # TODO: Remove once our MSRV is past 1.84 for the new resolver
-      - uses: dtolnay/rust-toolchain@1.84.0
-      - name: Downgrade msrv aware
-        run: env CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback cargo +1.84 generate-lockfile
       - name: Cargo cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-rust_1.70.0-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ runner.os }}-cargo-rust_1.89.0-${{ hashFiles('**/Cargo.toml') }}
       - name: Build cache
         uses: actions/cache@v3
         with:
           path: target
-          key: ${{ runner.os }}-build-rust_1.70.0-check-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ runner.os }}-build-rust_1.89.0-check-${{ hashFiles('**/Cargo.toml') }}
       - name: Clippy
-        run: cargo +1.70.0 clippy --all --all-features --all-targets -- -D warnings -A clippy::redundant_static_lifetimes
+        run: cargo +1.89.0 clippy --all --all-features --all-targets -- -D warnings -A clippy::redundant_static_lifetimes
 
   check-minimal:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - run: |
+          uname -a
           sudo apt-get update -y
-          sudo apt-get install -y libdrm-dev
+          sudo apt-get install -y libdrm-dev linux-headers-6.8.0-1044-azure
       - name: Fetch drm headers
         run: ./.github/workflows/fetch_headers.sh
       - uses: dtolnay/rust-toolchain@nightly
