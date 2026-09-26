@@ -1,7 +1,7 @@
 use drm_ffi as ffi;
 
+use rustix::fd::{AsFd, BorrowedFd};
 use std::fs::{File, OpenOptions};
-use std::os::unix::io::{AsFd, BorrowedFd};
 
 #[derive(Debug)]
 // This is our customized struct that implements the traits in drm.

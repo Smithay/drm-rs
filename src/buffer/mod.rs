@@ -25,6 +25,7 @@
 //!    recommended method of sharing buffers.
 
 use crate::control;
+use core::fmt;
 pub use drm_fourcc::{DrmFourcc, DrmModifier, DrmVendor, UnrecognizedFourcc, UnrecognizedVendor};
 
 /// A handle to a GEM buffer
@@ -60,8 +61,8 @@ impl From<control::RawResourceHandle> for Handle {
     }
 }
 
-impl std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Handle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("buffer::Handle").field(&self.0).finish()
     }
 }
@@ -83,8 +84,8 @@ impl From<Name> for u32 {
     }
 }
 
-impl std::fmt::Debug for Name {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Name {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("buffer::Name").field(&self.0).finish()
     }
 }

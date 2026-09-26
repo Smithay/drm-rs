@@ -4,6 +4,7 @@
 
 use crate::buffer;
 use crate::control;
+use core::fmt;
 use drm_ffi as ffi;
 use drm_fourcc::{DrmFourcc, DrmModifier};
 
@@ -38,8 +39,8 @@ impl control::ResourceHandle for Handle {
     const FFI_TYPE: u32 = ffi::DRM_MODE_OBJECT_FB;
 }
 
-impl std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Handle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("framebuffer::Handle").field(&self.0).finish()
     }
 }
@@ -55,8 +56,8 @@ pub struct Info {
     pub(crate) buffer: Option<buffer::Handle>,
 }
 
-impl std::fmt::Display for Info {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Info {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Framebuffer {}", self.handle.0)
     }
 }

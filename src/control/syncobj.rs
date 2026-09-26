@@ -13,6 +13,7 @@
 //! [`tokio::io::unix::AsyncFd`]: <https://docs.rs/tokio/latest/tokio/io/unix/struct.AsyncFd.html>
 
 use crate::control;
+use core::fmt;
 
 /// A handle to a specific syncobj
 #[repr(transparent)]
@@ -42,8 +43,8 @@ impl From<control::RawResourceHandle> for Handle {
     }
 }
 
-impl std::fmt::Debug for Handle {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Debug for Handle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("syncobj::Handle").field(&self.0).finish()
     }
 }

@@ -2,8 +2,11 @@
 //! Foreign function interface
 //!
 
+#![no_std]
 #![warn(missing_docs)]
 #![allow(unused_doc_comments)]
+
+extern crate alloc;
 
 pub use drm_sys::{self, *};
 
@@ -15,11 +18,10 @@ mod ioctl;
 pub mod mode;
 pub mod syncobj;
 
-use std::{
-    ffi::{c_int, c_ulong},
-    io,
-    os::unix::io::BorrowedFd,
-};
+use alloc::vec::Vec;
+use core::ffi::{c_int, c_ulong};
+use rustix::fd::BorrowedFd;
+use rustix::io;
 
 ///
 /// Bindings to the methods of authentication the DRM provides.
@@ -28,7 +30,8 @@ pub mod auth {
     use crate::ioctl;
     use drm_sys::*;
 
-    use std::{io, os::unix::io::BorrowedFd};
+    use rustix::fd::BorrowedFd;
+    use rustix::io;
 
     /// Get the 'Magic Authentication Token' for this file descriptor.
     pub fn get_magic_token(fd: BorrowedFd<'_>) -> io::Result<drm_auth> {

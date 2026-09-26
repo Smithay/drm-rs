@@ -2,12 +2,14 @@
 
 pub mod constants;
 
+use alloc::format;
+use core::fmt;
+use rustix::io::Errno;
 use std::error::Error;
-use std::fmt::{self, Debug, Display, Formatter};
 use std::io;
-use std::os::unix::io::AsFd;
 use std::path::{Path, PathBuf};
 
+use rustix::fd::AsFd;
 use rustix::fs::{fstat, major, minor, stat, Dev as dev_t, Stat};
 
 use crate::node::constants::*;
@@ -22,13 +24,13 @@ pub struct DrmNode {
 impl DrmNode {
     /// Creates a DRM node from an open drm device.
     pub fn from_file<A: AsFd>(file: A) -> Result<DrmNode, CreateDrmNodeError> {
-        let stat = fstat(file).map_err(Into::<io::Error>::into)?;
+        let stat = fstat(file)?;
         DrmNode::from_stat(stat)
     }
 
     /// Creates a DRM node from path.
     pub fn from_path<A: AsRef<Path>>(path: A) -> Result<DrmNode, CreateDrmNodeError> {
-        let stat = stat(path.as_ref()).map_err(Into::<io::Error>::into)?;
+        let stat = stat(path.as_ref())?;
         DrmNode::from_stat(stat)
     }
 
@@ -105,8 +107,8 @@ impl DrmNode {
     }
 }
 
-impl Display for DrmNode {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::Display for DrmNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.ty.minor_name_prefix(), minor(self.dev_id()))
     }
 }
@@ -177,9 +179,9 @@ impl NodeType {
     }
 }
 
-impl Display for NodeType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Debug::fmt(self, f)
+impl fmt::Display for NodeType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(self, f)
     }
 }
 
@@ -187,16 +189,16 @@ impl Display for NodeType {
 #[derive(Debug)]
 pub enum CreateDrmNodeError {
     /// Some underlying IO error occured while trying to create a DRM node.
-    Io(io::Error),
+    Io(Errno),
 
     /// The provided file descriptor does not refer to a DRM node.
     NotDrmNode,
 }
 
-impl Display for CreateDrmNodeError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::Display for CreateDrmNodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Io(err) => Display::fmt(err, f),
+            Self::Io(err) => fmt::Display::fmt(err, f),
             Self::NotDrmNode => {
                 f.write_str("the provided file descriptor does not refer to a DRM node")
             }
@@ -213,9 +215,9 @@ impl Error for CreateDrmNodeError {
     }
 }
 
-impl From<io::Error> for CreateDrmNodeError {
+impl From<Errno> for CreateDrmNodeError {
     #[inline]
-    fn from(err: io::Error) -> Self {
+    fn from(err: Errno) -> Self {
         CreateDrmNodeError::Io(err)
     }
 }
@@ -275,7 +277,7 @@ pub fn is_device_drm(dev: dev_t) -> bool {
 
 /// Returns the path of a specific type of node from the same DRM device as another path of the same node.
 pub fn path_to_type<P: AsRef<Path>>(path: P, ty: NodeType) -> io::Result<PathBuf> {
-    let stat = stat(path.as_ref()).map_err(Into::<io::Error>::into)?;
+    let stat = stat(path.as_ref())?;
     dev_path(stat.st_rdev, ty)
 }
 
