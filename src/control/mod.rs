@@ -837,24 +837,39 @@ pub trait Device: super::Device {
         Ok(())
     }
 
-    /// Exports a syncobj as an inter-process file descriptor or as a poll()-able sync file.
-    fn syncobj_to_fd(
+    /// Exports a syncobj as an inter-process file descriptor.
+    fn syncobj_to_fd(&self, handle: syncobj::Handle) -> io::Result<OwnedFd> {
+        let args = ffi::syncobj::handle_to_fd(self.as_fd(), handle.into())?;
+        Ok(unsafe { OwnedFd::from_raw_fd(args.fd) })
+    }
+
+    /// Exports a syncobj as a poll-able sync file optionally for a specified timeline point.
+    fn syncobj_to_sync_file(
         &self,
         handle: syncobj::Handle,
-        export_sync_file: bool,
+        timeline_point: Option<u64>,
     ) -> io::Result<OwnedFd> {
-        let info = ffi::syncobj::handle_to_fd(self.as_fd(), handle.into(), export_sync_file)?;
-        Ok(unsafe { OwnedFd::from_raw_fd(info.fd) })
+        let args = ffi::syncobj::handle_to_sync_file(self.as_fd(), handle.into(), timeline_point)?;
+        Ok(unsafe { OwnedFd::from_raw_fd(args.fd) })
     }
 
     /// Imports a file descriptor exported by [`Self::syncobj_to_fd`] back into a process-local handle.
-    fn fd_to_syncobj(
+    fn fd_to_syncobj(&self, fd: BorrowedFd<'_>) -> io::Result<syncobj::Handle> {
+        let args = ffi::syncobj::fd_to_handle(self.as_fd(), fd)?;
+        Ok(from_u32(args.handle).unwrap())
+    }
+
+    /// Imports a sync file exported by [`Self::syncobj_to_sync_file`] into an existing process-local handle
+    /// optionally for a specified timeline point.
+    fn sync_file_into_syncobj(
         &self,
         fd: BorrowedFd<'_>,
-        import_sync_file: bool,
-    ) -> io::Result<syncobj::Handle> {
-        let info = ffi::syncobj::fd_to_handle(self.as_fd(), fd, import_sync_file)?;
-        Ok(from_u32(info.handle).unwrap())
+        handle: syncobj::Handle,
+        timeline_point: Option<u64>,
+    ) -> io::Result<()> {
+        let _ =
+            ffi::syncobj::sync_file_into_handle(self.as_fd(), fd, handle.into(), timeline_point)?;
+        Ok(())
     }
 
     /// Waits for one or more syncobjs to become signalled.
