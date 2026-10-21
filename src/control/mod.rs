@@ -56,7 +56,6 @@ use std::error;
 use std::fmt;
 use std::io;
 use std::iter::Zip;
-use std::mem;
 use std::ops::RangeBounds;
 use std::os::unix::io::{AsFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 use std::time::Duration;
@@ -534,9 +533,23 @@ pub trait Device: super::Device {
     }
 
     /// Create a property blob value from a given data blob
-    fn create_property_blob<T: ?Sized>(&self, data: &T) -> io::Result<property::Value<'static>> {
-        let size = mem::size_of_val(data);
-        let data = unsafe { std::slice::from_raw_parts_mut(data as *const _ as *mut u8, size) };
+    fn create_property_blob<T: bytemuck::NoUninit>(
+        &self,
+        data: &T,
+    ) -> io::Result<property::Value<'static>> {
+        let data = bytemuck::bytes_of(data);
+        let blob = ffi::mode::create_property_blob(self.as_fd(), data)?;
+
+        Ok(property::Value::Blob(blob.blob_id.into()))
+    }
+
+    /// Create a property blob value from a given data slice
+    fn create_property_blob_from_slice<T: bytemuck::NoUninit>(
+        &self,
+        data: &[T],
+    ) -> io::Result<property::Value<'static>> {
+        let data = bytemuck::try_cast_slice(data)
+            .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))?;
         let blob = ffi::mode::create_property_blob(self.as_fd(), data)?;
 
         Ok(property::Value::Blob(blob.blob_id.into()))
@@ -1257,6 +1270,7 @@ pub struct Mode {
     // to convert to/from an abstracted type, just use the raw object.
     mode: ffi::drm_mode_modeinfo,
 }
+unsafe impl bytemuck::NoUninit for Mode {}
 
 impl Mode {
     /// Returns the name of this mode.
