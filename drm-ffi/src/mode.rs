@@ -189,6 +189,10 @@ pub fn dirty_fb(
         ..Default::default()
     };
 
+    if clips.is_empty() {
+        dirty.clips_ptr = 0;
+    }
+
     unsafe {
         ioctl::mode::dirty_fb(fd, &mut dirty)?;
     }
