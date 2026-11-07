@@ -1262,7 +1262,7 @@ pub struct Mode {
 impl Mode {
     /// Returns the name of this mode.
     pub fn name(&self) -> &std::ffi::CStr {
-        unsafe { std::ffi::CStr::from_ptr(&self.mode.name[0] as _) }
+        unsafe { std::ffi::CStr::from_ptr(self.mode.name.as_ptr()) }
     }
 
     /// Returns the clock speed of this mode.
