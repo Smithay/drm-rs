@@ -176,6 +176,20 @@ pub fn rm_fb(fd: BorrowedFd<'_>, mut id: u32) -> io::Result<()> {
     Ok(())
 }
 
+/// Close a framebuffer handle without disabling the planes that scan it out.
+///
+/// Requires Linux 6.8 or newer (`DRM_IOCTL_MODE_CLOSEFB`). Older or non-Linux kernels
+/// return an error, usually `EINVAL` or `ENOTTY`.
+pub fn close_fb(fd: BorrowedFd<'_>, id: u32) -> io::Result<()> {
+    let mut closefb = drm_mode_closefb { fb_id: id, pad: 0 };
+
+    unsafe {
+        ioctl::mode::close_fb(fd, &mut closefb)?;
+    }
+
+    Ok(())
+}
+
 /// Mark a framebuffer as dirty.
 pub fn dirty_fb(
     fd: BorrowedFd<'_>,
