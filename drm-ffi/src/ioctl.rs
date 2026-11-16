@@ -158,6 +158,7 @@ pub(crate) mod mode {
     ioctl_readwrite!(add_fb, DRM_IOCTL_BASE, 0xAE, drm_mode_fb_cmd);
     ioctl_readwrite!(add_fb2, DRM_IOCTL_BASE, 0xB8, drm_mode_fb_cmd2);
     ioctl_readwrite!(rm_fb, DRM_IOCTL_BASE, 0xAF, c_uint);
+    ioctl_readwrite!(close_fb, DRM_IOCTL_BASE, 0xD0, drm_mode_closefb);
 
     /// Plane related functions
     ioctl_readwrite!(get_plane, DRM_IOCTL_BASE, 0xB6, drm_mode_get_plane);

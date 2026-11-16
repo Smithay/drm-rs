@@ -404,6 +404,25 @@ pub trait Device: super::Device {
         ffi::mode::rm_fb(self.as_fd(), handle.into())
     }
 
+    /// Close a framebuffer
+    ///
+    /// Unlike [`Device::destroy_framebuffer`], this does not disable planes (or CRTCs)
+    /// that currently scan out the framebuffer. The handle becomes invalid for this
+    /// file, but the framebuffer itself stays alive until no plane uses it anymore,
+    /// e.g. until the next compositor commits its own state. This allows leaving the
+    /// last frame on screen when handing over the device.
+    ///
+    /// Requires Linux 6.8 or newer. Older kernels return `EINVAL` or `ENOTTY`, in which
+    /// case the caller may fall back to [`Device::destroy_framebuffer`], but that disables
+    /// the planes using the framebuffer, so the last frame is lost.
+    ///
+    /// Other errors are not a sign of missing support: `ENOENT` if the framebuffer does
+    /// not exist or was not created by this file, `EOPNOTSUPP` if the driver does not
+    /// support modesetting, `EACCES` on render nodes.
+    fn close_framebuffer(&self, handle: framebuffer::Handle) -> io::Result<()> {
+        ffi::mode::close_fb(self.as_fd(), handle.into())
+    }
+
     /// Returns information about a specific plane
     fn get_plane(&self, handle: plane::Handle) -> io::Result<plane::Info> {
         let mut formats = Vec::new();
